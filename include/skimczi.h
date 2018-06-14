@@ -2,7 +2,7 @@
 // Created by Robin Wiess
 //
 
-#include <tiff.h>
+//#include <tiff.h>
 #include <cstdint>
 #include <string>
 #include <CLI11.hpp>

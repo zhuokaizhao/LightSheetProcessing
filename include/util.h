@@ -5,6 +5,7 @@
 #ifndef LSP_UTIL_H
 #define LSP_UTIL_H
 
+#include <stdexcept>
 #include <teem/nrrd.h>
 #include <string>
 

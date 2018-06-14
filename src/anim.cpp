@@ -229,7 +229,7 @@ int anim_main(AnimOptions const &opt) {
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
-  auto kparm[2] = {40,3};
+  double kparm[2] = {40,3};
   if (nrrdResampleInputSet(rsmc, avg_x_joined) ||
       nrrdResampleKernelSet(rsmc, 0, nrrdKernelGaussian, kparm) ||
       nrrdResampleSamplesSet(rsmc, 0, avg_x_joined->axis[0].size) ||

@@ -44,7 +44,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
 
     path file = dir + s_num + basename;
     if (exists(file)) {
-      ifstream inFile;
+      std::ifstream inFile;
       inFile.open(file.string());
 
       std::vector<double> tmp;

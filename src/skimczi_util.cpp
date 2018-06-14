@@ -6,6 +6,7 @@
 #include "skimczi_util.h"
 
 #include <cfloat>
+#include <string.h>
 
 
 // Convert the string parameter to a CZI pixel type.
