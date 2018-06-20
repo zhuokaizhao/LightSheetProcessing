@@ -31,14 +31,10 @@ void setup_corrfind(CLI::App &app) {
 
 void corrfind_main(corrfindOptions const &opt) {
   auto mop = airMopNew();
-  std::ostringstream ss;
 
-  ss << std::setw(3) << std::setfill('0') << opt.file_number;
-  std::string s_num(ss.str());
-  std::string output_name = "reg/" + s_num + opt.output_name;
+  std::string output_name = "reg/" + zero_pad(opt.file_number, 3) + opt.output_name;
 
-  std::ofstream outfile;
-  outfile.open(output_name);
+  std::ofstream outfile(output_name);
 
   if (opt.file_number == 0) {
     outfile << "0 0 0 0";
@@ -52,15 +48,7 @@ void corrfind_main(corrfindOptions const &opt) {
     std::vector<double> shifts;
 
     for (std::string proj : {"XY.png", "XZ.png", "YZ.png"}) {
-      ss.str(""); ss.clear();
-      std::cout << "===" << proj.substr(0, 2) << "===" << std::endl;
-      ss << std::setw(3) << std::setfill('0') << opt.file_number-1;
-      std::string s_num1(ss.str());
-      ss.str(""); ss.clear();
-      ss << std::setw(3) << std::setfill('0') << opt.file_number;
-      std::string s_num2(ss.str());
-
-      corr_op.input_images = {"reg/" + s_num1 + "-" + proj, "reg/" + s_num2 + "-" + proj};
+      corr_op.input_images = {"reg/" + zero_pad(opt.file_number-1, 3) + "-" + proj, "reg/" + zero_pad(opt.file_number, 3) + "-" + proj};
 
       std::vector<double> shift;
       shift = corr_main(corr_op);
@@ -68,10 +56,11 @@ void corrfind_main(corrfindOptions const &opt) {
       shifts.push_back(shift[0]);
       shifts.push_back(shift[1]);
     }
-
+/*
     double xx = (shifts[0] + shifts[2])/2.0;
     double yy = (shifts[1] + shifts[4])/2.0;
     double zz = (shifts[3] + shifts[5])/2.0;
+*/
   }
 
   airMopOkay(mop);

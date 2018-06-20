@@ -1,6 +1,7 @@
-//
-// Created by Jake Stover on 5/2/18.
-//
+//! \file nhdrCheck.h
+//! \author Jake Stover
+//! \date 2018-05-02
+//! \brief Check if the input file exists.
 
 #ifndef LSP_NHDRCHECK_H
 #define LSP_NHDRCHECK_H

@@ -28,18 +28,10 @@ const char* LSPException::get_func() const { return func; }
  */
 
 std::string zero_pad(int num, uint len) {
-  std::stringstream ss;
+    string ret = to_string(num);
+    ret = string(len-ret.size(), '0') + ret;
 
-  // the number is converted to string with the help of stringstream
-  ss << num;
-  std::string ret;
-  ss >> ret;
-
-  // Append zero chars
-  u_long str_length = ret.length();
-  for (int i = 0; i < len - str_length; i++)
-    ret.insert(0, "0");
-  return ret;
+    return ret;
 }
 
 
@@ -51,11 +43,7 @@ Nrrd* safe_load_nrrd(std::string filename) {
 
   /* read in the nrrd from file */
   if (nrrdLoad(nin, filename.c_str(), NULL)) {
-    char *err = biffGetDone(NRRD);
-    std::string msg = "Error loading file: ";
-    msg.append(err);
-
-    free(err);
+    std::string msg = "Error loading file: " + string(biffGetDone(NRRD));
 
     throw LSPException(msg, "util.cpp", "safe_load_nrrd");
   }

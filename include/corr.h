@@ -1,6 +1,7 @@
-//
-// Created by Jake Stover on 5/9/18.
-//
+//! \file corr.h
+//! \author Jake Stover
+//! \date 2018-05-09
+//! \brief Compute the corr val for a 2D squre dataset
 
 #ifndef LSP_CORR_H
 #define LSP_CORR_H

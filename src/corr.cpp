@@ -403,4 +403,3 @@ std::vector<double> corr_main(corrOptions const &opt) {
   airMopOkay(mop);
   return shift;
 }
-

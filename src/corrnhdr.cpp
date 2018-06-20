@@ -27,22 +27,22 @@ void setup_corrnhdr(CLI::App &app) {
 }
 
 void corrnhdr_main(corrnhdrOptions const &opt) {
+  // check if "/nhdr" exist for later use
+  std::string dir = current_path().string() + "/nhdr/";
+  if(!exists(dir))
+    return ;
+
   auto mop = airMopNew();
   const int num = opt.num;
-  std::string dir = current_path().string() + "/reg/";
+  dir = current_path().string() + "/reg/";
   std::string basename = "-corr1.txt";
-
-  std::ostringstream ss;
 
   std::vector<std::vector<double>> shifts;  //offset from previous frame
   std::vector<std::vector<double>> offsets = {{0,0,0}}; //offset from first frame
 
+  // read shifts and offsets from input file
   for (int i = 0; i <= num; i++) {
-    ss.str(""); ss.clear();
-    ss << std::setw(3) << std::setfill('0') << i;
-    std::string s_num(ss.str());
-
-    path file = dir + s_num + basename;
+    path file = dir + zero_pad(i, 3) + basename;
     if (exists(file)) {
       std::ifstream inFile;
       inFile.open(file.string());
@@ -69,7 +69,8 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
   Nrrd *offset_n = nrrdNew();
   airMopAdd(mop, offset_n, (airMopper)nrrdNix, airMopAlways);
 
-  if (nrrdWrap_va(offset_n, &offsets, nrrdTypeDouble, 2, 3, offsets.size()) ||
+  //save offsets into nrrd file
+  if (nrrdWrap_va(offset_n, offsets.data(), nrrdTypeDouble, 2, 3, offsets.size()) ||
           nrrdSave("reg/offsets.nrrd", offset_n, NULL)) {
     char *msg;
     char *err = biffGetDone(NRRD);
@@ -82,6 +83,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
     throw LSPException(msg, "corrnhdr.cpp", "corrnhdr_main");
   };
 
+  // slice nrrd by x axis and median yz shifts and join them back
   Nrrd *offset_median = nrrdNew();
   Nrrd *ntmp = nrrdNew();
 
@@ -128,6 +130,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
 
     throw LSPException(msg, "corrnhdr.cpp", "corrnhdr_main");
   }
+  // copy axis info
   nrrdAxisInfoCopy(offset_median, offset_n, NULL, NRRD_AXIS_INFO_NONE);
   if (nrrdBasicInfoCopy(offset_median, offset_n,
                         NRRD_BASIC_INFO_DATA_BIT
@@ -150,6 +153,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
     throw LSPException(msg, "corrnhdr.cpp", "corrnhdr_main");
   }
 
+  // smooth the nrrd data
   Nrrd *offset_smooth = nrrdNew();
   airMopAdd(mop, offset_smooth, (airMopper)nrrdNuke, airMopAlways);
 
@@ -157,6 +161,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
 
+  //gaussian-blur
   double kparm[2] = {2, 3};
   if (nrrdResampleInputSet(rsmc, offset_median) ||
       nrrdResampleKernelSet(rsmc, 0, NULL, NULL) ||
@@ -177,6 +182,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
     throw LSPException(msg, "corrnhdr.cpp", "corrnhdr_main");
   }
 
+  // create a helper nrrd struct to help smooth the boundary
   Nrrd *base = nrrdNew();
   airMopAdd(mop, base, (airMopper)nrrdNix, airMopAlways);
 
@@ -232,7 +238,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
   nrrdQuantize(offset_smooth1, offset_smooth1, NULL, 32);
   nrrdUnquantize(offset_smooth1, offset_smooth1, nrrdTypeDouble);
 
-
+  // smooth the boundary
   NrrdIter *n1 = nrrdIterNew();
   NrrdIter *n2 = nrrdIterNew();
   NrrdIter *n3 = nrrdIterNew();
@@ -250,15 +256,10 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
 
   nrrdArithIterTernaryOp(offset_smooth2, nrrdTernaryOpLerp, n1, n2, n3);
 
-  // TODO: In the beginning of this function make sure that this dir exists.
+  //output files
   dir = current_path().string() + "/nhdr/";
-
   for (size_t i = 0; i <= num; i++) {
-    ss.str(""); ss.clear();
-    ss << std::setw(3) << std::setfill('0') << i;
-    std::string s_num(ss.str());
-
-    path file = dir + s_num + ".nhdr";
+    path file = dir + zero_pad(i, 3) + ".nhdr";
     if (exists(file)) {
       Nrrd *old_nrrd = safe_load_nrrd(file.string());
       Nrrd *new_nrrd = nrrdNew();

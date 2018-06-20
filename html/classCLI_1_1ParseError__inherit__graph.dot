@@ -1,0 +1,39 @@
+digraph "CLI::ParseError"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="CLI::ParseError",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="CLI::Error",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1Error.html",tooltip="All errors derive from this one. "];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="runtime_error",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="CLI::ArgumentMismatch",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1ArgumentMismatch.html",tooltip="Thrown when the wrong number of arguments has been received. "];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="CLI::CallForHelp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1CallForHelp.html",tooltip="-h or –help on command line "];
+  Node1 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="CLI::ConversionError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1ConversionError.html",tooltip="Thrown when conversion call back fails, such as when an int fails to coerce to a string. "];
+  Node1 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="CLI::ExcludesError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1ExcludesError.html",tooltip="Thrown when an excludes option is present. "];
+  Node1 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="CLI::ExtrasError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1ExtrasError.html",tooltip="Thrown when too many positionals or options are found. "];
+  Node1 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="CLI::FileError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1FileError.html",tooltip="Thrown when parsing an INI file and it is missing. "];
+  Node1 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="CLI::HorribleError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1HorribleError.html"];
+  Node1 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="CLI::INIError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1INIError.html",tooltip="Thrown when extra values are found in an INI file. "];
+  Node1 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="CLI::InvalidError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1InvalidError.html",tooltip="Thrown when validation fails before parsing. "];
+  Node1 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="CLI::RequiredError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1RequiredError.html",tooltip="Thrown when a required option is missing. "];
+  Node1 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="CLI::RequiresError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1RequiresError.html",tooltip="Thrown when a requires option is missing. "];
+  Node1 -> Node15 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="CLI::RuntimeError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1RuntimeError.html",tooltip="Does not output a diagnostic in CLI11_PARSE, but allows to return from main() with a specific error c..."];
+  Node1 -> Node16 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node16 [label="CLI::Success",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1Success.html",tooltip="This is a successful completion on parsing, supposed to exit. "];
+  Node1 -> Node17 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node17 [label="CLI::ValidationError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classCLI_1_1ValidationError.html",tooltip="Thrown when validation of results fails. "];
+}

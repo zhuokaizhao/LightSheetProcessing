@@ -1,6 +1,7 @@
-//
-// Created by Jake Stover on 5/9/18.
-//
+//! \file corrnhdr.h
+//! \author Jake Stover
+//! \date 2018-05-09
+//! \brief Load and apply the related offsets for input file.
 
 #ifndef LSP_CORRNHDR_H
 #define LSP_CORRNHDR_H

@@ -1,6 +1,6 @@
-//
-// Created by Robin Wiess
-//
+//! \file skimczi.h
+//! \author Robin Wiess
+//! \brief Convert CZI file to NRRD files(1 XML, 1 NDHR, 3 NRRD).
 
 #include <tiff.h>
 #include <cstdint>
@@ -89,7 +89,7 @@ typedef struct {
 
 #pragma pack(push,1)
 typedef struct {
-    unsigned char SchemaType[2]; // "DV"
+    unsigned char SchemaType[2]; //! <"DV"
     int32_t PixelType;
     int64_t FilePosition;
     int32_t FilePart;

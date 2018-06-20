@@ -1,6 +1,7 @@
-//
-// Created by Jake Stover on 5/9/18.
-//
+//! \file corrimg.h
+//! \author Jake Stover
+//! \date 2018-05-09
+//! \brief Convert(Resample) nrrd files into projection 2D-png format.
 
 #ifndef LSP_CORRIMG_H
 #define LSP_CORRIMG_H
