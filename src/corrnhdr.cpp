@@ -295,7 +295,7 @@ void corrnhdr_main(corrnhdrOptions const &opt) {
       nrrdSpaceOriginSet(new_nrrd, origin);
       new_nrrd->type = nrrdTypeUShort;
 
-      std::string o_name = dir + s_num + "-corr.nhdr";
+      std::string o_name = dir + zero_pad(i, 3) + "-corr.nhdr";
       nrrdSave(o_name.c_str(), new_nrrd, NULL);
 
       airMopSingleOkay(mop, old_nrrd);
