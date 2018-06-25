@@ -624,6 +624,7 @@ int skim_main(SkimOptions const &opt){
   close(cziFile);
   close(xmlFile);
 
+  //nrrdStateVerboseIO = 0;
   Nrrd *nin = safe_load_nrrd(nhdrFileName);
   airMopAdd(mop, nin, (airMopper)nrrdNix, airMopAlways);
 
