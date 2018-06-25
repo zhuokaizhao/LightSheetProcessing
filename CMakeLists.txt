@@ -5,13 +5,22 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB SOURCES "include/*.h" "include/*.hpp" "src/*.cpp")
+file(GLOB HEADERS "include/*.h" "include/*.hpp")
+file(GLOB SOURCES "src/*.cpp")
 
 add_executable(lsp ${SOURCES})
 
 target_include_directories(lsp PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(lsp PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
+target_link_libraries(lsp teem xml2 boost_filesystem boost_system)
+
+install (TARGETS lsp DESTINATION bin)
+
+
+# -------------------------------------------
+# Old version for pre-installed libs
+# Cannot work for midway's module system
+# -------------------------------------------
 #find_package(Teem REQUIRED)
 #target_include_directories(lsp PRIVATE ${Teem_INCLUDE_DIRS})
 
@@ -27,5 +36,3 @@ target_include_directories(lsp PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 #target_link_libraries(lsp ${Teem_LIBRARIES} ${LIBXML2_LIBRARIES})
 
-
-target_link_libraries(lsp teem xml2 boost_filesystem boost_system)

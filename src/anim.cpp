@@ -20,6 +20,49 @@ void setup_anim(CLI::App &app) {
   sub->set_callback([opt]() { anim_main(*opt); });
 }
 
+void
+nrrdRangeSet1(NrrdRange *range, const Nrrd *nrrd, int blind8BitRange) {
+  NRRD_TYPE_BIGGEST _min, _max;
+  int blind;
+
+  if (!range) {
+    return;
+  }
+  if (nrrd
+      && !airEnumValCheck(nrrdType, nrrd->type)
+      && nrrdTypeBlock != nrrd->type) {
+    std::cout << 1 << std::endl;
+    blind = (nrrdBlind8BitRangeTrue == blind8BitRange
+             || (nrrdBlind8BitRangeState == blind8BitRange
+                 && nrrdStateBlind8BitRange));
+    if (blind && 1 == nrrdTypeSize[nrrd->type]) {
+      std::cout << 2 << std::endl;
+      if (nrrdTypeChar == nrrd->type) {
+        std::cout << 3 << std::endl;
+        range->min = SCHAR_MIN;
+        range->max = SCHAR_MAX;
+      } else {
+        std::cout << 4 << std::endl;
+        range->min = 0;
+        range->max = UCHAR_MAX;
+      }
+      range->hasNonExist = nrrdHasNonExistFalse;
+    } else {
+      std::cout << 5 << std::endl;
+      nrrdMinMaxExactFind[nrrd->type](&_min, &_max, &(range->hasNonExist),
+                                      nrrd);
+      range->min = nrrdDLoad[nrrd->type](&_min);
+      range->max = nrrdDLoad[nrrd->type](&_max);
+    }
+  } else {
+    std::cout << 6 << std::endl;
+    range->min = range->max = AIR_NAN;
+    range->hasNonExist = nrrdHasNonExistUnknown;
+  }
+  return;
+}
+
+
 int anim_main(AnimOptions const &opt) {
   std::string name = opt.name;
   uint tmax = opt.tmax;
@@ -36,7 +79,7 @@ int anim_main(AnimOptions const &opt) {
 
   auto max_x_frames = std::vector<Nrrd*>();
   auto max_z_frames = std::vector<Nrrd*>();
-  auto avg_x_frames = std::vector<Nrrd*>();
+  auto avg_x_frames = std::vector<Nrrd*>();  
   auto avg_z_frames = std::vector<Nrrd*>();
 
   Nrrd* max_x_time = nrrdNew();
@@ -44,17 +87,18 @@ int anim_main(AnimOptions const &opt) {
   Nrrd* avg_x_time = nrrdNew();
   Nrrd* avg_z_time = nrrdNew();
 
-  for(int i = 0; i <= tmax; i++) {
+  // slice and resample projection files
+  for(int i = 100; i <= tmax; i++) {
     std::string iii = zero_pad(i, 3);
 
     std::cout << std::endl << "===== " << iii << "/" << tmax << "=====================" << std::endl;
 
-    std::string xy_proj_file = std::string("proj/-projXY.nrrd").insert(5, iii);
-    std::string yz_proj_file = std::string("proj/-projYZ.nrrd").insert(5, iii);
-    std::string max_z_file = std::string("anim/-max-z.nrrd").insert(5, iii);
-    std::string max_x_file = std::string("anim/-max-x.nrrd").insert(5, iii);
-    std::string avg_z_file = std::string("anim/-avg-z.nrrd").insert(5, iii);
-    std::string avg_x_file = std::string("anim/-avg-x.nrrd").insert(5, iii);
+    std::string xy_proj_file = "proj/" + iii + "-projXY.nrrd";
+    std::string yz_proj_file = "proj/" + iii + "-projYZ.nrrd";
+    std::string max_z_file = "anim/" + iii + "-max-z.nrrd";
+    std::string max_x_file = "anim/" + iii + "-max-x.nrrd";
+    std::string avg_z_file = "anim/" + iii + "-avg-z.nrrd";
+    std::string avg_x_file = "anim/" + iii + "-avg-x.nrrd";
 
 
     Nrrd* xy_proj = safe_load_nrrd(xy_proj_file);
@@ -69,8 +113,8 @@ int anim_main(AnimOptions const &opt) {
     double kparm[2] = {0, 0.5};
     if (nrrdResampleInputSet(rsmc, xy_proj) ||
         nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
-        nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(xy_proj->axis[1].size*resample_xy))) ||
-        nrrdResampleRangeFullSet(rsmc, 1) ||
+        nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(xy_proj->axis[0].size*resample_xy))) ||
+        nrrdResampleRangeFullSet(rsmc, 0) ||
         nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
         nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
         nrrdResampleKernelSet(rsmc, 1, nrrdKernelBCCubic, kparm) ||
@@ -101,7 +145,7 @@ int anim_main(AnimOptions const &opt) {
     if (nrrdResampleInputSet(rsmc, yz_proj) ||
         nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
         nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(yz_proj->axis[1].size*resample_xy))) ||
-        nrrdResampleRangeFullSet(rsmc, 1) ||
+        nrrdResampleRangeFullSet(rsmc, 0) ||
         nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
         nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
         nrrdResampleKernelSet(rsmc, 1, nrrdKernelBCCubic, kparm) ||
@@ -140,8 +184,10 @@ int anim_main(AnimOptions const &opt) {
     max_z_frames.push_back(max_z);
     avg_x_frames.push_back(avg_x);
     avg_z_frames.push_back(avg_z);
+
   }
 
+  //
   Nrrd* max_x_joined = nrrdNew();
   Nrrd* tmp0 = nrrdNew();
   Nrrd* tmp1 = nrrdNew();
@@ -156,8 +202,8 @@ int anim_main(AnimOptions const &opt) {
 
   auto range = nrrdRangeNew(AIR_NAN, AIR_NAN);
   airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-
-  if (nrrdRangePercentileFromStringSet(range, tmp0, "5%", "0.02%",
+nrrdRangeSet1(range, tmp0, true);
+  if (nrrdRangePercentileFromStringSet(range, tmp0, "0.02%", "5%", 
                                        5000, true)
       || nrrdQuantize(tmp0, tmp0, range, 8)) {
     char *msg;
@@ -182,9 +228,8 @@ int anim_main(AnimOptions const &opt) {
     max_x_q0.push_back(tmp);
   }
 
-
   if (nrrdArithGamma(tmp1, tmp1, NULL, 3) ||
-      nrrdRangePercentileFromStringSet(range, tmp1, "5%", "0.01%",5000, true) ||
+      nrrdRangePercentileFromStringSet(range, tmp1, "0.01%", "5%", 5000, true) ||
       nrrdQuantize(tmp1, tmp1, range, 8)) {
     char *msg;
     char *err = biffGetDone(NRRD);
@@ -275,7 +320,7 @@ int anim_main(AnimOptions const &opt) {
   range = nrrdRangeNew(AIR_NAN, AIR_NAN);
   airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
 
-  if (nrrdRangePercentileFromStringSet(range, tmp0, "10%", "0.1%",
+  if (nrrdRangePercentileFromStringSet(range, tmp0, "0.1%", "10%", 
                                        5000, true)
       || nrrdQuantize(tmp0, tmp0, range, 8)) {
     char *msg;
@@ -301,7 +346,7 @@ int anim_main(AnimOptions const &opt) {
   }
 
 
-  if (nrrdRangePercentileFromStringSet(range, tmp1, "10%", "0.1%",5000, true) ||
+  if (nrrdRangePercentileFromStringSet(range, tmp1, "0.1%", "10%", 5000, true) ||
       nrrdQuantize(tmp1, tmp1, range, 8)) {
     char *msg;
     char *err = biffGetDone(NRRD);
