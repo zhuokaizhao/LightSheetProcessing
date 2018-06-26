@@ -34,19 +34,36 @@ std::string zero_pad(int num, uint len) {
     return ret;
 }
 
+void nrrd_checker(bool status, AirArray* mop, std::string prompt,
+                 std::string file, std::string function){
+  if(status){
+    char *err = biffGetDone(NRRD);
+    std::string msg = prompt + std::string(err); 
 
-Nrrd* safe_load_nrrd(std::string filename) {
+    airMopAdd(mop, err, airFree, airMopAlways);
+    airMopError(mop);
+
+    throw LSPException(msg, file, function);
+  }
+}
+
+// REMEMBER: (nrrdNew-nrrdNuke) and (nrrdWrap-nrrdNix)
+Nrrd* safe_nrrd_new(AirArray* mop, airMopper mopper){
+  Nrrd* nrrd = nrrdNew();
+  airMopAdd(mop, nrrd, mopper, airMopAlways);
+
+  return nrrd;
+}
+
+Nrrd* safe_nrrd_load(AirArray* mop, std::string filename) {
   Nrrd *nin;
 
   /* create a nrrd; at this point this is just an empty container */
-  nin = nrrdNew();
+  nin = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   /* read in the nrrd from file */
-  if (nrrdLoad(nin, filename.c_str(), NULL)) {
-    std::string msg = "Error loading file: " + std::string(biffGetDone(NRRD));
-
-    throw LSPException(msg, "util.cpp", "safe_load_nrrd");
-  }
+  nrrd_checker(nrrdLoad(nin, filename.c_str(), NULL),
+              mop, "Error loading file: ", "util.cpp", "safe_nrrd_load");
 
   return nin;
 }

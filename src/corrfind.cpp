@@ -22,7 +22,7 @@ void setup_corrfind(CLI::App &app) {
 
   sub->set_callback([opt]() {
       try {
-        corrfind_main(*opt);
+        Corrfind(*opt).main();
       } catch(LSPException &e) {
         std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
       }

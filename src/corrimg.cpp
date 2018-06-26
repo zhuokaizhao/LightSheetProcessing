@@ -17,7 +17,7 @@ void setup_corrimg(CLI::App &app) {
 
   sub->set_callback([opt]() {
       try {
-        corrimg_main(*opt);
+        Corrimg(*opt).main();
       } catch(LSPException &e) {
         std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
       }
@@ -25,47 +25,30 @@ void setup_corrimg(CLI::App &app) {
 }
 
 
-void corrimg_main(corrimgOptions const &opt) {
+Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(AirMopNew()) {
   // load input file and create an empty output file
-  Nrrd *nrrd1 = safe_load_nrrd(opt.input_file);
-  Nrrd *nrrd2 = nrrdNew();
+  nrrd1 = safe_nrrd_load(mop, opt.input_file);
 
-  auto mop = airMopNew();
-  airMopAdd(mop, nrrd1, (airMopper)nrrdNuke, airMopAlways);
-  airMopAdd(mop, nrrd2, (airMopper)nrrdNuke, airMopAlways);
+  nrrd2 = safe_nrrd_new(mop);
 
   // set up nrrd kernel
   NrrdKernelSpec *kernel_spec = nrrdKernelSpecNew();
-  if (nrrdKernelParse(&(kernel_spec->kernel), kernel_spec->parm, opt.kernel.c_str())) {
-    char *msg;
-    char *err = biffGetDone(NRRD);
+  nrrd_checker(nrrdKernelParse(&(kernel_spec->kernel), kernel_spec->parm, opt.kernel.c_str()),
+              mop, "Error parsing kernel: ", "corrimg.cpp", "Corrimg::main");
 
-    sprintf(msg, "Error parsing kernel: %s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corrimg.cpp", "corrimg_main");
-  }
   airMopAdd(mop, kernel_spec, (airMopper)nrrdKernelSpecNix, airMopAlways);
 
-  const unsigned int axes_permute[3] = {2, 0, 1};
+}
 
+
+void Corrimg::main() {
   // get nrrd sliced and change axis order(for faster speed)
-  if (nrrdSlice(nrrd2, nrrd1, 3, 1) ||
-    nrrdAxesPermute(nrrd2, nrrd2, axes_permute)) {
+  const unsigned int axes_permute[3] = {2, 0, 1};
+  nrrd_checker(nrrdSlice(nrrd2, nrrd1, 3, 1) ||
+                nrrdAxesPermute(nrrd2, nrrd2, axes_permute),
+              mop, "Error slicing axis: ", "corrimg.cpp", "Corrimg::main");
 
-    char *msg;
-    char *err = biffGetDone(NRRD);
-
-    sprintf(msg, "%s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corrimg.cpp", "corrimg_main");
-  };
-
+  // augment vals in odd channel
   size_t n = nrrdElementNumber(nrrd2);
   for (size_t i = 1; i < n; i += 2) {
     double val = 3.0*nrrdDLookup[nrrd2->type](nrrd2->data, i);
@@ -73,69 +56,33 @@ void corrimg_main(corrimgOptions const &opt) {
   }
 
   // project mean val of one axis
-  if (nrrdProject(nrrd1, nrrd2, 0, nrrdMeasureMean, nrrd2->type)) {
-    char *msg;
-    char *err = biffGetDone(NRRD);
-
-    sprintf(msg, "Error projecting nrrd: %s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corrimg.cpp", "corrimg_main");
-  }
+  nrrd_checker(nrrdProject(nrrd1, nrrd2, 0, nrrdMeasureMean, nrrd2->type),
+              mop, "Error projecting nrrd: ", "corrimg.cpp", "Corrimg::main");
 
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
   // resample nrrd data
-  if (nrrdResampleInputSet(rsmc, nrrd1) ||
-    nrrdResampleKernelSet(rsmc, 0, kernel_spec->kernel, kernel_spec->parm) ||
-    nrrdResampleSamplesSet(rsmc, 0, nrrd1->axis[0].size) ||
-    nrrdResampleRangeFullSet(rsmc, 0) ||
-    nrrdResampleBoundarySet(rsmc, nrrdBoundaryWeight) ||
-    nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
-    nrrdResampleKernelSet(rsmc, 1, kernel_spec->kernel, kernel_spec->parm) ||
-    nrrdResampleSamplesSet(rsmc, 1, nrrd1->axis[1].size) ||
-    nrrdResampleRangeFullSet(rsmc, 1) ||
-    nrrdResampleExecute(rsmc, nrrd2)) {
+  nrrd_checker(nrrdResampleInputSet(rsmc, nrrd1) ||
+                nrrdResampleKernelSet(rsmc, 0, kernel_spec->kernel, kernel_spec->parm) ||
+                nrrdResampleSamplesSet(rsmc, 0, nrrd1->axis[0].size) ||
+                nrrdResampleRangeFullSet(rsmc, 0) ||
+                nrrdResampleBoundarySet(rsmc, nrrdBoundaryWeight) ||
+                nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
+                nrrdResampleKernelSet(rsmc, 1, kernel_spec->kernel, kernel_spec->parm) ||
+                nrrdResampleSamplesSet(rsmc, 1, nrrd1->axis[1].size) ||
+                nrrdResampleRangeFullSet(rsmc, 1) ||
+                nrrdResampleExecute(rsmc, nrrd2),
+              mop, "Error resampling nrrd: ", "corrimg.cpp", "Corrimg::main");
 
-    char *msg;
-    char *err = biffGetDone(NRRD);
-
-    sprintf(msg, "Error resampling nrrd: %s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corrimg.cpp", "corrimg_main");
-  }
 
   // quantize vals from 32 to 16 bits
-  if (nrrdQuantize(nrrd1, nrrd2, NULL, 16)) {
-    char *msg;
-    char *err = biffGetDone(NRRD);
-
-    sprintf(msg, "Error quantizing nrrd: %s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corrimg.cpp", "corrimg_main");
-  };
+  nrrd_checker(nrrdQuantize(nrrd1, nrrd2, NULL, 16),
+              mop, "Error quantizing nrrd: ", "corrimg.cpp", "Corrimg::main");
 
   // save final results
-  if (nrrdSave(opt.output_file.c_str(), nrrd1, NULL)) {
-    char *msg;
-    char *err = biffGetDone(NRRD);
-
-    sprintf(msg, "Could not save file: %s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corrimg.cpp", "corrimg_main");
-  };
+  nrrd_checker(nrrdSave(opt.output_file.c_str(), nrrd1, NULL),
+              mop, "Could not save file: ", "corrimg.cpp", "Corrimg::main");
 
   airMopOkay(mop);
 }
