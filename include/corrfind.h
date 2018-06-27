@@ -12,6 +12,7 @@
 
 struct corrfindOptions {
     int file_number;
+    std::string file_dir = "reg/";
     std::string output_name = "-corr1.txt";
     std::vector<std::string> kernels = {"c4hexic", "c4hexicd"};
     unsigned int bound = 10;
