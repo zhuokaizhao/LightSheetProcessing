@@ -15,3 +15,6 @@ Refine cmake. Now it has great file structures.
 
 06/25/2018
 Rewrite code to a more OOP style.		
+
+06/06/2018
+Finish rewrite corr*.cpp files

@@ -101,10 +101,10 @@ int anim_main(AnimOptions const &opt) {
     std::string avg_x_file = "anim/" + iii + "-avg-x.nrrd";
 
 
-    Nrrd* xy_proj = safe_load_nrrd(xy_proj_file);
+    Nrrd* xy_proj = safe_nrrd_load(mop, xy_proj_file);
     airMopAdd(mop, xy_proj, airMopper(nrrdNuke), airMopAlways);
 
-    Nrrd* yz_proj = safe_load_nrrd(yz_proj_file);
+    Nrrd* yz_proj = safe_nrrd_load(mop, yz_proj_file);
     airMopAdd(mop, yz_proj, airMopper(nrrdNuke), airMopAlways);
 
     auto rsmc = nrrdResampleContextNew();

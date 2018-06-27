@@ -25,19 +25,17 @@ void setup_corrimg(CLI::App &app) {
 }
 
 
-Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(AirMopNew()) {
+Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(airMopNew()) {
   // load input file and create an empty output file
   nrrd1 = safe_nrrd_load(mop, opt.input_file);
 
-  nrrd2 = safe_nrrd_new(mop);
+  nrrd2 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
-  // set up nrrd kernel
-  NrrdKernelSpec *kernel_spec = nrrdKernelSpecNew();
-  nrrd_checker(nrrdKernelParse(&(kernel_spec->kernel), kernel_spec->parm, opt.kernel.c_str()),
-              mop, "Error parsing kernel: ", "corrimg.cpp", "Corrimg::main");
+}
 
-  airMopAdd(mop, kernel_spec, (airMopper)nrrdKernelSpecNix, airMopAlways);
 
+Corrimg::~Corrimg(){
+  airMopOkay(mop);
 }
 
 
@@ -62,6 +60,13 @@ void Corrimg::main() {
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
+  // set up nrrd kernel
+  NrrdKernelSpec *kernel_spec = nrrdKernelSpecNew();
+  nrrd_checker(nrrdKernelParse(&(kernel_spec->kernel), kernel_spec->parm, opt.kernel.c_str()),
+              mop, "Error parsing kernel: ", "corrimg.cpp", "Corrimg::main");
+
+  airMopAdd(mop, kernel_spec, (airMopper)nrrdKernelSpecNix, airMopAlways);
+
   // resample nrrd data
   nrrd_checker(nrrdResampleInputSet(rsmc, nrrd1) ||
                 nrrdResampleKernelSet(rsmc, 0, kernel_spec->kernel, kernel_spec->parm) ||
@@ -84,5 +89,4 @@ void Corrimg::main() {
   nrrd_checker(nrrdSave(opt.output_file.c_str(), nrrd1, NULL),
               mop, "Could not save file: ", "corrimg.cpp", "Corrimg::main");
 
-  airMopOkay(mop);
 }

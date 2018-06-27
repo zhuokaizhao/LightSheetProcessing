@@ -20,13 +20,14 @@ void setup_corrimg(CLI::App &app);
 class Corrimg{
 public:
 	Corrimg(corrimgOptions const &opt = corrimgOptions());
+	~Corrimg();
 
 	void main();
 
 private:
 	corrimgOptions const opt;
 	Nrrd *nrrd1, *nrrd2;
-	AirArray* mop;
+	airArray* mop;
 };
 
 #endif //LSP_CORRIMG_H

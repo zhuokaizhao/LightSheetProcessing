@@ -3,6 +3,7 @@
 //
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <corr.h>
 
 #include "util.h"
@@ -29,39 +30,51 @@ void setup_corrfind(CLI::App &app) {
   });
 }
 
-void corrfind_main(corrfindOptions const &opt) {
-  auto mop = airMopNew();
 
+Corrfind::Corrfind(corrfindOptions const &opt): opt(opt), mop(airMopNew()) {}
+
+
+Corrfind::~Corrfind(){
+  airMopOkay(mop);
+}
+
+
+void Corrfind::main() {
   std::string output_name = "reg/" + zero_pad(opt.file_number, 3) + opt.output_name;
-
   std::ofstream outfile(output_name);
 
-  if (opt.file_number == 0) {
-    outfile << "0 0 0 0";
-  } else {
-    corrOptions corr_op;
-    corr_op.verbosity = 0;
-    corr_op.kernel = opt.kernels;
-    corr_op.max_offset = opt.bound;
-    corr_op.epsilon = opt.epsilon;
+  corrOptions corr_op;
+  corr_op.verbosity = 0;
+  corr_op.kernel = opt.kernels;
+  corr_op.max_offset = opt.bound;
+  corr_op.epsilon = opt.epsilon;
 
+  if (opt.file_number == 0) {
+    outfile << std::vector<double>{0, 0, 0, 0} << std::endl;
+  } 
+  else {
     std::vector<double> shifts;
 
     for (std::string proj : {"XY.png", "XZ.png", "YZ.png"}) {
-      corr_op.input_images = {"reg/" + zero_pad(opt.file_number-1, 3) + "-" + proj, "reg/" + zero_pad(opt.file_number, 3) + "-" + proj};
+      corr_op.input_images = {"reg/" + zero_pad(opt.file_number-1, 3) + "-" + proj,
+                              "reg/" + zero_pad(opt.file_number, 3) + "-" + proj
+                             };
 
       std::vector<double> shift;
-      shift = corr_main(corr_op);
+      Corr corr(corr_op);
+      corr.main();
+      shift = corr.get_shift();
 
       shifts.push_back(shift[0]);
       shifts.push_back(shift[1]);
     }
-/*
+
     double xx = (shifts[0] + shifts[2])/2.0;
     double yy = (shifts[1] + shifts[4])/2.0;
     double zz = (shifts[3] + shifts[5])/2.0;
-*/
+
+    outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, opt.file_number)} << std::endl;
   }
 
-  airMopOkay(mop);
+  outfile.close();
 }

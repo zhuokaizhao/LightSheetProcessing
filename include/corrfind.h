@@ -2,6 +2,7 @@
 //! \author Jake Stover
 //! \date 2018-05-09
 //! \brief Find input nrrd/png file and compute corr for it.
+//! \brief rewrite by Jiawei Jiang at 2018-06-26
 
 #ifndef LSP_CORRFIND_H
 #define LSP_CORRFIND_H
@@ -19,7 +20,16 @@ struct corrfindOptions {
 
 void setup_corrfind(CLI::App &app);
 
-//! \brief Load raw files, call corr.h/corr_main and return 3D shifts.
-void corrfind_main(corrfindOptions const &opt);
+class Corrfind{
+public:
+	Corrfind(corrfindOptions const &opt = corrfindOptions());
+	~Corrfind();
+
+	void main();
+
+private:
+	corrfindOptions const opt;
+	airArray* mop;
+};
 
 #endif //LSP_CORRFIND_H

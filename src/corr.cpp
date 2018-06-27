@@ -1,7 +1,7 @@
 //
 // Created by Gordone Kindlmann.
 //
-#include <math.h>
+#include <cmath>
 
 #include <teem/air.h>
 #include <teem/biff.h>
@@ -11,6 +11,41 @@
 #include "corr.h"
 #include "util.h"
 
+void setup_corr(CLI::App &app) {
+  auto opt = std::make_shared<corrOptions>();
+  auto sub = app.add_subcommand("corr", "Simple program for measuring 2D image correlation"
+                                        "over a 2D array of offsets. "
+                                        "Prints out offset coordinates that maximized the "
+                                        "cross correlation");
+
+  sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
+  sub->add_option("-b, --max", opt->max_offset, "Maximum offset (Default: 10).");
+  sub->add_option("-k, --kdk", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)")->expected(2);
+  sub->add_option("-o, --output", opt->output_file, "Output filename");
+  sub->add_option("-e, --epsilon", opt->epsilon, "Convergence for sub-resolution optimization. (Default: 0.0001)");
+  sub->add_option("-v, --verbosity", opt->verbosity, "Verbosity level. (Default: 1)");
+  sub->add_option("-m, --itermax", opt->max_iters, "Maximum number of iterations. (Default: 100)");
+
+  sub->set_callback([opt]() {
+      try {
+        Corr(*opt).main();
+      } catch(LSPException &e) {
+        std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+      }
+  });
+}
+
+Corr::Corr(corrOptions const &opt): opt(opt), mop(airMopNew()) {
+  nin[0] = safe_nrrd_load(mop, opt.input_images[0]);
+  nin[1] = safe_nrrd_load(mop, opt.input_images[1]);
+  nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+}
+
+
+Corr::~Corr(){
+  airMopOkay(mop);
+}
+
 /* bb[0,0] is located at same position as aa[offx, offy] */
 
 /*
@@ -19,16 +54,11 @@ float *bug;
 unsigned int szbugx;
 */
 
-static double
-crossCorr(const unsigned short *aa, const unsigned short *bb,
+double Corr::cross_corr(const unsigned short *aa, const unsigned short *bb,
           const unsigned int sza[2], const unsigned int szb[2],
           const int off[2]) {
-  /* static const char me[]="crossCorr"; */
-  int xi, yi, lo[2], hi[2];
-  unsigned int ii;
-  double dot /* numerator */, lena, lenb; /* factors in denominator */
-
-  for (ii=0; ii<2; ii++) {
+  int lo[2], hi[2];
+  for (auto ii=0; ii<2; ii++) {
     /*  different scenerios to make sure computation of
         lo and hi bounds of index into bb are correct
       aa:  0  1  2  3  4  5  6     (sizeA == 7)
@@ -44,7 +74,7 @@ crossCorr(const unsigned short *aa, const unsigned short *bb,
       bb: 0  1  2  3  4  5  6        (sizeB == 7, off == -2)
     */
     lo[ii] = AIR_MAX(0, -off[ii]);
-    hi[ii] = AIR_MIN(sza[ii]-1-off[ii], szb[ii]-1);
+    hi[ii] = AIR_MIN(sza[ii]-1-off[ii], szb[ii]-1); 
     /*
     printf("%s: lo[%d] = max(0, -off[%d]) = max(0, %d) = %d\n", me,
            ii, ii, -off[ii], lo[ii]);
@@ -53,7 +83,8 @@ crossCorr(const unsigned short *aa, const unsigned short *bb,
            ii, ii, ii, ii, sza[ii]-1, off[ii], szb[ii]-1, hi[ii]);
     */
   }
-  dot = lena = lenb = 0;
+  double dot /* numerator */,
+         lena, lenb; /* factors in denominator */
   /*
   nrrdAlloc_va(ndebug, nrrdTypeFloat, 3,
                AIR_CAST(size_t, 2),
@@ -62,19 +93,10 @@ crossCorr(const unsigned short *aa, const unsigned short *bb,
   bug = AIR_CAST(float *, ndebug->data);
   szbugx = hi[0]-lo[0]+1;
   */
-  int off0 = off[0];
-  int off1 = off[1];
-  int lo0 = lo[0];
-  int lo1 = lo[1];
-  int hi0 = hi[0];
-  int hi1 = hi[1];
-  unsigned int szb0 = szb[0];
-  unsigned int sza0 = sza[0];
-  for (yi=lo1; yi<=hi1; yi++) {
-    for (xi=lo0; xi<=hi0; xi++) {
-      float a, b;
-      b = bb[xi + szb0*yi];
-      a = aa[(xi+off0) + sza0*(yi+off1)];
+  for (auto yi=lo[1]; yi<=hi[1]; yi++) {
+    for (auto xi=lo[0]; xi<=hi[0]; xi++) {
+      double a = aa[(xi+off[0]) + sza[0]*(yi+off[1])];
+      double b = bb[xi + szb[0]*yi];
       dot += a*b;
       lena += a*a;
       lenb += b*b;
@@ -83,58 +105,49 @@ crossCorr(const unsigned short *aa, const unsigned short *bb,
   return dot/(sqrt(lena)*sqrt(lenb));
 }
 
-static int
-crossCorrImg(Nrrd *nout, int maxIdx[2], Nrrd *nin[2],
-             int bound, int verbose,
-             airArray *mop /* passing the mop just for convenience; more
-                              correct would be to use a new biff key
-                              for this function, but that's probably
-                              more confusing */) {
-  static const char me[]="crossCorrImg";
-  char *err, done[13];
-  unsigned int sza[2], szb[2], ii, szc;
-  unsigned short *aa, *bb;
-  double *cci, maxcc, cc;
-  int ox, oy;
 
-  for (ii=0; ii<2; ii++) {
+void Corr::cross_corrImg() {
+  int bound = opt.max_offset,
+      verbose = opt.verbosity;
+
+  for (auto ii: {0, 1}) {
     if (!( 2 == nin[ii]->dim && nrrdTypeUShort == nin[ii]->type )) {
-      fprintf(stderr, "%s: input %s isn't 2D ushort array "
-                      "(instead got %u-D %s array)\n", me, !ii ? "A" : "B",
-              nin[ii]->dim, airEnumStr(nrrdType, nin[ii]->type));
-      return 1;
+      std::string msg = "Error: input " + std::string(!ii?"A":"B") + "isn't 2D ushort array (instead got "
+                        + std::to_string(nin[ii]->dim) + "-D " + airEnumStr(nrrdType, nin[ii]->type) + " array)";
+      throw LSPException(msg, "corr.cpp", "Corr::cross_corrImg");
     }
   }
-  sza[0] = nin[0]->axis[0].size;
-  sza[1] = nin[0]->axis[1].size;
-  szb[0] = nin[1]->axis[0].size;
-  szb[1] = nin[1]->axis[1].size;
-  aa = AIR_CAST(unsigned short *, nin[0]->data);
-  bb = AIR_CAST(unsigned short *, nin[1]->data);
+  unsigned int sza[2] = {AIR_CAST(unsigned int, nin[0]->axis[0].size),
+                         AIR_CAST(unsigned int, nin[0]->axis[1].size)};
+  unsigned int szb[2] = {AIR_CAST(unsigned int, nin[1]->axis[0].size),
+                         AIR_CAST(unsigned int, nin[1]->axis[1].size)};
+  auto aa = AIR_CAST(unsigned short *, nin[0]->data);
+  auto bb = AIR_CAST(unsigned short *, nin[1]->data);
 
-  szc = 2*bound + 1;
-  if (nrrdAlloc_va(nout, nrrdTypeDouble, 2,
+  auto szc = 2*bound + 1;
+  nout = safe_nrrd_new(mop, (airMopper)nrrdNix);
+  nrrd_checker(nrrdAlloc_va(nout, nrrdTypeDouble, 2,
                    AIR_CAST(size_t, szc),
-                   AIR_CAST(size_t, szc))) {
-    airMopAdd(mop, err = biffGetDone(NRRD), airFree, airMopAlways);
-    fprintf(stderr, "%s: trouble allocating output:\n%s\n", me, err);
-    return 1;
-  }
-  cci = AIR_CAST(double *, nout->data);
+                   AIR_CAST(size_t, szc)),
+              mop, "Error allocating output: ", "corr.cpp", "Corr::cross_corrImg");
 
-  maxcc = AIR_NEG_INF;
-  if (verbose) {
-    fprintf(stderr, "%s: computing ...       ", me); fflush(stdout);
-  }
-  for (oy=-bound; oy<=bound; oy++) {
-    int off[2];
-    if (verbose) {
-      fprintf(stderr, "%s", airDoneStr(-bound, oy, bound, done)); fflush(stdout);
+  auto cci = AIR_CAST(double *, nout->data);
+
+  if (verbose)
+    std::cerr << "Corr::cross_corrImg: computing ...      " << std::endl;
+
+  double maxcc = AIR_NEG_INF;
+  for (auto oy=-bound; oy<=bound; oy++) {
+    if (verbose){
+      char done[13]; // defined in teem.
+      std::cerr << airDoneStr(-bound, oy, bound, done) << std::endl;
     }
+
+    int off[2];
     off[1] = oy;
-    for (ox=-bound; ox<=bound; ox++) {
+    for (auto ox=-bound; ox<=bound; ox++) {
       off[0] = ox;
-      cc = cci[ox+bound + szc*(oy+bound)] = crossCorr(aa, bb, sza, szb, off);
+      auto cc = cci[ox+bound + szc*(oy+bound)] = cross_corr(aa, bb, sza, szb, off);
       /* remember where the max is */
       if (cc > maxcc) {
         maxIdx[0] = ox;
@@ -143,49 +156,42 @@ crossCorrImg(Nrrd *nout, int maxIdx[2], Nrrd *nin[2],
       }
     }
   }
-  if (verbose) {
-    fprintf(stderr, "%s\n", airDoneStr(-bound, oy, bound, done)); fflush(stdout);
+  if (verbose){
+    char done[13]; // defined in teem.
+    std::cerr << airDoneStr(-bound, bound+1, bound, done) << std::endl;
   }
 
-  return 0;
 }
 
 /* convolution based recon of value and derivative, with
    simplifying assumption that world == index space,
    and this is a square size-by-size data */
-static double
-probe(double grad[2], /* output */
-      int *out, /* went outside domain */
-      const double *val, unsigned int size, const double pos[2],
-      double *fw, const NrrdKernelSpec *kk, const NrrdKernelSpec *dk,
-      int ksup, int ilo, int ihi) {
-  /* static const char me[]="probe"; */
-  int ii, jj, xn, yn, out0, out1, xi, yi;
-  double res, xa, ya;
+double Corr::probe(double grad[2], /* output */
+      const double pos[2],
+      int *out /* went outside domain */) {
 
   double *fwD0x = fw;
   double *fwD0y = fw + 1*2*ksup;
   double *fwD1x = fw + 2*2*ksup;
   double *fwD1y = fw + 3*2*ksup;
 
-  xn = floor(pos[0]);
-  yn = floor(pos[1]);
-  xa = pos[0] - xn;
-  ya = pos[1] - yn;
-  out0 = out1 = 0;
-  for (ii=ilo; ii<=ihi; ii++) {
-    xi = xn + ii;
-    if (xi < 0 || size-1 < xi) {
+  int xn = floor(pos[0]), yn = floor(pos[1]);
+  double xa = pos[0] - xn, ya = pos[1] - yn;
+
+  int out0, out1;
+  for (auto ii=ilo; ii<=ihi; ii++) {
+    auto xi = xn + ii;
+    if (xi < 0 || size-1 < xi)
       out0 += 1;
-    }
-    yi = yn + ii;
-    if (yi < 0 || size-1 < yi) {
+
+    auto yi = yn + ii;
+    if (yi < 0 || size-1 < yi)
       out1 += 1;
-    }
-    fwD0x[ii-ilo] = kk->kernel->eval1_d(xa-ii, kk->parm);
-    fwD0y[ii-ilo] = kk->kernel->eval1_d(ya-ii, kk->parm);
-    fwD1x[ii-ilo] = dk->kernel->eval1_d(xa-ii, dk->parm);
-    fwD1y[ii-ilo] = dk->kernel->eval1_d(ya-ii, dk->parm);
+
+    fwD0x[ii-ilo] = kk[0]->kernel->eval1_d(xa-ii, kk[0]->parm);
+    fwD0y[ii-ilo] = kk[0]->kernel->eval1_d(ya-ii, kk[0]->parm);
+    fwD1x[ii-ilo] = kk[1]->kernel->eval1_d(xa-ii, kk[1]->parm);
+    fwD1y[ii-ilo] = kk[1]->kernel->eval1_d(ya-ii, kk[1]->parm);
     /*
     printf("fwD0x[%u] = %g\t", ii-ilo, fwD0x[ii-ilo]);
     printf("fwD0y[%u] = %g\t", ii-ilo, fwD0y[ii-ilo]);
@@ -193,6 +199,7 @@ probe(double grad[2], /* output */
     printf("fwD1y[%u] = %g\n", ii-ilo, fwD1y[ii-ilo]);
     */
   }
+
   *out = out0 + out1;
   if (*out) {
     grad[0] = AIR_NAN;
@@ -203,12 +210,12 @@ probe(double grad[2], /* output */
   printf("!%s: (%g,%g) = n(%u,%u) + a(%g,%g)\n", me,
          pos[0], pos[1], xn, yn, xa, ya);
   */
-  res = grad[0] = grad[1] = 0;
-  for (jj=ilo; jj<=ihi; jj++) {
-    yi = yn + jj;
-    for (ii=ilo; ii<=ihi; ii++) {
-      xi = xn + ii;
-      double vv = val[xi + size*yi];
+  double res = grad[0] = grad[1] = 0;
+  for (auto jj=ilo; jj<=ihi; jj++) {
+    auto yi = yn + jj;
+    for (auto ii=ilo; ii<=ihi; ii++) {
+      auto xi = xn + ii;
+      double vv = dout[xi + size*yi];
       /*
       printf("!%s: [%d,%d] : data.[%u + %u*%u = %u] = %g\n", me,
              ii, jj, xi, size, yi, xi + size*yi, vv);
@@ -229,177 +236,121 @@ probe(double grad[2], /* output */
   return res;
 }
 
-void setup_corr(CLI::App &app) {
-  auto opt = std::make_shared<corrOptions>();
-  auto sub = app.add_subcommand("corr", "Simple program for measuring 2D image correlation"
-                                        "over a 2D array of offsets. "
-                                        "Prints out offset coordinates that maximized the "
-                                        "cross correlation");
-
-  sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
-  sub->add_option("-b, --max", opt->max_offset, "Maximum offset (Default: 10).");
-  sub->add_option("-k, --kdk", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)")->expected(2);
-  sub->add_option("-o, --output", opt->output_file, "Output filename");
-  sub->add_option("-e, --epsilon", opt->epsilon, "Convergence for sub-resolution optimization. (Default: 0.0001)");
-  sub->add_option("-v, --verbosity", opt->verbosity, "Verbosity level. (Default: 1)");
-  sub->add_option("-m, --itermax", opt->max_iters, "Maximum number of iterations. (Default: 100)");
-
-  sub->set_callback([opt]() {
-      try {
-        corr_main(*opt);
-      } catch(LSPException &e) {
-        std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
-      }
-  });
-}
-
-std::vector<double> corr_main(corrOptions const &opt) {
-  airArray *mop = airMopNew();
-
-  const char *outName = opt.output_file.c_str();
-
-  Nrrd *nin[2], *nout;
-  int bound = opt.max_offset,
-      maxIdx[2]={-1,-1},
-      verbose = opt.verbosity,
-      iterMax = opt.max_iters;
-  NrrdKernelSpec *kk[2];
-  double eps = opt.epsilon;
-
-  std::vector<double> shift;
-
-
-  nin[0] = safe_load_nrrd(opt.input_images[0]);
-  nin[1] = safe_load_nrrd(opt.input_images[1]);
+void Corr::set_kernel(){
+  int bound = opt.max_offset;
 
   kk[0] = nrrdKernelSpecNew();
   kk[1] = nrrdKernelSpecNew();
   nrrdKernelParse(&(kk[0]->kernel), kk[0]->parm, opt.kernel[0].c_str());
   nrrdKernelParse(&(kk[1]->kernel), kk[1]->parm, opt.kernel[1].c_str());
-
-  nout = nrrdNew();
-  airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
-  airMopAdd(mop, nin[0], (airMopper)nrrdNuke, airMopAlways);
-  airMopAdd(mop, nin[1], (airMopper)nrrdNuke, airMopAlways);
   airMopAdd(mop, kk[0], (airMopper)nrrdKernelSpecNix, airMopAlways);
   airMopAdd(mop, kk[1], (airMopper)nrrdKernelSpecNix, airMopAlways);
 
-  if (crossCorrImg(nout, maxIdx, nin, bound, verbose, mop)) {
-    char *msg;
-    char *err = biffGetDone(NRRD);
-
-    sprintf(msg, "Error computing cross correlation: %s", err);
-
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "corr.cpp", "corr_main");
-  }
   if (nrrdKernelBox == kk[0]->kernel && nrrdKernelBox == kk[1]->kernel) {
-    if (AIR_ABS(maxIdx[0]) == bound || AIR_ABS(maxIdx[1]) == bound) {
-      char *msg;
-      sprintf(msg, "maxIdx %d,%d is at boundary of test space; "
-                   "should increase -b bound %d\n",
-              maxIdx[0], maxIdx[1], bound);
-
-      airMopError(mop);
-
-      throw LSPException(msg, "corr.cpp", "corr_main");
-    }
+    std::string msg = "maxIdx " + std::to_string(maxIdx[0]) + ", " + std::to_string(maxIdx[1])
+                      + "is at boundary of test space; should increase -b bound " + std::to_string(bound);
+    nrrd_checker(AIR_ABS(maxIdx[0]) == bound || AIR_ABS(maxIdx[1]) == bound, 
+                mop, msg, "corr.cpp", "Corr::main");
+    
     printf("%d %d = shift\n", maxIdx[0], maxIdx[1]);
-  } else {
+  }
+  else {
     double ksup0 = kk[0]->kernel->support(kk[0]->parm);
     double ksup1 = kk[1]->kernel->support(kk[1]->parm);
-    double _ksup = AIR_MAX(ksup0, ksup1);
-    int ksup = AIR_ROUNDUP(_ksup);
-    int ilo = 1 - ksup;
-    int ihi = ksup;
-    double *fw = AIR_CALLOC(4*2*ksup, double);
+    ksup = AIR_ROUNDUP( AIR_MAX(ksup0, ksup1) );
+    ilo = 1 - ksup;
+    ihi = ksup;
+
+    fw = AIR_CALLOC(4*2*ksup, double);
     airMopAdd(mop, fw, airFree, airMopAlways);
-    double *dout = AIR_CAST(double*, nout->data);
-    unsigned int size = AIR_CAST(unsigned int, nout->axis[0].size);
+    dout = AIR_CAST(double*, nout->data);
+    size = AIR_CAST(unsigned int, nout->axis[0].size);
 
-    if (AIR_ABS(AIR_ABS(maxIdx[0]) - bound) + 1 <= ksup ||
-        AIR_ABS(AIR_ABS(maxIdx[1]) - bound) + 1 <= ksup) {
-      char *msg;
-
-      sprintf(msg, "maxIdx %d,%d is within kernel support %d "
-                   "of test space boundary; should increase -b bound %d\n",
-              maxIdx[0], maxIdx[1], ksup, bound);
-
-      airMopError(mop);
-
-      throw LSPException(msg, "corr.cpp", "corr_main");
-    }
-    if (verbose) {
+    std::string msg = "maxIdx " + std::to_string(maxIdx[0]) + ", " + std::to_string(maxIdx[1])
+                      + "is within kernel support " + std::to_string(ksup)
+                      + " of test space boundary; should increase -b bound " + std::to_string(bound);
+    nrrd_checker(AIR_ABS(AIR_ABS(maxIdx[0]) - bound) + 1 <= ksup ||
+                    AIR_ABS(AIR_ABS(maxIdx[1]) - bound) + 1 <= ksup,
+                mop, msg, "corr.cpp", "Corr::main");
+    
+    if (opt.verbosity) {
       printf("%s->support=%g, %s->support=%g ==> ksup = %d\n",
              kk[0]->kernel->name, ksup0,
              kk[1]->kernel->name, ksup1, ksup);
     }
-    int out, badstep, iter;
-    double dval, val0, val1, grad0[2], grad1[2], pos0[2], pos1[2], hh=10, back=0.5, creep=1.2;
-    pos0[0] = maxIdx[0] + bound;
-    pos0[1] = maxIdx[1] + bound;
+  }
+}
 
-#define PROBE(V, G, P) \
-    (V) = probe((G), &out, dout, size, (P), fw, kk[0], kk[1], ksup, ilo, ihi);
 
-    PROBE(val0, grad0, pos0);
-    if (verbose) {
-      printf("start: %g %g --> (out %d) %g (%g,%g)\n", pos0[0], pos0[0], out, val0, grad0[0], grad0[1]);
-    }
-    for (iter=0; iter<iterMax; iter++) {
-      int tries = 0;
-      do {
-        ELL_2V_SCALE_ADD2(pos1, 1, pos0, hh, grad0);
-        PROBE(val1, grad1, pos1);
-        if (verbose > 1) {
-          printf("  try %d: %g %g --> (out %d) %g (%g,%g)\n", tries, pos1[0], pos1[0], out, val1, grad1[0], grad1[1]);
-        }
-        badstep = out || (val1 < val0);
-        if (badstep) {
-          if (verbose > 1) {
-            printf("  badstep!  %d || (%g < %g)\n", out, val1, val0);
-          }
-          hh *= back;
-        } else {
-          hh *= creep;
-        }
-        tries++;
-      } while (badstep);
-      dval = (val1 - val0)/val1;
-      if (dval < eps) {
-        if (verbose) {
-          printf("converged in %d iters, %g < %g\n", iter, dval, eps);
-        }
-        break;
-      }
-      val0 = val1;
-      ELL_2V_COPY(pos0, pos1);
-      ELL_2V_COPY(grad0, grad1);
+void Corr::compute_shift(){
+  int bound = opt.max_offset,
+      verbose = opt.verbosity,
+      iterMax = opt.max_iters;
+  double eps = opt.epsilon;
+
+  int out;
+  double grad0[2], grad1[2], pos0[2], pos1[2], hh=10, back=0.5, creep=1.2;
+  double val0, val1;
+
+  pos0[0] = maxIdx[0] + bound;
+  pos0[1] = maxIdx[1] + bound;
+  val0 = probe(grad0, pos0, &out);
+
+  if (verbose) {
+    printf("start: %g %g --> (out %d) %g (%g,%g)\n", pos0[0], pos0[0], out, val0, grad0[0], grad0[1]);
+  }
+  for (auto iter=0; iter<iterMax; iter++) {
+    int tries, badstep;
+    do {
+      ELL_2V_SCALE_ADD2(pos1, 1, pos0, hh, grad0);
+      val1 = probe(grad1, pos1, &out);
       if (verbose > 1) {
-        printf("%d: %f %f --> (%d tries) %f (%g,%g) (hh %g)\n", iter, pos0[0], pos0[0], tries, val0, grad0[0], grad0[1], hh);
+        printf("  try %d: %g %g --> (out %d) %g (%g,%g)\n", tries, pos1[0], pos1[0], out, val1, grad1[0], grad1[1]);
       }
+      badstep = out || (val1 < val0);
+      if (badstep) {
+        if (verbose > 1) {
+          printf("  badstep!  %d || (%g < %g)\n", out, val1, val0);
+        }
+        hh *= back;
+      } else {
+        hh *= creep;
+      }
+      tries++;
+    } while (badstep);
+    double dval = (val1 - val0)/val1;
+    if (dval < eps) {
+      if (verbose) {
+        printf("converged in %d iters, %g < %g\n", iter, dval, eps);
+      }
+      break;
     }
-    printf("%f %f = shift\n", pos1[0] - bound, pos1[1] - bound);
-    shift.push_back(pos1[0]-bound);
-    shift.push_back(pos1[1]-bound);
-  }
-
-  if (!opt.output_file.empty()) {
-    if (nrrdSave(outName, nout, NULL)) {
-      char *msg;
-      char *err = biffGetDone(NRRD);
-
-      sprintf(msg, "Error saving output: %s", err);
-
-      airMopAdd(mop, err, airFree, airMopAlways);
-      airMopError(mop);
-
-      throw LSPException(msg, "corr.cpp", "corr_main");
+    val0 = val1;
+    ELL_2V_COPY(pos0, pos1);
+    ELL_2V_COPY(grad0, grad1);
+    if (verbose > 1) {
+      printf("%d: %f %f --> (%d tries) %f (%g,%g) (hh %g)\n", iter, pos0[0], pos0[0], tries, val0, grad0[0], grad0[1], hh);
     }
   }
+  printf("%f %f = shift\n", pos1[0] - bound, pos1[1] - bound);
+  shift.push_back(pos1[0]-bound);
+  shift.push_back(pos1[1]-bound);
+}
 
-  airMopOkay(mop);
+
+std::vector<double> Corr::get_shift(){
   return shift;
+}
+
+
+void Corr::main() {
+  cross_corrImg();
+
+  set_kernel();
+
+  compute_shift();
+
+  if (!opt.output_file.empty())
+    nrrd_checker(nrrdSave(opt.output_file.c_str(), nout, NULL),
+                mop, "Error saving output: ", "corr.cpp", "corr_main");
 }

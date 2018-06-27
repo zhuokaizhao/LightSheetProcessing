@@ -27,7 +27,7 @@ void setup_corrnhdr(CLI::App &app) {
 }
 
 
-Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(AirMopNew()) {
+Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()) {
   // check if "/nhdr" exist for later use
   nhdr_dir = current_path().string() + "/nhdr/";
   if(!exists(nhdr_dir))
@@ -39,6 +39,12 @@ Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(AirMopNew()) {
   
   basename = "-corr1.txt";
 }
+
+
+Corrnhdr::~Corrnhdr(){
+  airMopOkay(mop);
+}
+
 
 void Corrnhdr::compute_offsets(){
   std::vector<std::vector<double>> shifts,  //offset from previous frame
@@ -116,7 +122,7 @@ void Corrnhdr::median_filtering(){
 }
 
 void Corrnhdr::smooth(){
-  Nrrd *offset_blur = safe_nrrd_new(mop);
+  Nrrd *offset_blur = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
@@ -138,12 +144,12 @@ void Corrnhdr::smooth(){
   data.insert(data.end(), 3*offset_blur->axis[1].size-6, 0);
   data.insert(data.end(), 3, 1);
 
-  Nrrd *base = nrrdNew(mop, (airMopper)nrrdNix);
+  Nrrd *base = safe_nrrd_new(mop, (airMopper)nrrdNix);
   nrrd_checker(nrrdWrap_va(base, data.data(), nrrdTypeFloat, 2, 3, offset_blur->axis[1].size),
               mop, "Error wrapping data vector: ", "corrnhdr.cpp", "Corrnhdr::smooth");
   nrrdAxisInfoCopy(base, offset_blur, NULL, NRRD_AXIS_INFO_ALL);
 
-  offset_smooth1 = safe_nrrd_new(mop);
+  offset_smooth1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   airMopSingleOkay(mop, rsmc);
   rsmc = nrrdResampleContextNew();
@@ -176,7 +182,7 @@ void Corrnhdr::smooth(){
   nrrdIterSetOwnNrrd(n2, offset_blur);
   nrrdIterSetOwnNrrd(n3, offset_origin);
 
-  offset_smooth = safe_nrrd_new(mop);
+  offset_smooth = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   nrrdArithIterTernaryOp(offset_smooth, nrrdTernaryOpLerp, n1, n2, n3);
 
@@ -219,6 +225,4 @@ void Corrnhdr::main() {
     else
       std::cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
   }
-
-  airMopOkay(mop);
 }

@@ -18,7 +18,8 @@ void setup_corrnhdr(CLI::App &app);
 class Corrnhdr{
 public:
 	Corrnhdr(corrnhdrOptions const &opt = corrnhdrOptions());
-
+	~Corrnhdr();
+	
 	void main();
 
 private:
@@ -27,7 +28,7 @@ private:
 	void smooth();
 
 	corrnhdrOptions const opt;
-	AirArray* mop;
+	airArray* mop;
 	std::string nhdr_dir, reg_dir, basename;
 
 	Nrrd *offset_origin, *offset_median, *offset_smooth1, *offset_smooth;

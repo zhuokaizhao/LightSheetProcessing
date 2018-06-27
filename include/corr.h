@@ -2,6 +2,7 @@
 //! \author Jake Stover
 //! \date 2018-05-09
 //! \brief Compute the corr val for a 2D squre dataset
+//! \brief rewrite by Jiawei Jiang at 2018-06-26
 
 #ifndef LSP_CORR_H
 #define LSP_CORR_H
@@ -24,23 +25,37 @@ struct corrOptions {
 
 void setup_corr(CLI::App &app);
 
-std::vector<double> corr_main(corrOptions const &opt);
+class Corr{
+public:
+  Corr(corrOptions const &opt);
+  ~Corr();
 
-static double
-crossCorr(const unsigned short *aa, const unsigned short *bb,
+  void main();
+  std::vector<double> get_shift();
+
+private:
+  double cross_corr(const unsigned short *aa, const unsigned short *bb,
           const unsigned int sza[2], const unsigned int szb[2],
           const int off[2]);
+  void cross_corrImg();
+  double probe(double grad[2], /* output */
+        const double pos[2],
+        int *out /* went outside domain */);
+  void set_kernel();
+  void compute_shift();
 
-static int
-crossCorrImg(Nrrd *nout, int maxIdx[2], Nrrd *nin[2],
-             int bound, int verbose,
-             airArray *mop);
+  corrOptions const opt;
+  airArray* mop;
+  std::vector<double> shift;
 
-static double
-probe(double grad[2], /* output */
-      int *out, /* went outside domain */
-      const double *val, unsigned int size, const double pos[2],
-      double *fw, const NrrdKernelSpec *kk, const NrrdKernelSpec *dk,
-      int ksup, int ilo, int ihi);
+  /* helper vars */
+  Nrrd *nin[2], *nout;
+  NrrdKernelSpec *kk[2]; 
+  int ksup, ilo, ihi, maxIdx[2];
+  unsigned size;
+  double *fw, *dout;
+
+};
+
 
 #endif //LSP_CORR_H
