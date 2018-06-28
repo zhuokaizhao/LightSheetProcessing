@@ -304,7 +304,15 @@ void Skim::generate_nhdr(){
   }
   else {
     fprintf(nhdrFile, "dimension: 4\n");
-    fprintf(nhdrFile, "sizes: %d %d %d %d\n", dims->sizeX, dims->sizeY, dims->sizeC, dims->sizeZ);
+/* ================================================================== */
+/* 
+    TODO: if size and nrrd data doesnot match, prog will crash
+    Unfortunately, some data is complete!(Last step is missing)
+    I deduce the size for 1 here.
+    Wait to be solved.
+*/
+/* ================================================================== */
+    fprintf(nhdrFile, "sizes: %d %d %d %d\n", dims->sizeX, dims->sizeY, dims->sizeC, dims->sizeZ-1);
     fprintf(nhdrFile, "centers: cell cell none cell\n"); // May change in future
   }
 
@@ -463,7 +471,8 @@ void Skim::generate_nrrd(){
 
       // Add entry for this slice to nhdr file
       fprintf(nhdrFile, "%ld %s\n", dataBegin, cziFileName.c_str());
-
+      static int ctr;
+      printf("print data line: %d\n", ++ctr);
       // go to the beginning of data
       lseek(cziFile, dataBegin, SEEK_SET);
 
@@ -542,7 +551,7 @@ void Skim::generate_proj(){
   }
 
   nrrdStateVerboseIO = 0;
-  Nrrd *nin = safe_nrrd_load(mop, nhdrFileName);
+  Nrrd *nin = safe_nrrd_load(mop, nhdrFileName); 
 
   if (nin) {
     Nrrd *line = safe_nrrd_new(mop, (airMopper)nrrdNuke);
