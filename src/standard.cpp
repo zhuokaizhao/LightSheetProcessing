@@ -101,7 +101,7 @@ void Standard::run_skim(){
   		skim_opt.no	= data_dir + "/nhdr/" + iii + ".nhdr";
   		skim_opt.xo = data_dir + "/xml/" + iii + ".xml";
   		skim_opt.po = data_dir + "/proj/" + iii;
-		skim_main(skim_opt);
+		Skim(skim_opt).main();
 		}
 	}
 }

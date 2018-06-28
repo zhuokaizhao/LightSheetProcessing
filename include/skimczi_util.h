@@ -7,19 +7,6 @@
 #include <libxml/tree.h>
 #include "skimczi.h"
 
-typedef struct{
-    int sizeX;
-    int sizeY;
-    int sizeZ;
-    int sizeC;
-    int sizeT;
-    double scalingX;
-    double scalingY;
-    double scalingZ;
-    CziPixelType pixelType;
-    size_t pixelSize;
-} ImageDims;
-
 CziPixelType ConvertStringToPixelType(const char *wszValue);
 
 //! \brief Read image info from CZI file.

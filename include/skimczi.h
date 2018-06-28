@@ -1,11 +1,15 @@
 //! \file skimczi.h
 //! \author Robin Wiess
 //! \brief Convert CZI file to NRRD files(1 XML, 1 NDHR, 3 NRRD).
-
+//! \brief rewrite by Jiawei Jiang at 06-28-2018
 #include <tiff.h>
 #include <cstdint>
 #include <string>
-#include <CLI11.hpp>
+
+#include <teem/nrrd.h>
+
+#include "skimczi_util.h"
+#include "CLI11.hpp"
 
 #ifndef LSP_SKIMCZI_H
 #define LSP_SKIMCZI_H
@@ -182,6 +186,21 @@ typedef enum {
     CZICOMPRESSTYPE_JPEGXRFILE = 3   //--- Jpeg-XR aka HDP-file
 } CziCompmressionType;
 
+
+typedef struct{
+    int sizeX;
+    int sizeY;
+    int sizeZ;
+    int sizeC;
+    int sizeT;
+    double scalingX;
+    double scalingY;
+    double scalingZ;
+    CziPixelType pixelType;
+    size_t pixelSize;
+} ImageDims;
+
+
 struct SkimOptions {
     std::string file;
     std::string no;
@@ -191,6 +210,39 @@ struct SkimOptions {
 };
 
 void setup_skim(CLI::App &app);
-int skim_main(SkimOptions const &opt);
+
+class Skim{
+public:
+    Skim(SkimOptions const &opt = SkimOptions());
+    ~Skim();
+
+    void main();
+private:
+    SkimOptions const &opt;
+    airArray* mop;
+
+    void parse_file();
+    void generate_nhdr();
+    void generate_nrrd();
+    void generate_proj();
+    void update_projections();
+
+    std::string cziFileName, projBaseFileName, nhdrFileName, xmlFileName;
+
+    int cziFile, xmlFile;
+    FILE *nhdrFile;
+
+    SID *currentSID;
+
+    Nrrd *nproj_xy, *nproj_xz, *nproj_yz;
+
+    ImageDims *dims;    // Image metadata
+    int curr_c,         // current channel
+        curr_z;         // current z slice
+    float *current_f,   // current slice data
+          *proj_max_xy, *proj_max_xz, *proj_max_yz,     //max projections
+          *proj_mean_xy, *proj_mean_xz, *proj_mean_yz;  // mean projections
+
+};
 
 #endif

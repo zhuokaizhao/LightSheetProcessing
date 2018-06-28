@@ -17,88 +17,11 @@
 #include <teem/biff.h>
 #include <teem/ell.h>
 
-#include <CLI11.hpp>
+#include "CLI11.hpp"
 
 #include "skimczi.h"
 #include "util.h"
 #include "skimczi_util.h"
-
-static void
-update_projections(ImageDims *dims,     // Image metadata
-                   int curr_c,          // current channel
-                   int curr_z,          // current z slice
-                   float *current,      // current slice data
-                   float *proj_max_xy,  // max xy projection
-        // float *proj_min_xy,  // min xy projection
-                   float *proj_mean_xy, // mean xy projection
-                   float *proj_max_xz,  // max xz projection
-        // float *proj_min_xz,  // min xz projection
-                   float *proj_mean_xz, // mean xz projection
-                   float *proj_max_yz,  // max yz projection
-        // float *proj_min_yz,  // min yz projection
-                   float *proj_mean_yz  // mean yz projection
-){
-  unsigned int idx;  // temp for current index
-  float cval;        // current value
-
-  unsigned int sizeX = (unsigned int)dims->sizeX;
-  unsigned int sizeY = (unsigned int)dims->sizeY;
-  unsigned int sizeZ = (unsigned int)dims->sizeZ;
-
-  /* update pointers to what will actually be used in this call */
-  size_t off = sizeX * sizeY * curr_c;
-  // proj_min_xy += off;
-  proj_max_xy += off;
-  proj_mean_xy += off;
-  off = sizeX * (curr_z + sizeZ * curr_c);
-  proj_max_xz += off;
-  // proj_min_xz += off;
-  proj_mean_xz += off;
-  off = sizeY * (curr_z + sizeZ * curr_c);
-  proj_max_yz += off;
-  // proj_min_yz += off;
-  proj_mean_yz += off;
-
-  /* all initializations */
-  if (curr_z == 0){
-    for (idx = 0; idx < sizeX*sizeY; idx++){
-      proj_max_xy[idx] = FLT_MIN;
-      // proj_min_xy[idx] = FLT_MAX;
-      proj_mean_xy[idx] = 0;
-    }
-  }
-  for (int x = 0; x < sizeX; x++) {
-    proj_max_xz[x] = FLT_MIN;
-    // proj_min_xz[x] = FLT_MAX;
-    proj_mean_xz[x] = 0;
-  }
-  for (int y = 0; y < sizeY; y++) {
-    proj_max_yz[y] = FLT_MIN;
-    // proj_min_yz[y] = FLT_MAX;
-    proj_mean_yz[y] = 0;
-  }
-
-  for (int y = 0; y < sizeY; y++){
-    for (int x = 0; x < sizeX; x++){
-      idx = x + sizeX*y;
-      cval = current[idx];
-
-      if (proj_max_xy[idx] < cval) proj_max_xy[idx] = cval;
-      // if (proj_min_xy[idx] > cval) proj_min_xy[idx] = cval;
-      proj_mean_xy[idx] += cval / sizeZ;
-
-      if (proj_max_xz[x] < cval) proj_max_xz[x] = cval;
-      // if (proj_min_xz[x] > cval) proj_min_xz[x] = cval;
-      proj_mean_xz[x] += cval/sizeY;
-
-      if (proj_max_yz[y] < cval) proj_max_yz[y] = cval;
-      // if (proj_min_yz[y] > cval) proj_min_yz[y] = cval;
-      proj_mean_yz[y] += cval / sizeX;
-    }
-  }
-
-  return;
-}
 
 void setup_skim(CLI::App &app) {
   auto opt = std::make_shared<SkimOptions>();
@@ -114,54 +37,52 @@ void setup_skim(CLI::App &app) {
 
   sub->set_callback([opt]() {
     try {
-      skim_main(*opt);
+      Skim(*opt).main();
     } catch(LSPException &e) {
       std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
     }
   });
 }
 
-int skim_main(SkimOptions const &opt){
 
-  std::string cziFileName = opt.file,
-       projBaseFileName = opt.po,
-       _xmlFileName = opt.xo,
-       _nhdrFileName = opt.no;
-
-  int verbose = opt.verbose;
-
-  airArray *mop = airMopNew();
-
+Skim::Skim(SkimOptions const &opt)
+: opt(opt), mop(airMopNew()),
+  current_f(nullptr),
+  proj_max_xy(nullptr),
+  proj_mean_xy(nullptr),
+  proj_max_xz(nullptr),
+  proj_mean_xz(nullptr),
+  proj_max_yz(nullptr),
+  proj_mean_yz(nullptr),
+  nproj_xy(nullptr),
+  nproj_xz(nullptr),
+  nproj_yz(nullptr),
+  cziFileName(opt.file),
+  projBaseFileName(opt.po),
+  xmlFileName(opt.xo),
+  nhdrFileName(opt.no)
+{
   u_long suff = cziFileName.rfind(".czi");
   if (!suff || (suff != cziFileName.length() - 4)) {
     std::string msg = "Input file " + cziFileName + " does not end with .czi\n";
 
     airMopError(mop);
 
-    throw LSPException(msg, "skimczi.cpp", "skim_main");
+    throw LSPException(msg, "skimczi.cpp", "Skim::Skim");
   }
 
   std::string baseName = cziFileName.substr(0,suff);
 
-  std::string nhdrFileName;
-  if (_nhdrFileName.empty()) {
+  if (nhdrFileName.empty()) {
     /* the -no option was not used */
     nhdrFileName = baseName + ".nhdr";
-  } else {
-    /* this was explicitly given with -no, so use it */
-    nhdrFileName = _nhdrFileName;
   }
-  /* HEY copy and paste from above */
-  std::string xmlFileName;
-  if (_xmlFileName.empty()) {
+  if (xmlFileName.empty()) {
     /* the -xo option was not used */
     xmlFileName = baseName + ".xml";
-  } else {
-    /* this was explicitly given with -xo, so use it */
-    xmlFileName = _xmlFileName;
   }
 
-  if (verbose) {
+  if (opt.verbose) {
     std::cout << "===========FILES==========\n";
     std::cout << "CZI  : " <<  cziFileName << "\n";
     std::cout << "NHDR : " <<  nhdrFileName << "\n";
@@ -173,20 +94,26 @@ int skim_main(SkimOptions const &opt){
   }
 
   // Open the files
-  int cziFile  = open(cziFileName.c_str(), O_RDONLY);
-  if (errno){
-    std::string msg = "Error opening " + cziFileName + " : " + strerror(errno) + ".\n";
-
-    airMopError(mop);
-
-    throw LSPException(msg, "skimczi.cpp", "skim_main");
-  }
-  FILE * nhdrFile = fopen(nhdrFileName.c_str(), "w");
-  int xmlFile  = open(xmlFileName.c_str(), O_TRUNC | O_CREAT | O_WRONLY, 0666);
+  cziFile  = open(cziFileName.c_str(), O_RDONLY);
+  if (errno)
+    throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n",
+                      "skimczi.cpp", "Skim::Skim");
+  xmlFile  = open(xmlFileName.c_str(), O_TRUNC | O_CREAT | O_WRONLY, 0666);
+  nhdrFile = fopen(nhdrFileName.c_str(), "w");
 
   // Re-used for all SID segments
-  SID *currentSID = (SID*)malloc(sizeof(SID));
+  currentSID = (SID*)malloc(sizeof(SID));
   airMopAdd(mop, currentSID, airFree, airMopAlways);
+}
+
+
+Skim::~Skim(){
+  airMopOkay(mop);
+}
+
+
+void Skim::parse_file(){
+  int verbose = opt.verbose;
 
   //======================//
   // Parse Header Segment //
@@ -230,13 +157,9 @@ int skim_main(SkimOptions const &opt){
 
   // Read the metadata SID
   read(cziFile, currentSID, 32);
-  if (strcmp(currentSID->id, "ZISRAWMETADATA") != 0){
-    std::string msg = "Metadata not where we expected it.\n";
-    airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
-
-    throw LSPException(msg, "skimczi.cpp", "skim_main");
-  }
+  if (strcmp(currentSID->id, "ZISRAWMETADATA") != 0)
+    throw LSPException("Metadata not where we expected it.\n",
+                      "skimczi.cpp", "Skim::parse_file");
 
   // Metadata for the metadata
   CziMetadataSegmentHeaderPart *metaDataSegment = (CziMetadataSegmentHeaderPart*)malloc(sizeof(CziMetadataSegmentHeaderPart));
@@ -260,20 +183,16 @@ int skim_main(SkimOptions const &opt){
   // Create XML doc from string in memory
   xmlDoc *doc = NULL;
   doc = xmlReadMemory(xml, metaDataSegment->XmlSize, "noname.xml", NULL, 0);
-  if (doc == NULL) {
-    std::string msg = "Could not parse XML\n";
-
-    airMopError(mop);
-
-    throw LSPException(msg, "skimczi.cpp", "skim_main");
-  }
+  if (doc == NULL)
+    throw LSPException("Could not parse XML\n",
+                      "skimczi.cpp", "Skim::parse_file");
 
   // Get the root element node
   xmlNode *root_element = NULL;
   root_element = xmlDocGetRootElement(doc);
 
   // Parse XML for image dimensions
-  ImageDims *dims = (ImageDims*)malloc(sizeof(ImageDims));
+  dims = (ImageDims*)malloc(sizeof(ImageDims));
   airMopAdd(mop, dims, airFree, airMopAlways);
   memset(dims, 0, sizeof(ImageDims));
   get_image_dims(root_element, dims);
@@ -297,14 +216,64 @@ int skim_main(SkimOptions const &opt){
 
     airMopError(mop);
 
-    throw LSPException(msg, "skimczi.cpp", "skim_main");
+    throw LSPException(msg, "skimczi.cpp", "Skim::parse_file");
   }
 
   // Clean up XML parser
   xmlFreeDoc(doc);
   xmlCleanupParser();
 
+  close(xmlFile);
+}
 
+
+void Skim::update_projections(){
+  unsigned int sizeX = (unsigned int)dims->sizeX;
+  unsigned int sizeY = (unsigned int)dims->sizeY;
+  unsigned int sizeZ = (unsigned int)dims->sizeZ;
+
+  /* update pointers to what will actually be used in this call */
+  size_t off_xy = sizeX * sizeY * curr_c;
+
+  size_t off_xz = sizeX * (curr_z + sizeZ * curr_c);
+
+  size_t off_yz = sizeY * (curr_z + sizeZ * curr_c);
+
+  /* all initializations */
+  if (curr_z == 0){
+    for (auto idx = 0; idx < sizeX*sizeY; idx++){
+      proj_max_xy[off_xy+ idx] = FLT_MIN;
+      proj_mean_xy[off_xy+ idx] = 0;
+    }
+  }
+  for (int x = 0; x < sizeX; x++) {
+    proj_max_xz[off_xz + x] = FLT_MIN;
+    proj_mean_xz[off_xz + x] = 0;
+  }
+  for (int y = 0; y < sizeY; y++) {
+    proj_max_yz[off_yz + y] = FLT_MIN;
+    proj_mean_yz[off_yz + y] = 0;
+  }
+
+  for (int y = 0; y < sizeY; y++){
+    for (int x = 0; x < sizeX; x++){
+      auto idx = x + sizeX*y;
+      auto cval = current_f[idx];
+
+      if (proj_max_xy[idx] < cval) proj_max_xy[idx] = cval;
+      proj_mean_xy[off_xy+ idx] += cval / sizeZ;
+
+      if (proj_max_xz[x] < cval) proj_max_xz[x] = cval;
+      proj_mean_xz[off_xz + x] += cval/sizeY;
+
+      if (proj_max_yz[y] < cval) proj_max_yz[y] = cval;
+      proj_mean_yz[off_yz + y] += cval / sizeX;
+    }
+  }
+}
+
+
+void Skim::generate_nhdr(){
   //======================//
   // Generate NRRD Header //
   //======================//
@@ -358,35 +327,27 @@ int skim_main(SkimOptions const &opt){
   // Data format
   fprintf(nhdrFile, "data file: SKIPLIST 2\n");
 
+}
 
+void Skim::generate_nrrd(){
   //===================//
   // Find Image Blocks //
   //===================//
+  int verbose = opt.verbose;
 
-  void *current_raw = NULL;
-  float *current_f = NULL;
-  float *proj_max_xy = NULL;
-  // float *proj_min_xy = NULL;
-  float *proj_mean_xy = NULL;
-  float *proj_max_xz = NULL;
-  // float *proj_min_xz = NULL;
-  float *proj_mean_xz = NULL;
-  float *proj_max_yz = NULL;
-  // float *proj_min_yz = NULL;
-  float *proj_mean_yz = NULL;
-  Nrrd *ncurrent = NULL, *nproj_xy = NULL, *nproj_xz = NULL, *nproj_yz = NULL;
-  if (projBaseFileName.length()) {
+  void *current_raw = nullptr;
+  Nrrd *ncurrent = nullptr;
+
+  if (!projBaseFileName.empty()) {
     /* Allocate space for current slice in both raw and float,
        and for the projections */
     current_raw = malloc(dims->sizeX * dims->sizeY * dims->pixelSize);
-    ncurrent = nrrdNew();
-    nproj_xy = nrrdNew();
-    nproj_xz = nrrdNew();
-    nproj_yz = nrrdNew();
-    airMopAdd(mop, ncurrent, (airMopper)nrrdNuke, airMopAlways);
-    airMopAdd(mop, nproj_xy, (airMopper)nrrdNuke, airMopAlways);
-    airMopAdd(mop, nproj_xz, (airMopper)nrrdNuke, airMopAlways);
-    airMopAdd(mop, nproj_yz, (airMopper)nrrdNuke, airMopAlways);
+    airMopAdd(mop, current_raw, airFree, airMopAlways);
+    ncurrent = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    nproj_xy = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    nproj_xz = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    nproj_yz = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+
     size_t sizeC = dims->sizeC;
     size_t sizeX = dims->sizeX;
     size_t sizeY = dims->sizeY;
@@ -395,38 +356,29 @@ int skim_main(SkimOptions const &opt){
     /* TODO: even if sizeC is 1, we still create an axis for the channels,
        because the code logic is simpler that way, but then we
        should probably remove it prior to saving out */
-    if (nrrdAlloc_va(ncurrent, nrrdTypeFloat, 2,
+    nrrd_checker(nrrdAlloc_va(ncurrent, nrrdTypeFloat, 2,
                      sizeX, sizeY)
-        || nrrdAlloc_va(nproj_xy, nrrdTypeFloat, 4,
-                        sizeX, sizeY, sizeC, sizeP)
-        || nrrdAlloc_va(nproj_xz, nrrdTypeFloat, 4,
-                        sizeX, sizeZ, sizeC, sizeP)
-        || nrrdAlloc_va(nproj_yz, nrrdTypeFloat, 4,
-                        sizeY, sizeZ, sizeC, sizeP)) {
-      char *err = biffGetDone(NRRD);
-      char *msg;
-      sprintf(msg, "Couldn't allocate projection buffers:\n%s", err);
+                  || nrrdAlloc_va(nproj_xy, nrrdTypeFloat, 4,
+                                  sizeX, sizeY, sizeC, sizeP)
+                  || nrrdAlloc_va(nproj_xz, nrrdTypeFloat, 4,
+                                  sizeX, sizeZ, sizeC, sizeP)
+                  || nrrdAlloc_va(nproj_yz, nrrdTypeFloat, 4,
+                                  sizeY, sizeZ, sizeC, sizeP),
+                mop, "Couldn't allocate projection buffers:\n", "skimczi.cpp", "generate_nrrd");
 
-      airMopAdd(mop, err, airFree, airMopAlways);
-      airMopError(mop);
-
-      throw LSPException(msg, "skimczi.cpp", "skim_main");
-    }
     nrrdAxisInfoSet_va(nproj_xy, nrrdAxisInfoLabel, "x", "y", "c", "proj");
     nrrdAxisInfoSet_va(nproj_xz, nrrdAxisInfoLabel, "x", "z", "c", "proj");
     nrrdAxisInfoSet_va(nproj_yz, nrrdAxisInfoLabel, "y", "z", "c", "proj");
+
     current_f = (float*)ncurrent->data;
     size_t szslice = sizeX*sizeY*sizeC;
     proj_max_xy  = (float*)(nproj_xy->data) + 0;
-    // proj_min_xy  = (float*)(nproj_xy->data) + szslice;
     proj_mean_xy = (float*)(nproj_xy->data) + szslice;
     szslice = sizeX*sizeZ*sizeC;
     proj_max_xz  = (float*)(nproj_xz->data) + 0;
-    // proj_min_xz  = (float*)(nproj_xz->data) + szslice;
     proj_mean_xz = (float*)(nproj_xz->data) + szslice;
     szslice = sizeY*sizeZ*sizeC;
     proj_max_yz  = (float*)(nproj_yz->data) + 0;
-    // proj_min_yz  = (float*)(nproj_yz->data) + szslice;
     proj_mean_yz = (float*)(nproj_yz->data) + szslice;
   }
 
@@ -441,10 +393,8 @@ int skim_main(SkimOptions const &opt){
   CziSubBlockSegment *imageSubBlockHeader = (CziSubBlockSegment*)malloc(sizeof(CziSubBlockSegment));
   airMopAdd(mop, imageSubBlockHeader, airFree, airMopAlways);
   while(read(cziFile, currentSID, 32) == 32){
-
     // skip through file to get the image blocks
     if (strcmp(currentSID->id, "ZISRAWSUBBLOCK") == 0){
-
       // Remember where this segment begins
       off_t start_of_segment = lseek(cziFile, 0, SEEK_CUR) - 32;
 
@@ -453,33 +403,25 @@ int skim_main(SkimOptions const &opt){
 
       // Make sure this image block has the expected PixelType
       // TODO: Also check image dimensions agree with XML?
-      if (imageSubBlockHeader->PixelType != dims->pixelType){
-        std::string msg = "ImageSubBlock PixelType field doesn't agree with XML\n";
-        airMopAdd(mop, err, airFree, airMopAlways);
-        airMopError(mop);
-
-        throw LSPException(msg, "skimczi.cpp", "skim_main");
-      }
+      if (imageSubBlockHeader->PixelType != dims->pixelType)
+        throw LSPException("ImageSubBlock PixelType field doesn't agree with XML\n",
+                           "skimczi.cpp", "Skim::generate_nrrd");
+      
 
       // Make sure this image block has the expected compression
-      if (imageSubBlockHeader->Compression != CZICOMPRESSTYPE_RAW){
-        std::string msg = "ImageSubBlock indicated unsupported compression type\n";
-        airMopAdd(mop, err, airFree, airMopAlways);
-        airMopError(mop);
-
-        throw LSPException(msg, "skimczi.cpp", "skim_main");
-      }
+      if (imageSubBlockHeader->Compression != CZICOMPRESSTYPE_RAW)
+        throw LSPException("ImageSubBlock indicated unsupported compression type\n",
+                          "skimczi.cpp", "Skim::generate_nrrd");
 
       // Channel this image slice is from
-      int curr_c = 0;
-      int curr_z = 0;
+      curr_c = 0;
+      curr_z = 0;
       for (int i = 0; i < imageSubBlockHeader->DimensionCount; i++){
-        if (!strcmp((char *)(imageSubBlockHeader->DimensionEntries[i].Dimension), "C")){
+        if (!strcmp((char *)(imageSubBlockHeader->DimensionEntries[i].Dimension), "C"))
           curr_c = imageSubBlockHeader->DimensionEntries[i].Start;
-        }
-        if (!strcmp((char *)(imageSubBlockHeader->DimensionEntries[i].Dimension), "Z")){
+        
+        if (!strcmp((char *)(imageSubBlockHeader->DimensionEntries[i].Dimension), "Z"))
           curr_z = imageSubBlockHeader->DimensionEntries[i].Start;
-        }
       }
 
       // Compute where the data begins
@@ -525,49 +467,31 @@ int skim_main(SkimOptions const &opt){
       // go to the beginning of data
       lseek(cziFile, dataBegin, SEEK_SET);
 
-      if (projBaseFileName.length()) {
+      if (!projBaseFileName.empty()) {
         // read the current slice into *current_raw
         read(cziFile, current_raw, dims->sizeX * dims->sizeY * dims->pixelSize);
 
         // cast pixels to floats if necessary
         if (dims->pixelType == CZIPIXELTYPE_GRAY8){
           char *current = (char*)current_raw;
-          for (int y = 0; y < dims->sizeY; y++){
-            for (int x = 0; x < dims->sizeX; x++){
+          for (int y = 0; y < dims->sizeY; y++)
+            for (int x = 0; x < dims->sizeX; x++)
               current_f[y * dims->sizeX + x] = (float)current[y * dims->sizeX + x];
-            }
-          }
         }
         else if (dims->pixelType == CZIPIXELTYPE_GRAY16){
           short *current = (short*)current_raw;
-          for (int y = 0; y < dims->sizeY; y++){
-            for (int x = 0; x < dims->sizeX; x++){
+          for (int y = 0; y < dims->sizeY; y++)
+            for (int x = 0; x < dims->sizeX; x++)
               current_f[y * dims->sizeX + x] = (float)current[y * dims->sizeX + x];
-            }
-          }
         }
-        else if (dims->pixelType == CZIPIXELTYPE_GRAY32FLOAT){
+        else if (dims->pixelType == CZIPIXELTYPE_GRAY32FLOAT)
           memcpy(current_f, current_raw, dims->sizeX * dims->sizeY * sizeof(float));
-        }
-        else {
-          std::string msg = "Can't deal with given pixelType\n";
-
-          airMopAdd(mop, err, airFree, airMopAlways);
-          airMopError(mop);
-
-          throw LSPException(msg, "skimczi.cpp", "skim_main");
-        }
+        else
+          throw LSPException("Can't deal with given pixelType\n",
+                      "skimczi.cpp", "Skim::generate_nrrd");
+        
         // update the projections
-        update_projections(dims, curr_c, curr_z, current_f,
-                           proj_max_xy,
-                // proj_min_xy,
-                           proj_mean_xy,
-                           proj_max_xz,
-                // proj_min_xz,
-                           proj_mean_xz,
-                           proj_max_yz,
-                // proj_min_yz,
-                           proj_mean_yz);
+        update_projections();
       }
       if (verbose) {
         fprintf(stdout, " %d", curr_z);
@@ -581,11 +505,15 @@ int skim_main(SkimOptions const &opt){
     // Advance to the next SID
     lseek(cziFile, currentSID->allocatedSize, SEEK_CUR);
   }
-  if (verbose) {
+  if (verbose)
     fprintf(stdout, "\n");
-  }
 
-  if (projBaseFileName.length()) {
+  fclose(nhdrFile);
+  close(cziFile);
+}
+
+void Skim::generate_proj(){
+  if (!projBaseFileName.empty()) {
     //=======================//
     // Write out Projections //
     //=======================//
@@ -608,55 +536,37 @@ int skim_main(SkimOptions const &opt){
     if (!E) E |= nrrdSave(projFName, nproj_xz, NULL);
     if (!E) sprintf(projFName, "%s-projYZ.nrrd", projBaseFileName.c_str());
     if (!E) E |= nrrdSave(projFName, nproj_yz, NULL);
-    if (E) {
-      char *err = biffGetDone(NRRD);
-      char *msg;
-
-      sprintf(msg, "Couldn't save projections:\n%s", err);
-
-      airMopAdd(mop, err, airFree, airMopAlways);
-      airMopError(mop);
-
-      throw LSPException(msg, "skimczi.cpp", "skim_main");
-    }
+    nrrd_checker(E,
+                mop, "Couldn't save projections:\n",
+                "skimczi.cpp", "Skim::generate_proj");
   }
-
-  fclose(nhdrFile);
-  close(cziFile);
-  close(xmlFile);
 
   nrrdStateVerboseIO = 0;
   Nrrd *nin = safe_nrrd_load(mop, nhdrFileName);
 
   if (nin) {
-    Nrrd *line = nrrdNew();
-    Nrrd *fline = nrrdNew();
+    Nrrd *line = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    Nrrd *fline = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
-    airMopAdd(mop, line, (airMopper)nrrdNix, airMopAlways);
-    airMopAdd(mop, fline, (airMopper)nrrdNix, airMopAlways);
     std::string lineFile = projBaseFileName + "-line.nrrd";
 
-    if (nrrdAxesMerge(nin, nin, 0)
-      || nrrdProject(line, nin, 0, nrrdMeasureMean, nrrdTypeDefault)
-      || nrrdAxesMerge(line, line, 0)
-      || nrrdConvert(fline, line, nrrdTypeFloat)
-      || nrrdSave(lineFile.c_str(), fline, NULL)) {
-      char *msg;
-      char *err = biffGetDone(NRRD);
-
-      sprintf(msg, "Error making line: %s", err);
-
-      airMopAdd(mop, err, airFree, airMopAlways);
-      airMopError(mop);
-
-      throw LSPException(msg, "skimczi.cpp", "skim_main");
-    }
+    nrrd_checker(nrrdAxesMerge(nin, nin, 0)
+                  || nrrdProject(line, nin, 0, nrrdMeasureMean, nrrdTypeDefault)
+                  || nrrdAxesMerge(line, line, 0)
+                  || nrrdConvert(fline, line, nrrdTypeFloat)
+                  || nrrdSave(lineFile.c_str(), fline, NULL),
+                mop, "Error making line: ", "skimczi.cpp", "Skim::generate_proj");
   }
 
-  if (verbose) {
+  if (opt.verbose)
     fprintf(stdout, "DONE!\n");
-  }
+}
 
-  airMopOkay(mop);
-  return 0;
+void Skim::main(){
+  
+  parse_file();
+  generate_nhdr();
+  generate_nrrd();
+  generate_proj();
+
 }
