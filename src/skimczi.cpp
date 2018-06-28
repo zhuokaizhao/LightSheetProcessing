@@ -232,7 +232,7 @@ int skim_main(SkimOptions const &opt){
   read(cziFile, currentSID, 32);
   if (strcmp(currentSID->id, "ZISRAWMETADATA") != 0){
     std::string msg = "Metadata not where we expected it.\n";
-
+    airMopAdd(mop, err, airFree, airMopAlways);
     airMopError(mop);
 
     throw LSPException(msg, "skimczi.cpp", "skim_main");
@@ -455,7 +455,7 @@ int skim_main(SkimOptions const &opt){
       // TODO: Also check image dimensions agree with XML?
       if (imageSubBlockHeader->PixelType != dims->pixelType){
         std::string msg = "ImageSubBlock PixelType field doesn't agree with XML\n";
-
+        airMopAdd(mop, err, airFree, airMopAlways);
         airMopError(mop);
 
         throw LSPException(msg, "skimczi.cpp", "skim_main");
@@ -464,7 +464,7 @@ int skim_main(SkimOptions const &opt){
       // Make sure this image block has the expected compression
       if (imageSubBlockHeader->Compression != CZICOMPRESSTYPE_RAW){
         std::string msg = "ImageSubBlock indicated unsupported compression type\n";
-
+        airMopAdd(mop, err, airFree, airMopAlways);
         airMopError(mop);
 
         throw LSPException(msg, "skimczi.cpp", "skim_main");
@@ -552,6 +552,7 @@ int skim_main(SkimOptions const &opt){
         else {
           std::string msg = "Can't deal with given pixelType\n";
 
+          airMopAdd(mop, err, airFree, airMopAlways);
           airMopError(mop);
 
           throw LSPException(msg, "skimczi.cpp", "skim_main");
