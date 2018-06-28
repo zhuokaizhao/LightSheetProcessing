@@ -43,7 +43,7 @@ Standard::Standard(standardOptions const &opt): opt(opt){
 
 
 path Standard::safe_path(std::string const &folder){
-	//check if path is vaild.
+  //check if path is vaild.
   if(!exists(folder))
     throw LSPException("Error finding path: "+ folder, "standard.cpp", "Standard::safe_path");
 
@@ -101,7 +101,7 @@ void Standard::run_skim(){
   		skim_opt.no	= data_dir + "/nhdr/" + iii + ".nhdr";
   		skim_opt.xo = data_dir + "/xml/" + iii + ".xml";
   		skim_opt.po = data_dir + "/proj/" + iii;
-			skim_main(skim_opt);
+		skim_main(skim_opt);
 		}
 	}
 }
@@ -195,4 +195,10 @@ void Standard::run_corrnhdr(){
 void Standard::run_anim(){}
 void Standard::run_nhdrcheck(){}
 void Standard::run_untext(){}
-void Standard::run_all(){}
+void Standard::run_all(){
+	//temporarily
+	run_skim();
+	run_corrimg();
+	run_corrfind();
+	run_corrnhdr();
+}

@@ -1,4 +1,4 @@
-module load gcc/6.1 cmake teem libxml2 boost
+module load boost/1.62.0+gcc-6.1 cmake teem libxml2
 
 CXX=$(which g++)
 outer_path=$(cd $(dirname $0); cd ../..; pwd -P)
@@ -15,13 +15,16 @@ cmake -DCMAKE_CXX_COMPILER=$CXX \
 make install
 
 # write informations into ~/.bash_profile
-if [ "$(which lsp)" == "" ]; then
+if [[ ":$PATH:" != *":$install_path/bin:"* ]]; then
+	echo "Add lsp information to the end of ~/. bash_profile"
 	echo "# Here start writing lsp into \$PATH" >> ~/.bash_profile
+	echo "module load boost/1.62.0+gcc-6.1 cmake teem libxml2" >> ~/.bash_profile
 	echo "PATH=\$PATH:\$HOME/bin:$install_path/bin" >> ~/.bash_profile
 	echo "export PATH" >> ~/.bash_profile
 	echo "# Complete writeing lsp information" >> ~/.bash_profile
 
 	echo "# Here start writing lsp into \$PATH" >> ~/.profile
+	echo "module load boost/1.62.0+gcc-6.1 cmake teem libxml2" >> ~/.profile
 	echo "PATH=\$PATH:\$HOME/bin:$install_path/bin" >> ~/.profile
 	echo "export PATH" >> ~/.profile
 	echo "# Complete writeing lsp information" >> ~/.profile
