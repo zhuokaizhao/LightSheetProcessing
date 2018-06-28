@@ -14,7 +14,7 @@
 #include "corrimg.h"
 #include "corrfind.h"
 #include "corrnhdr.h"
-
+#include "standard.h"
 
 
 int main(int argc, char** argv) {
@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
   setup_corrimg(app);
   setup_corrfind(app);
   setup_corrnhdr(app);
+  setup_standard(app);
 
   CLI11_PARSE(app, argc, argv);
 

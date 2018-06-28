@@ -5,8 +5,9 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 
-#include <util.h>
 #include <teem/nrrd.h>
+
+#include "util.h"
 #include "corrnhdr.h"
 
 using namespace boost::filesystem;
@@ -15,6 +16,7 @@ void setup_corrnhdr(CLI::App &app) {
   auto opt = std::make_shared<corrnhdrOptions>();
   auto sub = app.add_subcommand("corrnhdr", "Apply the corrections calculated by corrimg and corrfind.");
 
+  sub->add_option("-d, --file_dir", opt->file_dir, "Where 'nhdr/' and 'reg/' are. Defualt path is working path. (Default: .)");
   sub->add_option("-n, --num_nhdr", opt->num, "The number of the last nhdr file.");
 
   sub->set_callback([opt] {
@@ -29,11 +31,11 @@ void setup_corrnhdr(CLI::App &app) {
 
 Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()) {
   // check if "/nhdr" exist for later use
-  nhdr_dir = current_path().string() + "/nhdr/";
+  nhdr_dir = opt.file_dir + "/nhdr/";
   if(!exists(nhdr_dir))
-    throw LSPException("Error finding '/nhdr' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
+    throw LSPException("Error finding 'nhdr' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
 
-  reg_dir = current_path().string() + "/reg/";
+  reg_dir = opt.file_dir + "/reg/";
   if(!exists(reg_dir))
     throw LSPException("Error finding 'reg' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
   
@@ -42,7 +44,7 @@ Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()) {
 
 
 Corrnhdr::~Corrnhdr(){
-  airMopOkay(mop);
+  //airMopOkay(mop);
 }
 
 
@@ -78,7 +80,7 @@ void Corrnhdr::compute_offsets(){
   //save offsets into nrrd file
   offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
   nrrd_checker(nrrdWrap_va(offset_origin, offsets.data(), nrrdTypeDouble, 2, 3, offsets.size()) ||
-                nrrdSave("reg/offsets.nrrd", offset_origin, NULL),
+                nrrdSave((reg_dir+"offsets.nrrd").c_str(), offset_origin, NULL),
               mop, "Error creating offset nrrd: ", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 }
 

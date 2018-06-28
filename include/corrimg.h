@@ -7,6 +7,7 @@
 #ifndef LSP_CORRIMG_H
 #define LSP_CORRIMG_H
 
+#include <teem/nrrd.h>
 #include "CLI11.hpp"
 
 struct corrimgOptions {

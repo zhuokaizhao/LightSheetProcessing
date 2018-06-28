@@ -10,6 +10,7 @@
 #include "CLI11.hpp"
 
 struct corrnhdrOptions {
+	std::string file_dir = ".";
     int num;
 };
 
@@ -19,7 +20,7 @@ class Corrnhdr{
 public:
 	Corrnhdr(corrnhdrOptions const &opt = corrnhdrOptions());
 	~Corrnhdr();
-	
+
 	void main();
 
 private:

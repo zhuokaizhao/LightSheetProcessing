@@ -1,7 +1,7 @@
 module load gcc/6.1 cmake teem libxml2 boost
 
 CXX=$(which g++)
-outer_path=$(cd $(dirname $0); cd ../..; pwd)
+outer_path=$(cd $(dirname $0); cd ../..; pwd -P)
 build_path=$outer_path/LSP-BUILD
 install_path=$outer_path/LSP-INSTALL
 
@@ -13,3 +13,16 @@ cmake -DCMAKE_CXX_COMPILER=$CXX \
 	$outer_path/LSP
 
 make install
+
+# write informations into ~/.bash_profile
+if [ "$(which lsp)" == "" ]; then
+	echo "# Here start writing lsp into \$PATH" >> ~/.bash_profile
+	echo "PATH=\$PATH:\$HOME/bin:$install_path/bin" >> ~/.bash_profile
+	echo "export PATH" >> ~/.bash_profile
+	echo "# Complete writeing lsp information" >> ~/.bash_profile
+
+	echo "# Here start writing lsp into \$PATH" >> ~/.profile
+	echo "PATH=\$PATH:\$HOME/bin:$install_path/bin" >> ~/.profile
+	echo "export PATH" >> ~/.profile
+	echo "# Complete writeing lsp information" >> ~/.profile
+fi

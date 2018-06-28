@@ -51,7 +51,8 @@ private:
   /* helper vars */
   Nrrd *nin[2], *nout;
   NrrdKernelSpec *kk[2]; 
-  int ksup, ilo, ihi, maxIdx[2];
+  int ksup, ilo, ihi;
+  int maxIdx[2] = {-1, -1};
   unsigned size;
   double *fw, *dout;
 

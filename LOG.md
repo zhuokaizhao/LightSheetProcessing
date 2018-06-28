@@ -16,5 +16,9 @@ Refine cmake. Now it has great file structures.
 06/25/2018
 Rewrite code to a more OOP style.		
 
-06/06/2018
+06/26/2018
 Finish rewrite corr*.cpp files
+
+06/27/2018      
+1. Fix small bugs in crr*.cpp files     
+2. Complete `standard` subcommand, which can set correct arguments and run processing automatically.    

@@ -2,19 +2,15 @@
 LightSheetProcessing
 
 ## Compilation
-### PC(Machines installing libs directly)
-    mkdir LSP-BUILD
-    cd LSP-BUILD
-    cmake ../LSP(Or wherever the LSP_DIR is.)
-    make
+    Run "compile.sh" under `scripts/`		
 
-### Midway(Servers using ENVIRONMENT MODULES)
-1. Run "compile.sh" under `scripts/`		
-2. (Optional)Write these lines at the end of your `~/.bash_profile`:	
-```
-    module load gcc/6.1 cmake teem libxml2 boost
+    P.S. it would modify your '~/.bash_profile' and '~/.profile'
 
-	PATH=$PATH:$HOME/bin:$HOME/work/LSP-INSTALL/bin(Or wherever your bin file is.)
-	export PATH
-```
-	Or, you may have to load modules everytime you login and call executable file via absolute path.		
+## Running
+1. Print `lsp -h` for help.        
+2. For well formatted experiment data, I highly recommand `standard` subcommand. It would automatically run data processing with correct arguments.
+3. A standard dataset is:   
+    a. original data is in 'some_path/czi' folder.  
+    b. data files are named: some_name.czi, some_name(1).czi, some_name(2).czi...    
+    c. this driver will generate work folders under "some_path/" and output files in there. 
+ 

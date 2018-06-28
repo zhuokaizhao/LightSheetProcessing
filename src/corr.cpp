@@ -38,7 +38,6 @@ void setup_corr(CLI::App &app) {
 Corr::Corr(corrOptions const &opt): opt(opt), mop(airMopNew()) {
   nin[0] = safe_nrrd_load(mop, opt.input_images[0]);
   nin[1] = safe_nrrd_load(mop, opt.input_images[1]);
-  nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 }
 
 
@@ -163,6 +162,53 @@ void Corr::cross_corrImg() {
 
 }
 
+
+void Corr::set_kernel(){
+  int bound = opt.max_offset;
+
+  kk[0] = nrrdKernelSpecNew();
+  kk[1] = nrrdKernelSpecNew();
+  nrrdKernelParse(&(kk[0]->kernel), kk[0]->parm, opt.kernel[0].c_str());
+  nrrdKernelParse(&(kk[1]->kernel), kk[1]->parm, opt.kernel[1].c_str());
+  airMopAdd(mop, kk[0], (airMopper)nrrdKernelSpecNix, airMopAlways);
+  airMopAdd(mop, kk[1], (airMopper)nrrdKernelSpecNix, airMopAlways);
+
+  if (nrrdKernelBox == kk[0]->kernel && nrrdKernelBox == kk[1]->kernel) {
+    std::string msg = "maxIdx " + std::to_string(maxIdx[0]) + ", " + std::to_string(maxIdx[1])
+                      + " is at boundary of test space; should increase -b bound " + std::to_string(bound) + "\n";
+    if(AIR_ABS(maxIdx[0]) == bound || AIR_ABS(maxIdx[1]) == bound)
+      throw LSPException(msg, "corr.cpp", "Corr::main");
+
+    printf("%d %d = shift\n", maxIdx[0], maxIdx[1]);
+  }
+  else {
+    double ksup0 = kk[0]->kernel->support(kk[0]->parm);
+    double ksup1 = kk[1]->kernel->support(kk[1]->parm);
+    ksup = AIR_ROUNDUP( AIR_MAX(ksup0, ksup1) );
+    ilo = 1 - ksup;
+    ihi = ksup;
+
+    fw = AIR_CALLOC(4*2*ksup, double);
+    airMopAdd(mop, fw, airFree, airMopAlways);
+    dout = AIR_CAST(double*, nout->data);
+    size = AIR_CAST(unsigned int, nout->axis[0].size);
+
+    std::string msg = "maxIdx " + std::to_string(maxIdx[0]) + ", " + std::to_string(maxIdx[1])
+                      + " is within kernel support " + std::to_string(ksup)
+                      + " of test space boundary; should increase -b bound " + std::to_string(bound) + "\n";
+      if(AIR_ABS(AIR_ABS(maxIdx[0]) - bound) + 1 <= ksup ||
+                    AIR_ABS(AIR_ABS(maxIdx[1]) - bound) + 1 <= ksup)
+        throw LSPException(msg, "corr.cpp", "Corr::main");
+
+    if (opt.verbosity) {
+      printf("%s->support=%g, %s->support=%g ==> ksup = %d\n",
+             kk[0]->kernel->name, ksup0,
+             kk[1]->kernel->name, ksup1, ksup);
+    }
+  }
+}
+
+
 /* convolution based recon of value and derivative, with
    simplifying assumption that world == index space,
    and this is a square size-by-size data */
@@ -178,7 +224,7 @@ double Corr::probe(double grad[2], /* output */
   int xn = floor(pos[0]), yn = floor(pos[1]);
   double xa = pos[0] - xn, ya = pos[1] - yn;
 
-  int out0, out1;
+  int out0 = 0, out1 = 0;
   for (auto ii=ilo; ii<=ihi; ii++) {
     auto xi = xn + ii;
     if (xi < 0 || size-1 < xi)
@@ -193,6 +239,7 @@ double Corr::probe(double grad[2], /* output */
     fwD1x[ii-ilo] = kk[1]->kernel->eval1_d(xa-ii, kk[1]->parm);
     fwD1y[ii-ilo] = kk[1]->kernel->eval1_d(ya-ii, kk[1]->parm);
     /*
+    printf("in loop: %d, %d, %d\n", ii, ilo, ihi);
     printf("fwD0x[%u] = %g\t", ii-ilo, fwD0x[ii-ilo]);
     printf("fwD0y[%u] = %g\t", ii-ilo, fwD0y[ii-ilo]);
     printf("fwD1x[%u] = %g\t", ii-ilo, fwD1x[ii-ilo]);
@@ -235,60 +282,13 @@ double Corr::probe(double grad[2], /* output */
   }
   return res;
 }
-
-void Corr::set_kernel(){
-  int bound = opt.max_offset;
-
-  kk[0] = nrrdKernelSpecNew();
-  kk[1] = nrrdKernelSpecNew();
-  nrrdKernelParse(&(kk[0]->kernel), kk[0]->parm, opt.kernel[0].c_str());
-  nrrdKernelParse(&(kk[1]->kernel), kk[1]->parm, opt.kernel[1].c_str());
-  airMopAdd(mop, kk[0], (airMopper)nrrdKernelSpecNix, airMopAlways);
-  airMopAdd(mop, kk[1], (airMopper)nrrdKernelSpecNix, airMopAlways);
-
-  if (nrrdKernelBox == kk[0]->kernel && nrrdKernelBox == kk[1]->kernel) {
-    std::string msg = "maxIdx " + std::to_string(maxIdx[0]) + ", " + std::to_string(maxIdx[1])
-                      + "is at boundary of test space; should increase -b bound " + std::to_string(bound);
-    nrrd_checker(AIR_ABS(maxIdx[0]) == bound || AIR_ABS(maxIdx[1]) == bound, 
-                mop, msg, "corr.cpp", "Corr::main");
-    
-    printf("%d %d = shift\n", maxIdx[0], maxIdx[1]);
-  }
-  else {
-    double ksup0 = kk[0]->kernel->support(kk[0]->parm);
-    double ksup1 = kk[1]->kernel->support(kk[1]->parm);
-    ksup = AIR_ROUNDUP( AIR_MAX(ksup0, ksup1) );
-    ilo = 1 - ksup;
-    ihi = ksup;
-
-    fw = AIR_CALLOC(4*2*ksup, double);
-    airMopAdd(mop, fw, airFree, airMopAlways);
-    dout = AIR_CAST(double*, nout->data);
-    size = AIR_CAST(unsigned int, nout->axis[0].size);
-
-    std::string msg = "maxIdx " + std::to_string(maxIdx[0]) + ", " + std::to_string(maxIdx[1])
-                      + "is within kernel support " + std::to_string(ksup)
-                      + " of test space boundary; should increase -b bound " + std::to_string(bound);
-    nrrd_checker(AIR_ABS(AIR_ABS(maxIdx[0]) - bound) + 1 <= ksup ||
-                    AIR_ABS(AIR_ABS(maxIdx[1]) - bound) + 1 <= ksup,
-                mop, msg, "corr.cpp", "Corr::main");
-    
-    if (opt.verbosity) {
-      printf("%s->support=%g, %s->support=%g ==> ksup = %d\n",
-             kk[0]->kernel->name, ksup0,
-             kk[1]->kernel->name, ksup1, ksup);
-    }
-  }
-}
-
-
 void Corr::compute_shift(){
   int bound = opt.max_offset,
       verbose = opt.verbosity,
       iterMax = opt.max_iters;
   double eps = opt.epsilon;
 
-  int out;
+  int out = 0;
   double grad0[2], grad1[2], pos0[2], pos1[2], hh=10, back=0.5, creep=1.2;
   double val0, val1;
 
