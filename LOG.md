@@ -22,3 +22,8 @@ Finish rewrite corr*.cpp files
 06/27/2018      
 1. Fix small bugs in crr*.cpp files     
 2. Complete `standard` subcommand, which can set correct arguments and run processing automatically.    
+
+06/28/2018
+1. Rename `standard` to `pack`.     
+2. Rewrite `skim`.      
+3. Write a tmp work around for `skim` in the case that data is broken(nrrd header and data not match)

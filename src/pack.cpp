@@ -14,20 +14,20 @@
 #include "corrfind.h"
 #include "corrnhdr.h"
 
-#include "standard.h"
+#include "pack.h"
 
 using namespace boost::filesystem;
 
-void setup_standard(CLI::App &app){
-	auto opt = std::make_shared<standardOptions>();
-	auto sub = app.add_subcommand("standard", "Process dataset with standard format");
+void setup_pack(CLI::App &app){
+	auto opt = std::make_shared<packOptions>();
+	auto sub = app.add_subcommand("pack", "Process dataset with standard format");
 
 	sub->add_option("directory", opt->data_dir, "Where the 'czi' folder is")->required();
 	sub->add_option("-c, --command", opt->command, "Specify the command you want to run. (Default: all)");
 
 	sub->set_callback([opt](){
 		try{
-			Standard(*opt).main();
+			Pack(*opt).main();
 		}
 		catch(LSPException &e){
 			std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
@@ -36,22 +36,22 @@ void setup_standard(CLI::App &app){
 }
 
 
-Standard::Standard(standardOptions const &opt): opt(opt){
+Pack::Pack(packOptions const &opt): opt(opt){
   //better change path to absolute and resolve links if neccessary.
   data_dir = canonical(opt.data_dir).string();
 }
 
 
-path Standard::safe_path(std::string const &folder){
+path Pack::safe_path(std::string const &folder){
   //check if path is vaild.
   if(!exists(folder))
-    throw LSPException("Error finding path: "+ folder, "standard.cpp", "Standard::safe_path");
+    throw LSPException("Error finding path: "+ folder, "pack.cpp", "Pack::safe_path");
 
   return path(folder);
 }
 
 
-void Standard::main(){
+void Pack::main(){
 	std::string cmd = opt.command;
 	if(cmd == "skim")
 		run_skim();
@@ -70,11 +70,11 @@ void Standard::main(){
 	else if(cmd == "all")
 		run_all();
 	else
-		throw LSPException("Unrecognized command.", "standard.cpp", "Standard::main");
+		throw LSPException("Unrecognized command.", "pack.cpp", "Pack::main");
 }
 
 
-void Standard::run_skim(){
+void Pack::run_skim(){
 	//build related folders
 	for(std::string str: {"/nhdr/", "/proj/", "/xml/"}){
 		if(!exists(data_dir+str))
@@ -107,7 +107,7 @@ void Standard::run_skim(){
 }
 
 
-void Standard::run_corrimg(){
+void Pack::run_corrimg(){
 	//build reg folder
 	if(!exists(data_dir+"/reg/"))
 		create_directory(data_dir+"/reg/");
@@ -136,7 +136,7 @@ void Standard::run_corrimg(){
 }
 
 
-void Standard::run_corrfind(){
+void Pack::run_corrfind(){
 	//loop all files, find the max file number
 	int max = 0;
 	directory_iterator end_iter;
@@ -165,7 +165,7 @@ void Standard::run_corrfind(){
 }
 
 
-void Standard::run_corrnhdr(){
+void Pack::run_corrnhdr(){
 	//loop all files, find the max file number
 	int max = 0;
 	directory_iterator end_iter;
@@ -192,10 +192,10 @@ void Standard::run_corrnhdr(){
 }
 
 
-void Standard::run_anim(){}
-void Standard::run_nhdrcheck(){}
-void Standard::run_untext(){}
-void Standard::run_all(){
+void Pack::run_anim(){}
+void Pack::run_nhdrcheck(){}
+void Pack::run_untext(){}
+void Pack::run_all(){
 	//temporarily
 	run_skim();
 	run_corrimg();

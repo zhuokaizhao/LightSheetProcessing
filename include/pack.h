@@ -1,4 +1,4 @@
-//! \file standard.h
+//! \file pack.h
 //! \author Jiawei Jiang
 //! \date 2018-06-27
 //! \brief Driver for standard dataset format.
@@ -9,23 +9,23 @@
 // 3. this driver will generate work folders under "some_path/" and output files in there.
 
 
-#ifndef STANDARD_H
-#define STANDARD_H
+#ifndef PACK_H
+#define PACK_H
 
 #include "CLI11.hpp"
 #include <boost/filesystem.hpp>
 #include "util.h"
 
-struct standardOptions{
+struct packOptions{
 	std::string data_dir;
 	std::string command = "all";
 };
 
-void setup_standard(CLI::App &app);
+void setup_pack(CLI::App &app);
 
-class Standard{
+class Pack{
 public:
-	Standard(standardOptions const &opt);
+	Pack(packOptions const &opt);
 
 	void main();
 
@@ -42,7 +42,7 @@ private:
 	//! \breif Check if path exists, if not throw LSPException.
 	boost::filesystem::path safe_path(std::string const &folder);
 
-	standardOptions const opt;
+	packOptions const opt;
 	std::string data_dir;
 };
 
