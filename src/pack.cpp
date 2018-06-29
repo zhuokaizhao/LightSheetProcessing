@@ -13,6 +13,7 @@
 #include "corrimg.h"
 #include "corrfind.h"
 #include "corrnhdr.h"
+#include "anim.h"
 
 #include "pack.h"
 
@@ -51,26 +52,45 @@ path Pack::safe_path(std::string const &folder){
 }
 
 
-void Pack::main(){
-	std::string cmd = opt.command;
-	if(cmd == "skim")
-		run_skim();
-	else if(cmd == "anim")
-		run_anim();
-	else if(cmd == "nhdrcheck")
-		run_nhdrcheck();
-	else if(cmd == "untext")
-		run_untext();
-	else if(cmd == "corrimg")
-		run_corrimg();
-	else if(cmd == "corrfind")
-		run_corrfind();
-	else if(cmd == "corrnhdr")
-		run_corrnhdr();
-	else if(cmd == "all")
-		run_all();
+int Pack::find_tmax(){
+	// already found
+	if(tmax != -1)
+		return tmax;
+
+	std::string exist_path, path_pattern;
+	if(exists(data_dir+"/nhdr/")){
+		//find the max file number based on nhdr/ (for run_anim)
+		exist_path = data_dir+"/nhdr/";
+		//find "iii" in pattern "../../iii-projXX.nrrd"
+		path_pattern = "(\\w{3})-proj\\w{3}nrrd";
+	}
+	else if(exists(data_dir+"/reg/")){
+		//find the max file number based on reg/ (for corr*s)
+		exist_path = data_dir+"/reg/";
+		//find "iii" in pattern "../../iii-projXX.nrrd"
+		path_pattern = "(\\w{3})-proj\\w{3}png";
+	}
 	else
-		throw LSPException("Unrecognized command.", "pack.cpp", "Pack::main");
+		throw LSPException("Error finding tmax: "
+												"nhdr/ and reg/ not exist. ",
+											"pack.cpp", "Pack::find_tmax");
+
+	directory_iterator end_iter;
+	for(directory_iterator iter(exist_path); iter!=end_iter; ++iter){
+		if(is_regular_file(iter->path())){
+			std::string current_file = iter->path().string();
+		  std::regex pattern(path_pattern);
+		  if(std::regex_search(current_file, pattern)){
+		    std::smatch results;
+		    std::regex_search(current_file, results, pattern);
+		    int num = std::stoi(results[1]);
+		    if(num > tmax)
+		    	tmax = num;
+  		}
+  	}
+  }
+
+  return tmax;
 }
 
 
@@ -137,23 +157,8 @@ void Pack::run_corrimg(){
 
 
 void Pack::run_corrfind(){
-	//loop all files, find the max file number
-	int max = 0;
-	directory_iterator end_iter;
-	for(directory_iterator iter(safe_path(data_dir+"/reg/")); iter!=end_iter; ++iter){
-		if(is_regular_file(iter->path())){
-			std::string current_file = iter->path().string();
-			//find "iii" and "XX" in pattern "../../iii-projXX.nrrd"
-		  std::regex pattern("(\\w{3})-.*png");
-		  if(std::regex_search(current_file, pattern)){
-		    std::smatch results;
-		    std::regex_search(current_file, results, pattern);
-		    int num = std::stoi(results[1]);
-		    if(num > max)
-		    	max = num;
-  		}
-  	}
-  }
+	int max = find_tmax();
+
   //call corrfind
   for(auto i=0; i<=max; ++i){
   	corrfindOptions corrfind_opt;
@@ -166,33 +171,36 @@ void Pack::run_corrfind(){
 
 
 void Pack::run_corrnhdr(){
-	//loop all files, find the max file number
-	int max = 0;
-	directory_iterator end_iter;
-	for(directory_iterator iter(safe_path(data_dir+"/reg/")); iter!=end_iter; ++iter){
-		if(is_regular_file(iter->path())){
-			std::string current_file = iter->path().string();
-			//find "iii" and "XX" in pattern "../../iii-projXX.nrrd"
-		  std::regex pattern("(\\w{3})-.*png");
-		  if(std::regex_search(current_file, pattern)){
-		    std::smatch results;
-		    std::regex_search(current_file, results, pattern);
-		    int num = std::stoi(results[1]);
-		    if(num > max)
-		    	max = num;
-  		}
-  	}
-  }
-
  	corrnhdrOptions corrnhdr_opt;
  	corrnhdr_opt.file_dir = data_dir;
- 	corrnhdr_opt.num = max;
+ 	corrnhdr_opt.num = find_tmax();
 
  	Corrnhdr(corrnhdr_opt).main();
 }
 
 
-void Pack::run_anim(){}
+void Pack::run_anim(){
+	//build reg folder
+	if(!exists(data_dir+"/anim/"))
+		create_directory(data_dir+"/anim/");
+
+	//resample args
+	// TODO: How to decide down_samp??
+	int down_samp = 2;
+	Xml_getter x(safe_path(data_dir+"/xml/000.xml").string());
+
+	AnimOptions anim_opt;
+	anim_opt.tmax = find_tmax();
+	anim_opt.proj_path = data_dir + "/proj/";
+	anim_opt.anim_path = data_dir + "/anim/";
+	anim_opt.dwn_sample = down_samp;
+	anim_opt.scale_x = x("ScalingX");
+	anim_opt.scale_z = x("ScalingZ");
+
+	Anim(anim_opt).main();
+}
+
+
 void Pack::run_nhdrcheck(){}
 void Pack::run_untext(){}
 void Pack::run_all(){
@@ -201,4 +209,27 @@ void Pack::run_all(){
 	run_corrimg();
 	run_corrfind();
 	run_corrnhdr();
+}
+
+
+void Pack::main(){
+	std::string cmd = opt.command;
+	if(cmd == "skim")
+		run_skim();
+	else if(cmd == "anim")
+		run_anim();
+	else if(cmd == "nhdrcheck")
+		run_nhdrcheck();
+	else if(cmd == "untext")
+		run_untext();
+	else if(cmd == "corrimg")
+		run_corrimg();
+	else if(cmd == "corrfind")
+		run_corrfind();
+	else if(cmd == "corrnhdr")
+		run_corrnhdr();
+	else if(cmd == "all")
+		run_all();
+	else
+		throw LSPException("Unrecognized command.", "pack.cpp", "Pack::main");
 }

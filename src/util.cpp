@@ -8,6 +8,7 @@
 #include <iterator>
 #include <algorithm>
 #include <teem/nrrd.h>
+#include <libxml/parser.h>
 
 /*
  * CLASSES
@@ -24,24 +25,6 @@ std::string const & LSPException::get_func() const { return func; }
 /*
  * UTILITY FUNCTIONS
  */
-
-std::string zero_pad(int num, uint len) {
-    std::string ret = std::to_string(num);
-    ret = std::string(len-ret.size(), '0') + ret;
-
-    return ret;
-}
-
-
-template<typename T>
-std::ostream &operator<<(std::ostream &os, std::vector<T> vec){
-  std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
-  return os;
-}
-template std::ostream &operator<<(std::ostream &os, std::vector<double> vec);
-// Ugly trick here: W/o this call, lib will not build specialization for double type,
-// then compiler cannot link files correctly.
-
 
 void nrrd_checker(bool status, airArray* mop, std::string prompt,
                  std::string file, std::string function){
@@ -76,4 +59,48 @@ Nrrd* safe_nrrd_load(airArray* mop, std::string filename) {
               mop, "Error loading file: ", "util.cpp", "safe_nrrd_load");
 
   return nin;
+}
+
+
+std::string zero_pad(int num, uint len) {
+    std::string ret = std::to_string(num);
+    ret = std::string(len-ret.size(), '0') + ret;
+
+    return ret;
+}
+
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os, std::vector<T> vec){
+  std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
+  return os;
+}
+template std::ostream &operator<<(std::ostream &os, std::vector<double> vec);
+// Ugly trick here: W/o this call, lib will not build specialization for double type,
+// then compiler cannot link files correctly.
+
+Xml_getter::Xml_getter(std::string file)
+: doc(xmlParseFile(file.c_str())),
+  node(xmlDocGetRootElement(doc)) {}
+
+Xml_getter::~Xml_getter(){
+  xmlFreeDoc(doc);
+  xmlCleanupParser();
+}
+
+double Xml_getter::operator()(std::string p){
+  pattern = p;
+  search();
+  return val;
+}
+
+void Xml_getter::search(){
+  for(auto cur_node = node; cur_node; cur_node = cur_node->next){
+    if(cur_node->type == XML_ELEMENT_NODE)
+      if(!xmlStrcmp(cur_node->name, (const xmlChar*)pattern.c_str()))
+        val = atof((const char*)xmlNodeGetContent(cur_node));
+
+    node = cur_node->children;
+    search();
+  }
 }

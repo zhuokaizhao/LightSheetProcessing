@@ -39,11 +39,14 @@ private:
 	void run_corrnhdr();
 	void run_all();
 
+	int find_tmax();
+
 	//! \breif Check if path exists, if not throw LSPException.
 	boost::filesystem::path safe_path(std::string const &folder);
 
 	packOptions const opt;
 	std::string data_dir;
+	int tmax = -1;
 };
 
 
