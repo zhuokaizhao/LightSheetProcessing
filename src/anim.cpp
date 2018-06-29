@@ -68,7 +68,12 @@ void Anim::split_type(){
     Nrrd* xy_proj = safe_nrrd_load(mop, xy_proj_file);
     Nrrd* yz_proj = safe_nrrd_load(mop, yz_proj_file);
 
-    Nrrd* res_rsm[2][2]; //store {{max_z, avg_z}, {max_x, avg_x}}
+    Nrrd* res_rsm[2][2] = { //store {{max_z, avg_z}, {max_x, avg_x}}
+			   {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+			    safe_nrrd_new(mop, (airMopper)nrrdNuke)},
+                           {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                            safe_nrrd_new(mop, (airMopper)nrrdNuke)}
+			  };
 
     Nrrd* proj_rsm[2] = {safe_nrrd_load(mop, xy_proj_file),
                          safe_nrrd_load(mop, yz_proj_file)};
@@ -93,7 +98,7 @@ void Anim::split_type(){
                   mop, "Error resampling nrrd: ", "anim.cpp", "Anim::split_type");
 
       //TODO SWAP(AX0 AX1) ifor xy plane
-      
+
       nrrd_checker(nrrdSlice(res_rsm[i][0], proj_rsm[i], 3, 0) ||
                       nrrdSlice(res_rsm[i][1], proj_rsm[i], 3, 1),
                   mop, "Error slicng nrrd: ", "anim.cpp", "Anim::split_type");

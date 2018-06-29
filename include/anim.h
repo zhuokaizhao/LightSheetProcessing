@@ -14,7 +14,7 @@ struct AnimOptions {
     uint dwn_sample = 1;    // How much to down-sample
     double scale_x = 1.0;
     double scale_z = 1.0;
-    uint verbose = 0;
+    uint verbose = 1;
 };
 
 void setup_anim(CLI::App &app);
