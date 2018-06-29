@@ -14,16 +14,15 @@
 //! \brief LSP exception class.
 class LSPException : public std::runtime_error {
 private:
-    const char *file;
-    const char *func;
+    std::string const file;
+    std::string const func;
 
 public:
 	//! \brief Deteceted error"msg" in function "func" of "file".
-    LSPException(const char *_msg, const char *_file, const char *_func);
-    LSPException(const std::string _msg, const char *_file, const char *_func);
+    LSPException(std::string const &_msg, std::string const &_file, std::string const &_func);
 
-    const char* get_file() const;
-    const char* get_func() const;
+    std::string const &get_file() const;
+    std::string const &get_func() const;
 };
 
 //! \brief Change num to string and add padding zeros before the number.

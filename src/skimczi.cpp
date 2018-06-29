@@ -304,15 +304,7 @@ void Skim::generate_nhdr(){
   }
   else {
     fprintf(nhdrFile, "dimension: 4\n");
-/* ================================================================== */
-/* 
-    TODO: if size and nrrd data doesnot match, prog will crash
-    Unfortunately, some data is complete!(Last step is missing)
-    I deduce the size for 1 here.
-    Wait to be solved.
-*/
-/* ================================================================== */
-    fprintf(nhdrFile, "sizes: %d %d %d %d\n", dims->sizeX, dims->sizeY, dims->sizeC, dims->sizeZ-1);
+    fprintf(nhdrFile, "sizes: %d %d %d %d\n", dims->sizeX, dims->sizeY, dims->sizeC, dims->sizeZ);
     fprintf(nhdrFile, "centers: cell cell none cell\n"); // May change in future
   }
 
@@ -397,6 +389,19 @@ void Skim::generate_nrrd(){
     fprintf(stdout, "looking for %d slices ...", dims->sizeZ);
     fflush(stdout);
   }
+
+/* ================================================================== */
+/* 
+    TODO: if size and nrrd data doesnot match, prog will crash
+    Unfortunately, some data is complete!(Last step is missing)
+    I deduce the size for 1 here.
+    Wait to be solved.
+*/
+  int ctr = 0;
+  size_t dataBegin;
+/* ================================================================== */
+
+
   // Go hunting for image blocks
   CziSubBlockSegment *imageSubBlockHeader = (CziSubBlockSegment*)malloc(sizeof(CziSubBlockSegment));
   airMopAdd(mop, imageSubBlockHeader, airFree, airMopAlways);
@@ -434,7 +439,7 @@ void Skim::generate_nrrd(){
 
       // Compute where the data begins
       size_t headSize = sizeof(CziSubBlockSegment) - (12 * sizeof(CziDimensionEntryDV1)) + (imageSubBlockHeader->DimensionCount * 20);
-      size_t dataBegin = imageSubBlockHeader->FilePosition + headSize + 32;
+      dataBegin = imageSubBlockHeader->FilePosition + headSize + 32;
 
       if (verbose > 1) {
         fprintf(stdout, "======ZISRAWSUBBLOCK======\n");
@@ -471,8 +476,8 @@ void Skim::generate_nrrd(){
 
       // Add entry for this slice to nhdr file
       fprintf(nhdrFile, "%ld %s\n", dataBegin, cziFileName.c_str());
-      static int ctr;
-      printf("print data line: %d\n", ++ctr);
+      ++ctr;
+
       // go to the beginning of data
       lseek(cziFile, dataBegin, SEEK_SET);
 
@@ -514,6 +519,16 @@ void Skim::generate_nrrd(){
     // Advance to the next SID
     lseek(cziFile, currentSID->allocatedSize, SEEK_CUR);
   }
+
+/* ================================================================== */
+/* 
+    TMP WORK AROUND: CONTINUE LINE 393 
+*/
+  while(ctr++ < dims->sizeC*dims->sizeZ)
+    fprintf(nhdrFile, "%ld %s\n", dataBegin, cziFileName.c_str());
+/* ================================================================== */
+
+
   if (verbose)
     fprintf(stdout, "\n");
 

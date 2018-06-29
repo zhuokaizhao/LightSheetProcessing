@@ -14,14 +14,11 @@
  */
 
 // LSPException Class
-LSPException::LSPException(const char *_msg, const char *_file, const char *_func) : std::runtime_error(_msg),
+LSPException::LSPException(std::string const &_msg, std::string const &_file, std::string const &_func) : std::runtime_error(_msg.c_str()),
                                                                                      file(_file),
                                                                                      func(_func) {}
-LSPException::LSPException(const std::string _msg, const char *_file, const char *_func) : std::runtime_error(_msg.c_str()),
-                                                                                     file(_file),
-                                                                                     func(_func) {}
-const char* LSPException::get_file() const { return file; }
-const char* LSPException::get_func() const { return func; }
+std::string const & LSPException::get_file() const { return file; }
+std::string const & LSPException::get_func() const { return func; }
 
 
 /*
@@ -53,7 +50,6 @@ void nrrd_checker(bool status, airArray* mop, std::string prompt,
     std::string msg = prompt + std::string(err); 
 
     airMopAdd(mop, err, airFree, airMopAlways);
-    airMopError(mop);
 
     throw LSPException(msg, file.c_str(), function.c_str());
   }
