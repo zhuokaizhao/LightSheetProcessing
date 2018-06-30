@@ -49,7 +49,7 @@ public:
   Xml_getter(std::string file);
   ~Xml_getter();
 
-  double operator()(std::string p);
+  std::string operator()(std::string p);
 
 private:  
   void search();
@@ -57,7 +57,7 @@ private:
   xmlDocPtr doc;
   xmlNodePtr node;
   std::string pattern;
-  double val;
+  std::string val;
 };
 
 

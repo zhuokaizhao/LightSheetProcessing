@@ -56,7 +56,7 @@ Nrrd* safe_nrrd_load(airArray* mop, std::string filename) {
 
   /* read in the nrrd from file */
   nrrd_checker(nrrdLoad(nin, filename.c_str(), NULL),
-              mop, "Error loading file: ", "util.cpp", "safe_nrrd_load");
+              mop, "Error loading file:\n", "util.cpp", "safe_nrrd_load");
 
   return nin;
 }
@@ -88,7 +88,8 @@ Xml_getter::~Xml_getter(){
   xmlCleanupParser();
 }
 
-double Xml_getter::operator()(std::string p){
+std::string Xml_getter::operator()(std::string p){
+  node = xmlDocGetRootElement(doc);
   pattern = p;
   search();
   return val;
@@ -97,8 +98,11 @@ double Xml_getter::operator()(std::string p){
 void Xml_getter::search(){
   for(auto cur_node = node; cur_node; cur_node = cur_node->next){
     if(cur_node->type == XML_ELEMENT_NODE)
-      if(!xmlStrcmp(cur_node->name, (const xmlChar*)pattern.c_str()))
-        val = atof((const char*)xmlNodeGetContent(cur_node));
+      if(!xmlStrcmp(cur_node->name, (const xmlChar*)pattern.c_str())){
+        xmlChar* tmp_v = xmlNodeGetContent(cur_node);
+        val = (char const*)tmp_v;
+        xmlFree(tmp_v);
+      }
 
     node = cur_node->children;
     search();

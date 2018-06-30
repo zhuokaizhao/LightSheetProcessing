@@ -128,7 +128,7 @@ void Corr::cross_corrImg() {
   nrrd_checker(nrrdAlloc_va(nout, nrrdTypeDouble, 2,
                    AIR_CAST(size_t, szc),
                    AIR_CAST(size_t, szc)),
-              mop, "Error allocating output: ", "corr.cpp", "Corr::cross_corrImg");
+              mop, "Error allocating output:\n", "corr.cpp", "Corr::cross_corrImg");
 
   auto cci = AIR_CAST(double *, nout->data);
 
@@ -352,5 +352,5 @@ void Corr::main() {
 
   if (!opt.output_file.empty())
     nrrd_checker(nrrdSave(opt.output_file.c_str(), nout, NULL),
-                mop, "Error saving output: ", "corr.cpp", "corr_main");
+                mop, "Error saving output:\n", "corr.cpp", "corr_main");
 }

@@ -14,7 +14,7 @@ struct AnimOptions {
     uint dwn_sample = 1;    // How much to down-sample
     double scale_x = 1.0;
     double scale_z = 1.0;
-    uint verbose = 1;
+    uint verbose = 0;
 };
 
 void setup_anim(CLI::App &app);
@@ -28,8 +28,8 @@ public:
 
 private:
   	void split_type();
-    void make_max_frame(std::vector<Nrrd*>);
-  	void make_avg_frame(std::vector<Nrrd*>);
+    void make_max_frame(std::vector<Nrrd*>, std::string);
+  	void make_avg_frame(std::vector<Nrrd*>, std::string);
   	void assembling_frame();
 
 	AnimOptions const opt;

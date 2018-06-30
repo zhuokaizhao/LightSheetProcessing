@@ -81,7 +81,7 @@ void Corrnhdr::compute_offsets(){
   offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
   nrrd_checker(nrrdWrap_va(offset_origin, offsets.data(), nrrdTypeDouble, 2, 3, offsets.size()) ||
                 nrrdSave((reg_dir+"offsets.nrrd").c_str(), offset_origin, NULL),
-              mop, "Error creating offset nrrd: ", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
+              mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 }
 
 void Corrnhdr::median_filtering(){
@@ -95,17 +95,17 @@ void Corrnhdr::median_filtering(){
 
   for (int ni=0; ni<nsize; ni++) {
     nrrd_checker(nrrdSlice(ntmp, offset_origin, 0, ni),
-                mop, "Error slicing nrrd: ", "corrnhdr.cpp", "Corrnhdr::median_filtering");
+                mop, "Error slicing nrrd:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
 
     airMopAdd(mop, mnout[ni] = nrrdNew(), (airMopper)nrrdNuke, airMopAlways);
 
     nrrd_checker(nrrdCheapMedian(mnout[ni], ntmp, 1, 0, 2, 1.0, 256),
-                mop, "Error computing median: ", "corrnhdr.cpp", "Corrnhdr::median_filtering");
+                mop, "Error computing median:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
     
   }
   
   nrrd_checker(nrrdJoin(offset_median, (const Nrrd*const*)mnout, nsize, 0, AIR_TRUE), 
-              mop, "Error joining median slices: ", "corrnhdr.cpp", "Corrnhdr::median_filtering");
+              mop, "Error joining median slices:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
   
   // copy axis info
   nrrdAxisInfoCopy(offset_median, offset_origin, NULL, NRRD_AXIS_INFO_NONE);
@@ -139,7 +139,7 @@ void Corrnhdr::smooth(){
                 nrrdResampleSamplesSet(rsmc, 1, offset_median->axis[1].size) ||
                 nrrdResampleRangeFullSet(rsmc, 1) ||
                 nrrdResampleExecute(rsmc, offset_blur),
-              mop, "Error resampling nrrd: ", "corrnhdr.cpp", "Corrnhdr::smooth");
+              mop, "Error resampling nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
   
   // create a helper nrrd array to help smooth the boundary
   std::vector<double> data(3, 1);
@@ -148,7 +148,7 @@ void Corrnhdr::smooth(){
 
   Nrrd *base = safe_nrrd_new(mop, (airMopper)nrrdNix);
   nrrd_checker(nrrdWrap_va(base, data.data(), nrrdTypeFloat, 2, 3, offset_blur->axis[1].size),
-              mop, "Error wrapping data vector: ", "corrnhdr.cpp", "Corrnhdr::smooth");
+              mop, "Error wrapping data vector:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
   nrrdAxisInfoCopy(base, offset_blur, NULL, NRRD_AXIS_INFO_ALL);
 
   offset_smooth1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -166,7 +166,7 @@ void Corrnhdr::smooth(){
                 nrrdResampleSamplesSet(rsmc, 1, base->axis[1].size) ||
                 nrrdResampleRangeFullSet(rsmc, 1) ||
                 nrrdResampleExecute(rsmc, offset_smooth1),
-              mop, "Error resampling nrrd: ", "corrnhdr.cpp", "Corrnhdr::smooth");
+              mop, "Error resampling nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
   
   nrrdQuantize(offset_smooth1, offset_smooth1, NULL, 32);
   nrrdUnquantize(offset_smooth1, offset_smooth1, nrrdTypeDouble);
@@ -204,7 +204,7 @@ void Corrnhdr::main() {
            *new_nrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
       nrrd_checker(nrrdCopy(new_nrrd, old_nrrd),
-                  mop, "Error copying nrrd: ", "corrnhdr.cpp", "corrnhdr_main");
+                  mop, "Error copying nrrd:\n", "corrnhdr.cpp", "corrnhdr_main");
       
       double xs = old_nrrd->axis[0].spacing,
              ys = old_nrrd->axis[1].spacing,

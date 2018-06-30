@@ -30,18 +30,13 @@ void setup_anim(CLI::App &app) {
 }
 
 
-Anim::Anim(AnimOptions const &opt): opt(opt), mop(airMopNew()) {
-
-  max_x_frames = std::vector<Nrrd*>();
-  max_z_frames = std::vector<Nrrd*>();
-  avg_x_frames = std::vector<Nrrd*>();  
-  avg_z_frames = std::vector<Nrrd*>();
-
-}
+Anim::Anim(AnimOptions const &opt): opt(opt), mop(airMopNew()) {}
 
 
 Anim::~Anim() {
+  printf("ckp1\n");
   airMopOkay(mop);
+  printf("ckp2\n");
 }
 
 
@@ -60,49 +55,56 @@ void Anim::split_type(){
     std::string iii = zero_pad(i, 3);
 
     if(opt.verbose)
-      std::cout << std::endl << "===== " << iii << "/" << opt.tmax << "=====================" << std::endl;
+      std::cout << "===== " << iii << "/" << opt.tmax << "=====================" << std::endl;
 
     std::string xy_proj_file = opt.proj_path + iii + "-projXY.nrrd";
     std::string yz_proj_file = opt.proj_path + iii + "-projYZ.nrrd";
 
-    Nrrd* xy_proj = safe_nrrd_load(mop, xy_proj_file);
-    Nrrd* yz_proj = safe_nrrd_load(mop, yz_proj_file);
-
     Nrrd* res_rsm[2][2] = { //store {{max_z, avg_z}, {max_x, avg_x}}
-			   {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-			    safe_nrrd_new(mop, (airMopper)nrrdNuke)},
+                  			   {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                  			    safe_nrrd_new(mop, (airMopper)nrrdNuke)},
                            {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)}
 			  };
 
     Nrrd* proj_rsm[2] = {safe_nrrd_load(mop, xy_proj_file),
                          safe_nrrd_load(mop, yz_proj_file)};
-    double resample_rsm[2] = {resample_z, resample_xy};
+    double resample_rsm[2][2] = {{resample_xy, resample_xy},
+                                  {resample_xy, resample_z}};
     double kparm[2] = {0, 0.5};
     for(auto i=0; i<2; ++i){
       auto rsmc = nrrdResampleContextNew();
       airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
-
+/*
       nrrd_checker(nrrdResampleInputSet(rsmc, proj_rsm[i]) ||
                       nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
-                      nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[0].size*resample_rsm[i]))) ||
+                      nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i][0]))) ||
                       nrrdResampleRangeFullSet(rsmc, 0) ||
                       nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
                       nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
                       nrrdResampleKernelSet(rsmc, 1, nrrdKernelBCCubic, kparm) ||
-                      nrrdResampleSamplesSet(rsmc, 1, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i]))) ||
+                      nrrdResampleSamplesSet(rsmc, 1, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i][1]))) ||
                       nrrdResampleRangeFullSet(rsmc, 1) ||
                       nrrdResampleKernelSet(rsmc, 2, NULL, NULL) ||
                       nrrdResampleKernelSet(rsmc, 3, NULL, NULL) ||
                       nrrdResampleExecute(rsmc, proj_rsm[i]),
-                  mop, "Error resampling nrrd: ", "anim.cpp", "Anim::split_type");
+                  mop, "Error resampling nrrd:\n", "anim.cpp", "Anim::split_type");
+*/
 
-      //TODO SWAP(AX0 AX1) ifor xy plane
+      //SWAP(AX0 AX1) for yz plane
+      if(i==1)
+        nrrd_checker(nrrdAxesSwap(proj_rsm[i], proj_rsm[i], 0, 1),
+                    mop, "Error swaping yz axes:\n", "anim.cpp", "Anim::split_type");
 
       nrrd_checker(nrrdSlice(res_rsm[i][0], proj_rsm[i], 3, 0) ||
                       nrrdSlice(res_rsm[i][1], proj_rsm[i], 3, 1),
-                  mop, "Error slicng nrrd: ", "anim.cpp", "Anim::split_type");
+                  mop, "Error slicng nrrd:\n", "anim.cpp", "Anim::split_type");
+
+      airMopSingleOkay(mop, rsmc);
     }
+
+    airMopSingleOkay(mop, proj_rsm[0]);
+    airMopSingleOkay(mop, proj_rsm[1]);
 
     max_z_frames.push_back(res_rsm[0][0]);
     avg_z_frames.push_back(res_rsm[0][1]);
@@ -112,51 +114,57 @@ void Anim::split_type(){
 }
 
 
-void Anim::make_max_frame(std::vector<Nrrd*> frame){
+void Anim::make_max_frame(std::vector<Nrrd*> frame, std::string direction){
   Nrrd* joined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-  Nrrd* tmp0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-  Nrrd* tmp1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* ch0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* ch1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* bit0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* bit1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   //join along time, slice along channel
   nrrd_checker(nrrdJoin(joined,frame.data(), frame.size(), 3, 0) ||
-                nrrdSlice(tmp0, joined, 2, 0) ||
-                nrrdSlice(tmp1, joined, 2, 1),
-              mop, "Error joining/slicing nrrd: ", "anim.cpp", "Anim::make_max_frame");
+                nrrdSlice(ch0, joined, 2, 0) ||
+                nrrdSlice(ch1, joined, 2, 1),
+              mop, "Error joining/slicing nrrd:\n", "anim.cpp", "Anim::make_max_frame");
+
   //quantize to 8bit
   auto range = nrrdRangeNew(AIR_NAN, AIR_NAN);
   airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-  nrrd_checker(nrrdRangePercentileFromStringSet(range, tmp0, "0.02%", "5%", 5000, true) ||
-                nrrdQuantize(tmp0, tmp0, range, 8),
-              mop, "Error quantizing nrrd: ", "anim.cpp", "Anim::make_max_frame");
+  nrrd_checker(nrrdRangePercentileFromStringSet(range, ch0,  "5%", "0.02%", 5000, true) ||
+                nrrdQuantize(bit0, ch0, range, 8),
+              mop, "Error quantizing ch1 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
   //set brightness for ch2(and quantize to 8bit)
-  nrrd_checker(nrrdArithGamma(tmp1, tmp1, NULL, 3) ||
-                  nrrdRangePercentileFromStringSet(range, tmp1, "0.01%", "5%", 5000, true) ||
-                  nrrdQuantize(tmp1, tmp1, range, 8),
-              mop, "Error quantizing nrrd: ", "anim.cpp", "Anim::make_max_frame");
+  nrrd_checker(nrrdArithGamma(ch1, ch1, NULL, 3) ||
+                  nrrdRangePercentileFromStringSet(range, ch1, "5%", "0.01%", 5000, true) ||
+                  nrrdQuantize(bit1, ch1, range, 8),
+              mop, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
     
   //slice on time and output
   for (size_t t = 0; t < frame.size(); ++t) {
-    Nrrd* tmp0_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-    Nrrd* tmp1_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-    std::string x_name = opt.anim_path + zero_pad(t, 3) + "-max-" + "x-" + std::to_string(t) + ".ppm";
-    std::string z_name = opt.anim_path + zero_pad(t, 3) + "-max-" + "z-" + std::to_string(t) + ".ppm";
+    Nrrd* bit0_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    Nrrd* bit1_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    std::string bit0_name = opt.anim_path + zero_pad(t, 3) + "-max-" + direction + "-0.ppm";
+    std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-max-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "Output " << t << "/" << opt.tmax << "max_frames" << std::endl;
+      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_max_frames"  << "=====================" << std::endl;
 
-    nrrd_checker(nrrdSlice(tmp0, tmp0_t, 2, t)  ||
-                  nrrdSlice(tmp1, tmp1_t, 2, t) ||
-                  nrrdSave(x_name.c_str() , tmp0_t, nullptr) ||
-                  nrrdSave(z_name.c_str() , tmp1_t, nullptr),
-                mop, "Error saving ppm files: ", "anim.cpp", "Anim::make_max_frame");
+    nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
+                  nrrdSlice(bit1_t, bit1, 2, t) ||
+                  nrrdSave(bit0_name.c_str() , bit0_t, nullptr) ||
+                  nrrdSave(bit1_name.c_str() , bit1_t, nullptr),
+                mop, "Error saving ppm files:\n", "anim.cpp", "Anim::make_max_frame");
+
+    airMopSingleOkay(mop, bit0_t);
+    airMopSingleOkay(mop, bit1_t);
   }
 }
 
 
-void Anim::make_avg_frame(std::vector<Nrrd*> frame){
+void Anim::make_avg_frame(std::vector<Nrrd*> frame, std::string direction){
   Nrrd* joined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-  Nrrd* tmp = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* ch = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   //join along time, slice along channel
   nrrd_checker(nrrdJoin(joined,frame.data(), frame.size(), 3, 0),
@@ -165,6 +173,7 @@ void Anim::make_avg_frame(std::vector<Nrrd*> frame){
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
+/*
   double kparm[2] = {40,3};
   nrrd_checker(nrrdResampleInputSet(rsmc, joined) ||
                   nrrdResampleKernelSet(rsmc, 0, nrrdKernelGaussian, kparm) ||
@@ -177,56 +186,63 @@ void Anim::make_avg_frame(std::vector<Nrrd*> frame){
                   nrrdResampleRangeFullSet(rsmc, 1) ||
                   nrrdResampleKernelSet(rsmc, 2, NULL, NULL) ||
                   nrrdResampleKernelSet(rsmc, 3, NULL, NULL) ||
-                  nrrdResampleExecute(rsmc, tmp),
-              mop,  "Error resampling nrrd: ", "anim.cpp", "Anim::make_avg_frame");
-
+                  nrrdResampleExecute(rsmc, ch),
+              mop,  "Error resampling nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
+*/
   //slice on ch 
-  Nrrd* tmp0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-  Nrrd* tmp1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* ch0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* ch1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   NrrdIter* nit1 = nrrdIterNew();
-  airMopAdd(mop, nit1, airMopper(nrrdIterNix), airMopAlways);
   NrrdIter* nit2 = nrrdIterNew();
-  airMopAdd(mop, nit2, airMopper(nrrdIterNix), airMopAlways);
 
-  nrrdIterSetOwnNrrd(nit1, tmp);
+  nrrdIterSetOwnNrrd(nit1, ch);
   nrrdIterSetValue(nit2, 0.5);
 
-  nrrdArithIterBinaryOp(tmp, nrrdBinaryOpMultiply, nit1, nit2);
+  nrrdArithIterBinaryOp(ch, nrrdBinaryOpMultiply, nit1, nit2);
 
-  nrrdIterSetOwnNrrd(nit1, tmp);
+  nrrdIterSetOwnNrrd(nit1, ch);
   nit2 = nrrdIterNix(nit2);
   nrrdIterSetOwnNrrd(nit2, joined);
 
   nrrdArithIterBinaryOp(joined, nrrdBinaryOpSubtract, nit2, nit1);
 
-  nrrdSlice(tmp0, joined, 2, 0);
-  nrrdSlice(tmp1, joined, 2, 1);
+  nrrdSlice(ch0, joined, 2, 0);
+  nrrdSlice(ch1, joined, 2, 1);
+
+  // Assume this iterator part is nonexcept and do not add nrrdIterNix into mop because we use nix as 'reset' above.
+  nrrdIterNix(nit1);
+  nrrdIterNix(nit2);
 
   //quantize to 8bit
+  Nrrd* bit0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  Nrrd* bit1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   auto range = nrrdRangeNew(AIR_NAN, AIR_NAN);
   airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-  nrrd_checker(nrrdRangePercentileFromStringSet(range, tmp0, "0.02%", "5%", 5000, true) ||
-                nrrdQuantize(tmp0, tmp0, range, 8) ||
-                nrrdRangePercentileFromStringSet(range, tmp1, "0.02%", "5%", 5000, true) ||
-                nrrdQuantize(tmp1, tmp1, range, 8),
-              mop, "Error quantizing nrrd: ", "anim.cpp", "Anim::make_avg_frame");
+  nrrd_checker(nrrdRangePercentileFromStringSet(range, ch0, "10%", "0.1%", 5000, true) ||
+                nrrdQuantize(bit0, ch0, range, 8) ||
+                nrrdRangePercentileFromStringSet(range, ch1, "10%", "0.1%", 5000, true) ||
+                nrrdQuantize(bit1, ch1, range, 8),
+              mop, "Error quantizing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
   //slice on time and output
   for (size_t t = 0; t < frame.size(); ++t) {
-    Nrrd* tmp0_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-    Nrrd* tmp1_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-    std::string x_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + "x-" + std::to_string(t) + ".ppm";
-    std::string z_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + "z-" + std::to_string(t) + ".ppm";
+    Nrrd* bit0_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    Nrrd* bit1_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    std::string bit0_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + direction + "-0.ppm";
+    std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "Output " << t << "/" << opt.tmax << "avg_frames" << std::endl;
+      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_avg_frames"  << "=====================" << std::endl;
 
-    nrrd_checker(nrrdSlice(tmp0, tmp0_t, 2, t)  ||
-                  nrrdSlice(tmp1, tmp1_t, 2, t) ||
-                  nrrdSave(x_name.c_str() , tmp0_t, nullptr) ||
-                  nrrdSave(z_name.c_str() , tmp1_t, nullptr),
-                mop, "Error saving ppm files: ", "anim.cpp", "Anim::make_avg_frame");
+    nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
+                  nrrdSlice(bit1_t, bit1, 2, t) ||
+                  nrrdSave(bit0_name.c_str() , bit0_t, nullptr) ||
+                  nrrdSave(bit1_name.c_str() , bit1_t, nullptr),
+                mop, "Error saving ppm files:\n", "anim.cpp", "Anim::make_avg_frame");
+
+    airMopSingleOkay(mop, bit0_t);
+    airMopSingleOkay(mop, bit1_t);
   }
 }
 
@@ -237,20 +253,38 @@ void Anim::assembling_frame() {
 
   for(auto type: {"max", "avg"}){
     for(auto i=0; i<=opt.tmax; ++i){
+      if(opt.verbose)
+        std::cout << "===== " << zero_pad(i, 3) << "/" << opt.tmax << " " << type << "_pngs" << "=====================" << std::endl;
+
       std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
       Nrrd *ppm_z_0 = safe_nrrd_load(mop, base_path + "-z-0.ppm");
       Nrrd *ppm_z_1 = safe_nrrd_load(mop, base_path + "-z-1.ppm");
       Nrrd *ppm_x_0 = safe_nrrd_load(mop, base_path + "-x-0.ppm");
       Nrrd *ppm_x_1 = safe_nrrd_load(mop, base_path + "-x-1.ppm");
-      std::vector<Nrrd*> ppms = {ppm_z_1, ppm_z_0, ppm_z_1, ppm_x_1, ppm_x_0, ppm_x_1};
+      std::vector<Nrrd*> ppms_z = {ppm_z_1, ppm_z_0, ppm_z_1};
+      std::vector<Nrrd*> ppms_x = {ppm_x_1, ppm_x_0, ppm_x_1};
 
+      Nrrd *nout_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+      Nrrd *nout_x = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+      Nrrd *tmp_nout_array[2] = {nout_z, nout_x};
       Nrrd *nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-      nrrd_checker(nrrdJoin(nout, ppms.data(), ppms.size(), 0, 1) ||
-                    nrrdJoin(nout, &nout, 1, 1, 1),
-                  mop, "Error joining ppm files to png: ", "anim.cpp", "Anim::assembling_frame");
-      std::string out_name = base_path + "-" + type + ".png";
+
+      nrrd_checker(nrrdJoin(nout_z, ppms_z.data(), ppms_z.size(), 0, 1) ||
+                    nrrdJoin(nout_x, ppms_x.data(), ppms_x.size(), 0, 1) ||
+                    nrrdJoin(nout, tmp_nout_array, 2, 1, 0),
+                  mop, "Error joining ppm files to png:\n", "anim.cpp", "Anim::assembling_frame");
+
+      std::string out_name = base_path + ".png";
       nrrd_checker(nrrdSave(out_name.c_str(), nout, nullptr), 
-                  mop, "Error saving png file: ", "anim.cpp", "Anim::assembling_frame");
+                  mop, "Error saving png file:\n", "anim.cpp", "Anim::assembling_frame");
+
+      airMopSingleOkay(mop, ppm_z_0);
+      airMopSingleOkay(mop, ppm_z_1);
+      airMopSingleOkay(mop, ppm_x_0);
+      airMopSingleOkay(mop, ppm_x_1);
+      airMopSingleOkay(mop, nout_z);
+      airMopSingleOkay(mop, nout_x);
+      airMopSingleOkay(mop, nout);
     }
   }
 }
@@ -262,13 +296,13 @@ void Anim::main(){
 
   if(opt.verbose)
     std::cout << "Making frames for max channel..." << std::endl;
-  make_max_frame(max_x_frames);
-  make_max_frame(max_z_frames);
+  make_max_frame(max_x_frames, "x");
+  make_max_frame(max_z_frames, "z");
 
   if(opt.verbose)
     std::cout << "Making frames for max channel..." << std::endl;
-  make_avg_frame(avg_x_frames);
-  make_avg_frame(avg_z_frames);
+  make_avg_frame(avg_x_frames, "x");
+  make_avg_frame(avg_z_frames, "z");
 
   assembling_frame();
 }

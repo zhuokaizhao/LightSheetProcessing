@@ -58,21 +58,21 @@ int Pack::find_tmax(){
 		return tmax;
 
 	std::string exist_path, path_pattern;
-	if(exists(data_dir+"/nhdr/")){
+	if(exists(data_dir+"/proj/")){
 		//find the max file number based on nhdr/ (for run_anim)
-		exist_path = data_dir+"/nhdr/";
+		exist_path = data_dir+"/proj/";
 		//find "iii" in pattern "../../iii-projXX.nrrd"
-		path_pattern = "(\\w{3})-proj\\w{3}nrrd";
+		path_pattern = "(\\w{3})-proj\\w{2}\\.nrrd";
 	}
 	else if(exists(data_dir+"/reg/")){
 		//find the max file number based on reg/ (for corr*s)
 		exist_path = data_dir+"/reg/";
 		//find "iii" in pattern "../../iii-projXX.nrrd"
-		path_pattern = "(\\w{3})-proj\\w{3}png";
+		path_pattern = "(\\w{3})-proj\\w{2}\\.png";
 	}
 	else
 		throw LSPException("Error finding tmax: "
-												"nhdr/ and reg/ not exist. ",
+												"proj/ and reg/ not exist. ",
 											"pack.cpp", "Pack::find_tmax");
 
 	directory_iterator end_iter;
@@ -89,7 +89,6 @@ int Pack::find_tmax(){
   		}
   	}
   }
-
   return tmax;
 }
 
@@ -194,8 +193,8 @@ void Pack::run_anim(){
 	anim_opt.proj_path = data_dir + "/proj/";
 	anim_opt.anim_path = data_dir + "/anim/";
 	anim_opt.dwn_sample = down_samp;
-	anim_opt.scale_x = x("ScalingX");
-	anim_opt.scale_z = x("ScalingZ");
+	anim_opt.scale_x = std::stof(x("ScalingX"));
+	anim_opt.scale_z = std::stof(x("ScalingZ"));
 
 	Anim(anim_opt).main();
 }

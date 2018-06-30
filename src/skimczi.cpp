@@ -579,7 +579,7 @@ void Skim::generate_proj(){
                   || nrrdAxesMerge(line, line, 0)
                   || nrrdConvert(fline, line, nrrdTypeFloat)
                   || nrrdSave(lineFile.c_str(), fline, NULL),
-                mop, "Error making line: ", "skimczi.cpp", "Skim::generate_proj");
+                mop, "Error making line:\n", "skimczi.cpp", "Skim::generate_proj");
   }
 
   if (opt.verbose)

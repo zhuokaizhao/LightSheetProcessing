@@ -44,7 +44,7 @@ void Corrimg::main() {
   const unsigned int axes_permute[3] = {2, 0, 1};
   nrrd_checker(nrrdSlice(nrrd2, nrrd1, 3, 1) ||
                 nrrdAxesPermute(nrrd2, nrrd2, axes_permute),
-              mop, "Error slicing axis: ", "corrimg.cpp", "Corrimg::main");
+              mop, "Error slicing axis:\n", "corrimg.cpp", "Corrimg::main");
 
   // augment vals in odd channel
   size_t n = nrrdElementNumber(nrrd2);
@@ -55,7 +55,7 @@ void Corrimg::main() {
 
   // project mean val of one axis
   nrrd_checker(nrrdProject(nrrd1, nrrd2, 0, nrrdMeasureMean, nrrd2->type),
-              mop, "Error projecting nrrd: ", "corrimg.cpp", "Corrimg::main");
+              mop, "Error projecting nrrd:\n", "corrimg.cpp", "Corrimg::main");
 
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
@@ -63,7 +63,7 @@ void Corrimg::main() {
   // set up nrrd kernel
   NrrdKernelSpec *kernel_spec = nrrdKernelSpecNew();
   nrrd_checker(nrrdKernelParse(&(kernel_spec->kernel), kernel_spec->parm, opt.kernel.c_str()),
-              mop, "Error parsing kernel: ", "corrimg.cpp", "Corrimg::main");
+              mop, "Error parsing kernel:\n", "corrimg.cpp", "Corrimg::main");
 
   airMopAdd(mop, kernel_spec, (airMopper)nrrdKernelSpecNix, airMopAlways);
 
@@ -78,15 +78,15 @@ void Corrimg::main() {
                 nrrdResampleSamplesSet(rsmc, 1, nrrd1->axis[1].size) ||
                 nrrdResampleRangeFullSet(rsmc, 1) ||
                 nrrdResampleExecute(rsmc, nrrd2),
-              mop, "Error resampling nrrd: ", "corrimg.cpp", "Corrimg::main");
+              mop, "Error resampling nrrd:\n", "corrimg.cpp", "Corrimg::main");
 
 
   // quantize vals from 32 to 16 bits
   nrrd_checker(nrrdQuantize(nrrd1, nrrd2, NULL, 16),
-              mop, "Error quantizing nrrd: ", "corrimg.cpp", "Corrimg::main");
+              mop, "Error quantizing nrrd:\n", "corrimg.cpp", "Corrimg::main");
 
   // save final results
   nrrd_checker(nrrdSave(opt.output_file.c_str(), nrrd1, NULL),
-              mop, "Could not save file: ", "corrimg.cpp", "Corrimg::main");
+              mop, "Could not save file:\n", "corrimg.cpp", "Corrimg::main");
 
 }
