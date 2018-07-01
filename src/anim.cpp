@@ -295,7 +295,7 @@ void Anim::build_video(){
       std::cout << "===== " << type << "_mp4" << " =====================" << std::endl;
 
     std::string out_file = std::string("/home/jiawei/Desktop/") + type + ".avi";
-    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, cv::Size(mat.cols, mat.rows), true);
+    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, s, true);
     if(!vw.isOpened()) 
       std::cout << "cannot open videoWriter." << std::endl;
     for(auto i=0; i<=tmax; ++i){
