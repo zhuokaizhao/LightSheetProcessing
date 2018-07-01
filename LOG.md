@@ -8,7 +8,7 @@ Start workint on lsp project.
 2. Debug under gcc/6.1     
 
 06/21/2018
-Fix skim and generate projection correctly.
+Fix skim. Now it can generate headers and projection files correctly.
 
 06/23/2018
 Refine cmake. Now it has great file structures.     
@@ -26,4 +26,7 @@ Finish rewrite corr*.cpp files
 06/28/2018
 1. Rename `standard` to `pack`.     
 2. Rewrite `skim`.      
-3. Write a tmp work around for `skim` in the case that data is broken(nrrd header and data not match)
+3. Write a tmp work around for `skim` in the case that data is broken(nrrd header and data not match)       
+
+06/30/2018
+Code `anim`. Everthing is done except for resampling. Without resampling, the program will use too much memory.     

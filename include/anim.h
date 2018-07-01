@@ -28,15 +28,13 @@ public:
 
 private:
   	void split_type();
-    void make_max_frame(std::vector<Nrrd*>, std::string);
-  	void make_avg_frame(std::vector<Nrrd*>, std::string);
+    void make_max_frame(std::string);
+  	void make_avg_frame(std::string);
     void build_png();
   	void build_video();
 
 	AnimOptions const opt;
 	airArray* mop;
-
-	std::vector<Nrrd*> max_x_frames, max_z_frames, avg_x_frames, avg_z_frames;
 };
 
 
