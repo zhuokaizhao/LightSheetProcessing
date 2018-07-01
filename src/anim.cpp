@@ -3,6 +3,7 @@
 //
 
 #include <teem/nrrd.h>
+#include <opencv2/opencv.hpp>
 #include "anim.h"
 #include "util.h"
 
@@ -34,9 +35,7 @@ Anim::Anim(AnimOptions const &opt): opt(opt), mop(airMopNew()) {}
 
 
 Anim::~Anim() {
-  printf("ckp1\n");
   airMopOkay(mop);
-  printf("ckp2\n");
 }
 
 
@@ -45,17 +44,15 @@ void Anim::split_type(){
   double resample_xy = opt.scale_x / opt.scale_z / opt.dwn_sample;
   double resample_z = 1.0 / opt.dwn_sample;
 
-  if(opt.verbose){
-    std::cout << "Spliting nrrd on type dimension..." << std::endl;
+  if(opt.verbose)
     std::cout << "Resampling Factors: resample_xy = " << resample_xy << ", resample_z = " << resample_z << std::endl;
-  }
 
   // slice and resample projection files
   for(int i = 0; i <= opt.tmax; i++) {
     std::string iii = zero_pad(i, 3);
 
     if(opt.verbose)
-      std::cout << "===== " << iii << "/" << opt.tmax << "=====================" << std::endl;
+      std::cout << "===== " << iii << "/" << opt.tmax << " =====================" << std::endl;
 
     std::string xy_proj_file = opt.proj_path + iii + "-projXY.nrrd";
     std::string yz_proj_file = opt.proj_path + iii + "-projYZ.nrrd";
@@ -148,7 +145,7 @@ void Anim::make_max_frame(std::vector<Nrrd*> frame, std::string direction){
     std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-max-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_max_frames"  << "=====================" << std::endl;
+      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_max_frames"  << " =====================" << std::endl;
 
     nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
                   nrrdSlice(bit1_t, bit1, 2, t) ||
@@ -233,7 +230,7 @@ void Anim::make_avg_frame(std::vector<Nrrd*> frame, std::string direction){
     std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_avg_frames"  << "=====================" << std::endl;
+      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_avg_frames"  << " =====================" << std::endl;
 
     nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
                   nrrdSlice(bit1_t, bit1, 2, t) ||
@@ -247,14 +244,11 @@ void Anim::make_avg_frame(std::vector<Nrrd*> frame, std::string direction){
 }
 
 
-void Anim::assembling_frame() {
-  if(opt.verbose)
-    std::cout << "Assembling frames..." << std::endl;
-
+void Anim::build_png() {
   for(auto type: {"max", "avg"}){
     for(auto i=0; i<=opt.tmax; ++i){
       if(opt.verbose)
-        std::cout << "===== " << zero_pad(i, 3) << "/" << opt.tmax << " " << type << "_pngs" << "=====================" << std::endl;
+        std::cout << "===== " << zero_pad(i, 3) << "/" << opt.tmax << " " << type << "_pngs" << " =====================" << std::endl;
 
       std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
       Nrrd *ppm_z_0 = safe_nrrd_load(mop, base_path + "-z-0.ppm");
@@ -272,11 +266,11 @@ void Anim::assembling_frame() {
       nrrd_checker(nrrdJoin(nout_z, ppms_z.data(), ppms_z.size(), 0, 1) ||
                     nrrdJoin(nout_x, ppms_x.data(), ppms_x.size(), 0, 1) ||
                     nrrdJoin(nout, tmp_nout_array, 2, 1, 0),
-                  mop, "Error joining ppm files to png:\n", "anim.cpp", "Anim::assembling_frame");
+                  mop, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
 
       std::string out_name = base_path + ".png";
       nrrd_checker(nrrdSave(out_name.c_str(), nout, nullptr), 
-                  mop, "Error saving png file:\n", "anim.cpp", "Anim::assembling_frame");
+                  mop, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
 
       airMopSingleOkay(mop, ppm_z_0);
       airMopSingleOkay(mop, ppm_z_1);
@@ -290,19 +284,51 @@ void Anim::assembling_frame() {
 }
 
 
-void Anim::main(){
+void Anim::build_video(){
+  int tmax = opt.tmax;
+  std::string base_name = opt.anim_path;
 
+  cv::Size s = cv::imread(base_name + "000-max.png").size();
+  
+  for(std::string type: {"max", "avg"}){ 
+    if(opt.verbose)
+      std::cout << "===== " << type << "_mp4" << " =====================" << std::endl;
+
+    std::string out_file = std::string("/home/jiawei/Desktop/") + type + ".avi";
+    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, cv::Size(mat.cols, mat.rows), true);
+    if(!vw.isOpened()) 
+      std::cout << "cannot open videoWriter." << std::endl;
+    for(auto i=0; i<=tmax; ++i){
+      std::string name = base_name + zero_pad(i, 3) + "-" + type + ".png";
+      vw << cv::imread(name);
+    }
+    vw.release();
+  }
+}
+
+
+void Anim::main(){
+  int verbose = opt.verbose;
+/*
+  if(verbose)
+    std::cout << "Spliting nrrd on type dimension..." << std::endl;
   split_type();
 
-  if(opt.verbose)
+  if(verbose)
     std::cout << "Making frames for max channel..." << std::endl;
   make_max_frame(max_x_frames, "x");
   make_max_frame(max_z_frames, "z");
 
-  if(opt.verbose)
-    std::cout << "Making frames for max channel..." << std::endl;
+  if(verbose)
+    std::cout << "Making frames for avg channel..." << std::endl;
   make_avg_frame(avg_x_frames, "x");
   make_avg_frame(avg_z_frames, "z");
 
-  assembling_frame();
+  if(verbose)
+    std::cout << "Building pngs..." << std::endl;
+  build_png();
+*/
+  if(verbose)
+    std::cout << "Building video..." << std::endl;
+  build_video();
 }
