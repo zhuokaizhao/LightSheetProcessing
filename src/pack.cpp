@@ -196,7 +196,7 @@ void Pack::run_anim(){
 	anim_opt.dwn_sample = down_samp;
 	anim_opt.scale_x = std::stof(x("ScalingX"));
 	anim_opt.scale_z = std::stof(x("ScalingZ"));
-
+anim_opt.verbose = 1;
 	Anim(anim_opt).main();
 }
 

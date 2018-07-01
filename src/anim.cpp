@@ -294,7 +294,7 @@ void Anim::build_video(){
     if(opt.verbose)
       std::cout << "===== " << type << "_mp4" << " =====================" << std::endl;
 
-    std::string out_file = std::string("/home/jiawei/Desktop/") + type + ".avi";
+    std::string out_file = base_name + type + ".avi";
     cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, s, true);
     if(!vw.isOpened()) 
       std::cout << "cannot open videoWriter." << std::endl;
@@ -309,7 +309,7 @@ void Anim::build_video(){
 
 void Anim::main(){
   int verbose = opt.verbose;
-/*
+
   if(verbose)
     std::cout << "Spliting nrrd on type dimension..." << std::endl;
   split_type();
@@ -327,7 +327,7 @@ void Anim::main(){
   if(verbose)
     std::cout << "Building pngs..." << std::endl;
   build_png();
-*/
+
   if(verbose)
     std::cout << "Building video..." << std::endl;
   build_video();
