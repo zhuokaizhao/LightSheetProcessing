@@ -7,6 +7,7 @@
 #include "CLI11.hpp"
 
 #include "skimczi.h"
+#include "proj.h"
 #include "anim.h"
 #include "nhdrCheck.h"
 #include "untext.h"
@@ -21,6 +22,7 @@ int main(int argc, char** argv) {
   CLI::App app{"Collection of utilities for processing of lightsheet data"};
 
   setup_skim(app);
+  setup_proj(app);
   setup_anim(app);
   setup_nhdr_check(app);
   setup_untext(app);

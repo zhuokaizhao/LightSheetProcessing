@@ -87,7 +87,7 @@ Skim::Skim(SkimOptions const &opt)
     std::cout << "CZI  : " <<  cziFileName << "\n";
     std::cout << "NHDR : " <<  nhdrFileName << "\n";
     std::cout << "XML  : " <<  xmlFileName << "\n";
-    if (projBaseFileName.length()) {
+    if (!projBaseFileName.empty()) {
       std::cout << "PROJs: " << projBaseFileName << "-projXX.nrrd\n";
     }
     std::cout << "==========================\n\n";
@@ -509,6 +509,7 @@ void Skim::generate_nrrd(){
       }
       if (verbose) {
         fprintf(stdout, " %d", curr_z);
+
         fflush(stdout);
       }
 
@@ -563,28 +564,35 @@ void Skim::generate_proj(){
     nrrd_checker(E,
                 mop, "Couldn't save projections:\n",
                 "skimczi.cpp", "Skim::generate_proj");
+
+    nrrdStateVerboseIO = 0;
+    Nrrd *nin = safe_nrrd_load(mop, nhdrFileName); 
+
+    if (nin) {
+      Nrrd *line = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+      Nrrd *fline = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+
+      std::string lineFile = projBaseFileName + "-line.nrrd";
+
+      nrrd_checker(nrrdAxesMerge(nin, nin, 0)
+                    || nrrdProject(line, nin, 0, nrrdMeasureMean, nrrdTypeDefault)
+                    || nrrdAxesMerge(line, line, 0)
+                    || nrrdConvert(fline, line, nrrdTypeFloat)
+                    || nrrdSave(lineFile.c_str(), fline, NULL),
+                  mop, "Error making line:\n", "skimczi.cpp", "Skim::generate_proj");
+
+      airMopSingleOkay(mop, line);
+      airMopSingleOkay(mop, fline);
+    }
+
+    airMopSingleOkay(mop, nin);
+
+    if (opt.verbose)
+      fprintf(stdout, "DONE!\n");
   }
-
-  nrrdStateVerboseIO = 0;
-  Nrrd *nin = safe_nrrd_load(mop, nhdrFileName); 
-
-  if (nin) {
-    Nrrd *line = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-    Nrrd *fline = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-
-    std::string lineFile = projBaseFileName + "-line.nrrd";
-
-    nrrd_checker(nrrdAxesMerge(nin, nin, 0)
-                  || nrrdProject(line, nin, 0, nrrdMeasureMean, nrrdTypeDefault)
-                  || nrrdAxesMerge(line, line, 0)
-                  || nrrdConvert(fline, line, nrrdTypeFloat)
-                  || nrrdSave(lineFile.c_str(), fline, NULL),
-                mop, "Error making line:\n", "skimczi.cpp", "Skim::generate_proj");
-  }
-
-  if (opt.verbose)
-    fprintf(stdout, "DONE!\n");
 }
+
+
 
 void Skim::main(){
   
@@ -592,5 +600,4 @@ void Skim::main(){
   generate_nhdr();
   generate_nrrd();
   generate_proj();
-
 }

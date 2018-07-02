@@ -30,3 +30,6 @@ Finish rewrite corr*.cpp files
 
 06/30/2018
 Code `anim`. Everthing is done except for resampling. Without resampling, the program will use too much memory.     
+
+07/01/2018
+Code `proj` for build projections based on nhdr file.

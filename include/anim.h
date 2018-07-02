@@ -1,14 +1,16 @@
-//
-// Created by Jake Stover on 4/24/18.
-//
+//! \file anim.h
+//! \author Jake Stover
+//! \date 04-24-2018
+//! \brief Build small video based on projection files.
+//! \brief rewrite by Jiawei Jiang at 07-01-2018
 
 #ifndef LSP_AMIN_H
 #define LSP_AMIN_H
 
 #include "CLI11.hpp"
 
-struct AnimOptions {
-	std::string proj_path = "proj/";
+struct animOptions {
+    std::string proj_path = "proj/";
     std::string anim_path = "anim/";
     uint tmax;
     uint dwn_sample = 1;    // How much to down-sample
@@ -21,7 +23,7 @@ void setup_anim(CLI::App &app);
 
 class Anim{
 public:
-	Anim(AnimOptions const &opt = AnimOptions());
+	Anim(animOptions const &opt = animOptions());
 	~Anim();
 
   void main();
@@ -33,7 +35,7 @@ private:
     void build_png();
   	void build_video();
 
-	AnimOptions const opt;
+	animOptions const opt;
 	airArray* mop;
 };
 

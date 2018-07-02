@@ -30,7 +30,7 @@ private:
 
 	corrnhdrOptions const opt;
 	airArray* mop;
-	std::string nhdr_dir, reg_dir, basename;
+	std::string file_dir;
 
 	Nrrd *offset_origin, *offset_median, *offset_smooth1, *offset_smooth;
 };

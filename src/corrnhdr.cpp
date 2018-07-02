@@ -16,7 +16,7 @@ void setup_corrnhdr(CLI::App &app) {
   auto opt = std::make_shared<corrnhdrOptions>();
   auto sub = app.add_subcommand("corrnhdr", "Apply the corrections calculated by corrimg and corrfind.");
 
-  sub->add_option("-d, --file_dir", opt->file_dir, "Where 'nhdr/' and 'reg/' are. Defualt path is working path. (Default: .)");
+  sub->add_option("-d, --file_dir", opt->file_dir, "Where 'nhdr', nhdr-corr/' and 'reg/' are. Defualt path is working path. (Default: .)");
   sub->add_option("-n, --num_nhdr", opt->num, "The number of the last nhdr file.");
 
   sub->set_callback([opt] {
@@ -29,22 +29,18 @@ void setup_corrnhdr(CLI::App &app) {
 }
 
 
-Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()) {
+Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), file_dir(opt.file_dir) {
   // check if "/nhdr" exist for later use
-  nhdr_dir = opt.file_dir + "/nhdr/";
-  if(!exists(nhdr_dir))
+  if(!exists(file_dir + "/nhdr/"))
     throw LSPException("Error finding 'nhdr' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
 
-  reg_dir = opt.file_dir + "/reg/";
-  if(!exists(reg_dir))
+  if(!exists(file_dir + "/reg/"))
     throw LSPException("Error finding 'reg' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
-  
-  basename = "-corr1.txt";
 }
 
 
 Corrnhdr::~Corrnhdr(){
-  //airMopOkay(mop);
+  airMopOkay(mop);
 }
 
 
@@ -55,7 +51,7 @@ void Corrnhdr::compute_offsets(){
   // read shifts and offsets from input file
   offsets.push_back({0, 0, 0});
   for (auto i = 0; i <= opt.num; i++) {
-    path file = reg_dir + zero_pad(i, 3) + basename;
+    path file = file_dir + "/reg/" + zero_pad(i, 3) + "-corr1.txt";
     if (exists(file)) {
       std::ifstream inFile;
       inFile.open(file.string());
@@ -80,7 +76,7 @@ void Corrnhdr::compute_offsets(){
   //save offsets into nrrd file
   offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
   nrrd_checker(nrrdWrap_va(offset_origin, offsets.data(), nrrdTypeDouble, 2, 3, offsets.size()) ||
-                nrrdSave((reg_dir+"offsets.nrrd").c_str(), offset_origin, NULL),
+                nrrdSave((file_dir+"/reg/offsets.nrrd").c_str(), offset_origin, NULL),
               mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 }
 
@@ -198,7 +194,7 @@ void Corrnhdr::main() {
 
   //output files
   for (size_t i = 0; i <= opt.num; i++) {
-    path file = nhdr_dir + zero_pad(i, 3) + ".nhdr";
+    path file = file_dir + "/nhdr/" + zero_pad(i, 3) + ".nhdr";
     if (exists(file)) {
       Nrrd *old_nrrd = safe_nrrd_load(mop, file.string()),
            *new_nrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -215,11 +211,14 @@ void Corrnhdr::main() {
 
       double origin[3] = {xs*x_scale, ys*y_scale, zs*z_scale};
 
-      nrrdSpaceOriginSet(new_nrrd, origin);
+      nrrd_checker(nrrdSpaceOriginSet(new_nrrd, origin),
+                  mop, "Error setting origin for nhdr-corr files:\n", "corrnhdr.cpp", "corrnhdr_main");
+
       new_nrrd->type = nrrdTypeUShort;
 
-      std::string o_name = nhdr_dir + zero_pad(i, 3) + "-corr.nhdr";
-      nrrdSave(o_name.c_str(), new_nrrd, NULL);
+      std::string o_name = file_dir + "/nhdr-corr/" + zero_pad(i, 3) + ".nhdr";
+      nrrd_checker(nrrdSave(o_name.c_str(), new_nrrd, NULL),
+                  mop, "Error saving output nrrd files:\n", "corrnhdr.cpp", "corrnhdr_main");
 
       airMopSingleOkay(mop, old_nrrd);
       airMopSingleOkay(mop, new_nrrd);

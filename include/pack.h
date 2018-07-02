@@ -37,6 +37,7 @@ private:
 	void run_corrimg();
 	void run_corrfind();
 	void run_corrnhdr();
+	void run_anim_corr();
 	void run_all();
 
 	int find_tmax();

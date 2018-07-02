@@ -14,6 +14,7 @@
 #include "corrfind.h"
 #include "corrnhdr.h"
 #include "anim.h"
+#include "proj.h"
 
 #include "pack.h"
 
@@ -89,7 +90,7 @@ int Pack::find_tmax(){
   		}
   	}
   }
-
+  return 50;
   return tmax;
 }
 
@@ -171,6 +172,10 @@ void Pack::run_corrfind(){
 
 
 void Pack::run_corrnhdr(){
+	//build nhdr-corr folder
+	if(!exists(data_dir+"/nhdr-corr/"))
+		create_directory(data_dir+"/nhdr-corr/");
+
  	corrnhdrOptions corrnhdr_opt;
  	corrnhdr_opt.file_dir = data_dir;
  	corrnhdr_opt.num = find_tmax();
@@ -180,26 +185,58 @@ void Pack::run_corrnhdr(){
 
 
 void Pack::run_anim(){
-	//build reg folder
+	//build anim folder
 	if(!exists(data_dir+"/anim/"))
 		create_directory(data_dir+"/anim/");
 
-	//resample args
-	// TODO: How to decide down_samp??
-	int down_samp = 2;
 	Xml_getter x(safe_path(data_dir+"/xml/000.xml").string());
 
-	AnimOptions anim_opt;
+	animOptions anim_opt;
 	anim_opt.tmax = find_tmax();
 	anim_opt.proj_path = data_dir + "/proj/";
 	anim_opt.anim_path = data_dir + "/anim/";
-	anim_opt.dwn_sample = down_samp;
+	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
 	anim_opt.scale_x = std::stof(x("ScalingX"));
 	anim_opt.scale_z = std::stof(x("ScalingZ"));
-anim_opt.verbose = 1;
+
 	Anim(anim_opt).main();
 }
 
+void Pack::run_anim_corr(){
+	std::string nhdr_path = data_dir+"/nhdr-corr/";
+	std::string proj_path = data_dir+"/proj-corr/";
+	std::string anim_path = data_dir+"/anim-corr/";
+
+	//build proj-corr folder
+	if(!exists(proj_path))
+		create_directory(proj_path);
+
+	//build proj-corr files
+	for(auto i=0; i<=tmax; ++i){
+		projOptions proj_opt;
+		proj_opt.file_number = tmax;
+		proj_opt.nhdr_path = nhdr_path;
+		proj_opt.proj_path = proj_path;
+
+		Proj(proj_opt).main();	
+	}
+
+	//build anim
+	if(!exists(anim_path))
+		create_directory(anim_path);
+
+	Xml_getter x(safe_path(data_dir+"/xml/000.xml").string());
+
+	animOptions anim_opt;
+	anim_opt.tmax = find_tmax();
+	anim_opt.proj_path = proj_path;
+	anim_opt.anim_path = anim_path;
+	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
+	anim_opt.scale_x = std::stof(x("ScalingX"));
+	anim_opt.scale_z = std::stof(x("ScalingZ"));
+
+	Anim(anim_opt).main();
+}
 
 void Pack::run_nhdrcheck(){}
 void Pack::run_untext(){}
@@ -228,6 +265,8 @@ void Pack::main(){
 		run_corrfind();
 	else if(cmd == "corrnhdr")
 		run_corrnhdr();
+	else if(cmd == "anim_corr")
+		run_anim_corr();
 	else if(cmd == "all")
 		run_all();
 	else
