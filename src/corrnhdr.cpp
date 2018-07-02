@@ -196,12 +196,9 @@ void Corrnhdr::main() {
   for (size_t i = 0; i <= opt.num; i++) {
     path file = file_dir + "/nhdr/" + zero_pad(i, 3) + ".nhdr";
     if (exists(file)) {
-      Nrrd *old_nrrd = safe_nrrd_load(mop, file.string()),
-           *new_nrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+      //compute new origin
+      Nrrd *old_nrrd = safe_nrrd_load(mop, file.string());
 
-      nrrd_checker(nrrdCopy(new_nrrd, old_nrrd),
-                  mop, "Error copying nrrd:\n", "corrnhdr.cpp", "corrnhdr_main");
-      
       double xs = old_nrrd->axis[0].spacing,
              ys = old_nrrd->axis[1].spacing,
              zs = old_nrrd->axis[2].spacing,
@@ -209,19 +206,27 @@ void Corrnhdr::main() {
              y_scale = nrrdDLookup[offset_smooth1->type](offset_smooth1->data, i*3+1),
              z_scale = nrrdDLookup[offset_smooth1->type](offset_smooth1->data, i*3+2);
 
-      double origin[3] = {xs*x_scale, ys*y_scale, zs*z_scale};
+      std::string origin = "space origin: ("
+                           + std::to_string(xs*x_scale) + ", "
+                           + std::to_string(ys*y_scale) + ", "
+                           + std::to_string(zs*z_scale) + ")";
 
-      nrrd_checker(nrrdSpaceOriginSet(new_nrrd, origin),
-                  mop, "Error setting origin for nhdr-corr files:\n", "corrnhdr.cpp", "corrnhdr_main");
-
-      new_nrrd->type = nrrdTypeUShort;
-
+      //build new nhdr
       std::string o_name = file_dir + "/nhdr-corr/" + zero_pad(i, 3) + ".nhdr";
-      nrrd_checker(nrrdSave(o_name.c_str(), new_nrrd, NULL),
-                  mop, "Error saving output nrrd files:\n", "corrnhdr.cpp", "corrnhdr_main");
+      std::ifstream ifile(file.string());
+      std::ofstream ofile(o_name);
+
+      std::string line;
+      while(getline(ifile, line)){
+        if(line.find("type:") != std::string::npos){
+          ofile << "type: signed short" << std::endl;
+          ofile << origin << std::endl;
+        }
+        else
+          ofile << line << std::endl;
+      }
 
       airMopSingleOkay(mop, old_nrrd);
-      airMopSingleOkay(mop, new_nrrd);
     }
     else
       std::cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
