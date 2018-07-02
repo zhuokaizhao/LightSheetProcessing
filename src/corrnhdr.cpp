@@ -192,17 +192,20 @@ void Corrnhdr::main() {
   median_filtering();
   smooth();
 
+  Nrrd *old_nrrd = safe_nrrd_load(mop, file.string());
+
+  double xs = old_nrrd->axis[0].spacing,
+         ys = old_nrrd->axis[1].spacing,
+         zs = old_nrrd->axis[2].spacing;
+
+  airMopSingleOkay(mop, old_nrrd);
+
   //output files
   for (size_t i = 0; i <= opt.num; i++) {
     path file = file_dir + "/nhdr/" + zero_pad(i, 3) + ".nhdr";
     if (exists(file)) {
       //compute new origin
-      Nrrd *old_nrrd = safe_nrrd_load(mop, file.string());
-
-      double xs = old_nrrd->axis[0].spacing,
-             ys = old_nrrd->axis[1].spacing,
-             zs = old_nrrd->axis[2].spacing,
-             x_scale = nrrdDLookup[offset_smooth1->type](offset_smooth1->data, i*3),
+      double x_scale = nrrdDLookup[offset_smooth1->type](offset_smooth1->data, i*3),
              y_scale = nrrdDLookup[offset_smooth1->type](offset_smooth1->data, i*3+1),
              z_scale = nrrdDLookup[offset_smooth1->type](offset_smooth1->data, i*3+2);
 
@@ -225,8 +228,6 @@ void Corrnhdr::main() {
         else
           ofile << line << std::endl;
       }
-
-      airMopSingleOkay(mop, old_nrrd);
     }
     else
       std::cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
