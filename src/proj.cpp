@@ -22,7 +22,7 @@ void setup_proj(CLI::App &app) {
 
 
 Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew()) {
-  nhdr_name = opt.nhdr_path + zero_pad(opt.file_number, 3) + ".nrrd";
+  nhdr_name = opt.nhdr_path + zero_pad(opt.file_number, 3) + ".nhdr";
   proj_common = opt.proj_path + zero_pad(opt.file_number, 3) + "-proj";
 }
 

@@ -212,15 +212,17 @@ void Pack::run_anim_corr(){
 		create_directory(proj_path);
 
 	//build proj-corr files
+	tmax = find_tmax();
 	for(auto i=0; i<=tmax; ++i){
 		projOptions proj_opt;
-		proj_opt.file_number = tmax;
+		proj_opt.file_number = i;
 		proj_opt.nhdr_path = nhdr_path;
 		proj_opt.proj_path = proj_path;
 
 		Proj(proj_opt).main();	
+	printf("build %d th proj-corr", i);
 	}
-
+printf("built all projs\n");
 	//build anim
 	if(!exists(anim_path))
 		create_directory(anim_path);

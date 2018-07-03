@@ -4,6 +4,7 @@
 
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include <regex>
 
 #include <teem/nrrd.h>
 
@@ -192,13 +193,23 @@ void Corrnhdr::main() {
   median_filtering();
   smooth();
 
-  Nrrd *old_nrrd = safe_nrrd_load(mop, file.string());
-
-  double xs = old_nrrd->axis[0].spacing,
-         ys = old_nrrd->axis[1].spacing,
-         zs = old_nrrd->axis[2].spacing;
-
-  airMopSingleOkay(mop, old_nrrd);
+  //read spacing from first nhdr file
+  double xs, ys, zs;
+  std::ifstream ifile(file_dir+"/nhdr/000.nhdr");
+  std::string line;
+  while(getline(ifile, line)){
+    if(line.find("directions:") != std::string::npos){
+      std::regex reg(".*\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
+      std::smatch res;
+      if(std::regex_search(line, res, reg)){
+        xs = std::stof(res[1]);
+        ys = std::stof(res[2]);
+        zs = std::stof(res[3]);
+      }
+      break;
+    }
+  }
+  ifile.close();
 
   //output files
   for (size_t i = 0; i <= opt.num; i++) {
@@ -221,10 +232,10 @@ void Corrnhdr::main() {
 
       std::string line;
       while(getline(ifile, line)){
-        if(line.find("type:") != std::string::npos){
+        if(line.find("type:") != std::string::npos)
           ofile << "type: signed short" << std::endl;
-          ofile << origin << std::endl;
-        }
+	else if(line.find("space origin:") != std::string::npos)
+	  ofile << origin << std::endl;
         else
           ofile << line << std::endl;
       }
