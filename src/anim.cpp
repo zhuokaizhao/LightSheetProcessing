@@ -68,25 +68,24 @@ void Anim::split_type(){
                          safe_nrrd_load(mop, yz_proj_file)};
     double resample_rsm[2][2] = {{resample_xy, resample_xy},
                                   {resample_xy, resample_z}};
-    double kparm[2] = {0, 0.5};
+    double kparm[3] = {1, 0, 0.5};
     for(auto i=0; i<2; ++i){
       auto rsmc = nrrdResampleContextNew();
       airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
-/*
+
       nrrd_checker(nrrdResampleInputSet(rsmc, proj_rsm[i]) ||
                       nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
-                      nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i][0]))) ||
+                      nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[0].size*resample_rsm[i][0]))) ||
                       nrrdResampleRangeFullSet(rsmc, 0) ||
-                      nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
-                      nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
                       nrrdResampleKernelSet(rsmc, 1, nrrdKernelBCCubic, kparm) ||
                       nrrdResampleSamplesSet(rsmc, 1, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i][1]))) ||
                       nrrdResampleRangeFullSet(rsmc, 1) ||
                       nrrdResampleKernelSet(rsmc, 2, NULL, NULL) ||
                       nrrdResampleKernelSet(rsmc, 3, NULL, NULL) ||
+                      nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
+                      nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
                       nrrdResampleExecute(rsmc, proj_rsm[i]),
                   mop, "Error resampling nrrd:\n", "anim.cpp", "Anim::split_type");
-*/
 
       //SWAP(AX0 AX1) for yz plane
       if(i==1)
@@ -95,7 +94,7 @@ void Anim::split_type(){
 
       nrrd_checker(nrrdSlice(res_rsm[i][0], proj_rsm[i], 3, 0) || 
                       nrrdSlice(res_rsm[i][1], proj_rsm[i], 3, 1),
-                  mop, "Error slicng nrrd:\n", "anim.cpp", "Anim::split_type");
+                  mop, "Error slicing nrrd:\n", "anim.cpp", "Anim::split_type");
 
       airMopSingleOkay(mop, rsmc);
     }
@@ -150,16 +149,18 @@ void Anim::make_max_frame(std::string direction){
   airMopSingleOkay(mop, joined);
 
   //quantize to 8bit
-  auto range = nrrdRangeNew(AIR_NAN, AIR_NAN);
-  airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-  nrrd_checker(nrrdRangePercentileFromStringSet(range, ch0,  "5%", "0.02%", 5000, true) ||
-                nrrdQuantize(bit0, ch0, range, 8),
+  auto range0 = nrrdRangeNew(AIR_NAN, AIR_NAN);
+  airMopAdd(mop, range0, (airMopper)nrrdRangeNix, airMopAlways);
+  nrrd_checker(nrrdRangePercentileFromStringSet(range0, ch0,  "5%", "0.02%", 5000, true) ||
+                nrrdQuantize(bit0, ch0, range0, 8),
               mop, "Error quantizing ch1 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
-  //set brightness for ch2(and quantize to 8bit)
-  nrrd_checker(nrrdArithGamma(ch1, ch1, NULL, 3) ||
-                  nrrdRangePercentileFromStringSet(range, ch1, "5%", "0.01%", 5000, true) ||
-                  nrrdQuantize(bit1, ch1, range, 8),
+  //set brightness for ch1(and quantize to 8bit)
+  auto range1 = nrrdRangeNew(AIR_NAN, AIR_NAN);
+  airMopAdd(mop, range1, (airMopper)nrrdRangeNix, airMopAlways);
+  nrrd_checker(nrrdArithGamma(ch1, ch1, NULL, 10) ||
+                  nrrdRangePercentileFromStringSet(range1, ch1, "5%", "0.01%", 5000, true) ||
+                  nrrdQuantize(bit1, ch1, range1, 8),
               mop, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
   
   airMopSingleOkay(mop, ch0);
@@ -214,12 +215,11 @@ void Anim::make_avg_frame(std::string direction){
   auto rsmc = nrrdResampleContextNew();
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
-/*
   double kparm[2] = {40,3};
   nrrd_checker(nrrdResampleInputSet(rsmc, joined) ||
                   nrrdResampleKernelSet(rsmc, 0, nrrdKernelGaussian, kparm) ||
                   nrrdResampleSamplesSet(rsmc, 0, joined->axis[0].size) ||
-                  nrrdResampleRangeFullSet(rsmc, 1) ||
+                  nrrdResampleRangeFullSet(rsmc, 0) ||
                   nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
                   nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
                   nrrdResampleKernelSet(rsmc, 1, nrrdKernelGaussian, kparm) ||
@@ -229,34 +229,40 @@ void Anim::make_avg_frame(std::string direction){
                   nrrdResampleKernelSet(rsmc, 3, NULL, NULL) ||
                   nrrdResampleExecute(rsmc, ch),
               mop,  "Error resampling nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
-*/
+
   //slice on ch 
   Nrrd* ch0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   Nrrd* ch1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   NrrdIter* nit1 = nrrdIterNew();
   NrrdIter* nit2 = nrrdIterNew();
+  NrrdIter* nit3 = nrrdIterNew();
+  NrrdIter* nit4 = nrrdIterNew();
 
   nrrdIterSetOwnNrrd(nit1, ch);
   nrrdIterSetValue(nit2, 0.5);
+  nrrd_checker(nrrdArithIterBinaryOp(ch, nrrdBinaryOpMultiply, nit1, nit2),
+              mop,  "Error doing BinaryMultiply nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
-  nrrdArithIterBinaryOp(ch, nrrdBinaryOpMultiply, nit1, nit2);
+  nrrdIterSetOwnNrrd(nit3, ch);
+  nrrdIterSetOwnNrrd(nit4, joined);
 
-  nrrdIterSetOwnNrrd(nit1, ch);
-  nit2 = nrrdIterNix(nit2);
-  nrrdIterSetOwnNrrd(nit2, joined);
+  nrrd_checker(nrrdArithIterBinaryOp(joined, nrrdBinaryOpSubtract, nit4, nit3),
+              mop,  "Error doing BinarySubstract nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
-  nrrdArithIterBinaryOp(joined, nrrdBinaryOpSubtract, nit2, nit1);
-
-  nrrdSlice(ch0, joined, 2, 0);
-  nrrdSlice(ch1, joined, 2, 1);
+  nrrd_checker(nrrdSlice(ch0, joined, 2, 0) ||
+                nrrdSlice(ch1, joined, 2, 1),
+              mop,  "Error slicing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
   airMopSingleOkay(mop, joined);
   airMopSingleOkay(mop, ch);
 
-  // Assume this iterator part is nonexcept and do not add nrrdIterNix into mop because we use nix as 'reset' above.
-  nrrdIterNix(nit1);
-  nrrdIterNix(nit2);
+  //TODO: In fact, we' better add cleanup function to mop, but nrrd lib only provide `nrrdIterNix` which will clean iter->nrrd also.
+  //This simple free() here may cause memory leak.
+  free(nit1);
+  free(nit2);
+  free(nit3);
+  free(nit4);
 
   //quantize to 8bit
   Nrrd* bit0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);

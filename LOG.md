@@ -38,3 +38,7 @@ Coded `proj` for build projections based on nhdr file.
 Did correctness check.  
 1. `proj` prints correct projs but skim does not. 
 2. `anim` works well but I have to face the resampling promblem.    
+
+07/04/2018  
+1. Completed `anim` lib(resampling part).        
+2. `proj` in fact returns bad results because bad points(abnormal peaks) in original dataset.       
