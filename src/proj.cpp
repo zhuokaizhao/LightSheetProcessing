@@ -65,8 +65,8 @@ void Proj::main(){
   Nrrd* nproj_xy = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   Nrrd* nproj_xy_t[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                         safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-  nrrdProject(nproj_xy_t[0], blured, 3, nrrdMeasureMax, nrrdTypeFloat);
-  nrrdProject(nproj_xy_t[1], blured, 3, nrrdMeasureMean, nrrdTypeFloat);
+  nrrdProject(nproj_xy_t[0], nin, 3, nrrdMeasureMax, nrrdTypeFloat);
+  nrrdProject(nproj_xy_t[1], nin, 3, nrrdMeasureMean, nrrdTypeFloat);
   nrrdJoin(nproj_xy, nproj_xy_t, 2, 3, 1);
 
   nrrdAxisInfoSet_va(nproj_xy, nrrdAxisInfoLabel, "x", "y", "c", "proj");
@@ -77,8 +77,8 @@ void Proj::main(){
   Nrrd* nproj_xz = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   Nrrd* nproj_xz_t[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                         safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-  nrrdProject(nproj_xz_t[0], blured, 1, nrrdMeasureMax, nrrdTypeFloat);
-  nrrdProject(nproj_xz_t[1], blured, 1, nrrdMeasureMean, nrrdTypeFloat);
+  nrrdProject(nproj_xz_t[0], nin, 1, nrrdMeasureMax, nrrdTypeFloat);
+  nrrdProject(nproj_xz_t[1], nin, 1, nrrdMeasureMean, nrrdTypeFloat);
   nrrdJoin(nproj_xz, nproj_xz_t, 2, 3, 1);
 
   unsigned int permute[4] = {0, 2, 1, 3}; //same permute array for xz and yz coincidently
@@ -91,8 +91,8 @@ void Proj::main(){
   Nrrd* nproj_yz = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   Nrrd* nproj_yz_t[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                         safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-  nrrdProject(nproj_yz_t[0], blured, 0, nrrdMeasureMax, nrrdTypeFloat);
-  nrrdProject(nproj_yz_t[1], blured, 0, nrrdMeasureMean, nrrdTypeFloat);
+  nrrdProject(nproj_yz_t[0], nin, 0, nrrdMeasureMax, nrrdTypeFloat);
+  nrrdProject(nproj_yz_t[1], nin, 0, nrrdMeasureMean, nrrdTypeFloat);
   nrrdJoin(nproj_yz, nproj_yz_t, 2, 3, 1);
 
   nrrdAxesPermute(nproj_yz, nproj_yz, permute);
