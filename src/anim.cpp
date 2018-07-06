@@ -4,6 +4,7 @@
 
 #include <teem/nrrd.h>
 #include <opencv2/opencv.hpp>
+#include <omp.h>
 #include "anim.h"
 #include "util.h"
 
@@ -48,6 +49,7 @@ void Anim::split_type(){
     std::cout << "Resampling Factors: resample_xy = " << resample_xy << ", resample_z = " << resample_z << std::endl;
 
   // slice and resample projection files
+  #pragma omp parallel for
   for(int i = 0; i <= opt.tmax; i++) {
     std::string iii = zero_pad(i, 3);
 
@@ -167,6 +169,7 @@ void Anim::make_max_frame(std::string direction){
   airMopSingleOkay(mop, ch1);
 
   //slice on time and output
+  #pragma omp parallel for
   for (size_t t = 0; t <= opt.tmax; ++t) {
     Nrrd* bit0_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     Nrrd* bit1_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -279,6 +282,7 @@ void Anim::make_avg_frame(std::string direction){
   airMopSingleOkay(mop, ch1);
 
   //slice on time and output
+  #pragma omp parallel for
   for (size_t t = 0; t <= opt.tmax; ++t) {
     Nrrd* bit0_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     Nrrd* bit1_t = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -305,6 +309,7 @@ void Anim::make_avg_frame(std::string direction){
 
 void Anim::build_png() {
   for(auto type: {"max", "avg"}){
+    #pragma omp parallel for
     for(auto i=0; i<=opt.tmax; ++i){
       if(opt.verbose)
         std::cout << "===== " << zero_pad(i, 3) << "/" << opt.tmax << " " << type << "_pngs" << " =====================" << std::endl;

@@ -4,6 +4,8 @@
 
 #include <boost/filesystem.hpp>
 #include <regex>
+#include <omp.h>
+
 #include "CLI11.hpp"
 
 #include "skimczi.h"
@@ -38,9 +40,11 @@ void setup_pack(CLI::App &app){
 }
 
 
-Pack::Pack(packOptions const &opt): opt(opt){
+Pack::Pack(packOptions const &opt): opt(opt), data_dir(canonical(opt.data_dir).string()){
   //better change path to absolute and resolve links if neccessary.
-  data_dir = canonical(opt.data_dir).string();
+  
+  //set thread num
+  omp_set_num_threads(16);
 }
 
 
@@ -97,33 +101,54 @@ int Pack::find_tmax(){
 
 void Pack::run_skim(){
 	//build related folders
-	for(std::string str: {"/nhdr/", "/proj/", "/xml/"}){
+	//for(std::string str: {"/nhdr/", "/proj/", "/xml/"}){
+	for(std::string str: {"/nhdr/", "/xml/"}){
 		if(!exists(data_dir+str))
 			create_directory(data_dir+str);
 	}
 
 	//loop all files
 	directory_iterator end_iter;
-	for(directory_iterator iter(safe_path(data_dir+"/czi/")); iter!=end_iter; ++iter){
-		if(is_regular_file(iter->path())){
-			std::string current_file = iter->path().string();
+	std::vector<path> paths;
+	for(auto iter = directory_iterator(safe_path(data_dir+"/czi/")); iter!=end_iter; ++iter)
+		paths.push_back(iter->path());
+	#pragma omp parallel for
+	for(auto i=0; i<paths.size(); ++i){
+		if(is_regular_file(paths[i])){
+			std::string current_file = paths[i].string();
 			//find file number
 			int num = 0;
-		  std::regex pattern("[(](.*)[)]");
-		  if(std::regex_search(current_file, pattern)){
-		    std::smatch results;
-		    std::regex_search(current_file, results, pattern);
-		    num = std::stoi(results[1]);
-  		}
+			std::regex pattern("[(](.*)[)]");
+			if(std::regex_search(current_file, pattern)){
+			    std::smatch results;
+			    std::regex_search(current_file, results, pattern);
+			    num = std::stoi(results[1]);
+	  		}
 
-  		std::string iii = zero_pad(num, 3);
-  		SkimOptions skim_opt;
-  		skim_opt.file = current_file;
-  		skim_opt.no	= data_dir + "/nhdr/" + iii + ".nhdr";
-  		skim_opt.xo = data_dir + "/xml/" + iii + ".xml";
-  		skim_opt.po = data_dir + "/proj/" + iii;
-		Skim(skim_opt).main();
+	  		std::string iii = zero_pad(num, 3);
+	  		SkimOptions skim_opt;
+	  		skim_opt.file = current_file;
+	  		skim_opt.no	= data_dir + "/nhdr/" + iii + ".nhdr";
+	  		skim_opt.xo = data_dir + "/xml/" + iii + ".xml";
+	  		//skim_opt.po = data_dir + "/proj/" + iii; //do not create projection here.
+			Skim(skim_opt).main();
 		}
+	}
+}
+
+
+void Pack::run_proj(std::string nhdr, std::string proj){
+	if(!exists(data_dir+proj))
+		create_directory(data_dir+proj);
+
+	tmax = find_tmax();
+	#pragma omp parallel for
+	for(auto i=0; i<=tmax; ++i){
+		projOptions proj_opt;
+		proj_opt.file_number = i;
+		proj_opt.nhdr_path = data_dir + nhdr;
+		proj_opt.proj_path = data_dir + proj;
+		Proj(proj_opt).main();
 	}
 }
 
@@ -135,9 +160,13 @@ void Pack::run_corrimg(){
 
 	//loop all files
 	directory_iterator end_iter;
-	for(directory_iterator iter(safe_path(data_dir+"/proj/")); iter!=end_iter; ++iter){
-		if(is_regular_file(iter->path())){
-			std::string current_file = iter->path().string();
+	std::vector<path> paths;
+	for(auto iter = directory_iterator(safe_path(data_dir+"/proj/")); iter!=end_iter; ++iter)
+		paths.push_back(iter->path());
+	#pragma omp parallel for
+	for(auto i=0; i<paths.size(); ++i){
+		if(is_regular_file(paths[i])){
+			std::string current_file = paths[i].string();
 			//find "iii" and "XX" in pattern "../../iii-projXX.nrrd"
 		  std::regex pattern("(\\w{3})-proj(\\w{2})");
 		  if(std::regex_search(current_file, pattern)){
@@ -158,10 +187,10 @@ void Pack::run_corrimg(){
 
 
 void Pack::run_corrfind(){
-	int max = find_tmax();
+  tmax = find_tmax();
 
-  //call corrfind
-  for(auto i=0; i<=max; ++i){
+  #pragma omp parallel for
+  for(auto i=0; i<=tmax; ++i){
   	corrfindOptions corrfind_opt;
   	corrfind_opt.file_dir = data_dir + "/reg/";
   	corrfind_opt.file_number = i;
@@ -184,91 +213,59 @@ void Pack::run_corrnhdr(){
 }
 
 
-void Pack::run_anim(){
+void Pack::run_anim(std::string anim, std::string proj){
 	//build anim folder
-	if(!exists(data_dir+"/anim/"))
-		create_directory(data_dir+"/anim/");
+	if(!exists(data_dir+anim))
+		create_directory(data_dir+anim);
 
 	Xml_getter x(safe_path(data_dir+"/xml/000.xml").string());
 
 	animOptions anim_opt;
 	anim_opt.tmax = find_tmax();
-	anim_opt.proj_path = data_dir + "/proj/";
-	anim_opt.anim_path = data_dir + "/anim/";
+	anim_opt.proj_path = data_dir + proj;
+	anim_opt.anim_path = data_dir + anim;
 	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
 	anim_opt.scale_x = std::stof(x("ScalingX"));
 	anim_opt.scale_z = std::stof(x("ScalingZ"));
 
-	Anim(anim_opt).main();
+	Anim(anim_opt).main();	//parallelized in function
 }
 
-void Pack::run_anim_corr(){
-	std::string nhdr_path = data_dir+"/nhdr-corr/";
-	std::string proj_path = data_dir+"/proj-corr/";
-	std::string anim_path = data_dir+"/anim-corr/";
-
-	//build proj-corr folder
-	if(!exists(proj_path))
-		create_directory(proj_path);
-
-	//build proj-corr files
-	tmax = find_tmax();
-	for(auto i=0; i<=tmax; ++i){
-		projOptions proj_opt;
-		proj_opt.file_number = i;
-		proj_opt.nhdr_path = nhdr_path;
-		proj_opt.proj_path = proj_path;
-
-		Proj(proj_opt).main();	
-	printf("build %d th proj-corr", i);
-	}
-printf("built all projs\n");
-	//build anim
-	if(!exists(anim_path))
-		create_directory(anim_path);
-
-	Xml_getter x(safe_path(data_dir+"/xml/000.xml").string());
-
-	animOptions anim_opt;
-	anim_opt.tmax = find_tmax();
-	anim_opt.proj_path = proj_path;
-	anim_opt.anim_path = anim_path;
-	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
-	anim_opt.scale_x = std::stof(x("ScalingX"));
-	anim_opt.scale_z = std::stof(x("ScalingZ"));
-
-	Anim(anim_opt).main();
-}
 
 void Pack::run_nhdrcheck(){}
 void Pack::run_untext(){}
 void Pack::run_all(){
 	//temporarily
 	run_skim();
+	run_proj("/nhdr/", "/proj/");
+	run_anim("/anim/", "/proj/");
 	run_corrimg();
 	run_corrfind();
 	run_corrnhdr();
+	run_proj("/nhdr-corr/", "/proj-corr/");
+	run_anim("/anim-corr/", "/proj-corr/");
 }
 
 
 void Pack::main(){
 	std::string cmd = opt.command;
-	if(cmd == "skim")
+	if(cmd == "skim"){
 		run_skim();
+		run_proj("/nhdr/", "/proj/");
+	}
 	else if(cmd == "anim")
-		run_anim();
-	else if(cmd == "nhdrcheck")
-		run_nhdrcheck();
+		run_anim("/anim/", "/proj/");
+	else if(cmd == "corr"){
+		run_corrimg();
+		run_corrfind();
+		run_corrnhdr();
+	}
+	else if(cmd == "anim_corr"){
+		run_proj("/nhdr-corr/", "/proj-corr/");
+		run_anim("/anim-corr/", "/proj-corr/");
+	}
 	else if(cmd == "untext")
 		run_untext();
-	else if(cmd == "corrimg")
-		run_corrimg();
-	else if(cmd == "corrfind")
-		run_corrfind();
-	else if(cmd == "corrnhdr")
-		run_corrnhdr();
-	else if(cmd == "anim_corr")
-		run_anim_corr();
 	else if(cmd == "all")
 		run_all();
 	else

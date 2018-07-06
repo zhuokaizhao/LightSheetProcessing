@@ -31,13 +31,13 @@ public:
 
 private:
 	void run_skim();
-	void run_anim();
+	void run_proj(std::string nhdr, std::string proj);
+	void run_anim(std::string anim, std::string proj);
 	void run_nhdrcheck();
 	void run_untext();
 	void run_corrimg();
 	void run_corrfind();
 	void run_corrnhdr();
-	void run_anim_corr();
 	void run_all();
 
 	int find_tmax();
@@ -46,8 +46,10 @@ private:
 	boost::filesystem::path safe_path(std::string const &folder);
 
 	packOptions const opt;
-	std::string data_dir;
+	std::string const data_dir;
 	int tmax = -1;
+
+
 };
 
 
