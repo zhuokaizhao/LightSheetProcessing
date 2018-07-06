@@ -1,4 +1,4 @@
-module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmp
+module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi
 
 CXX=$(which g++)
 outer_path=$(cd $(dirname $0); cd ../..; pwd -P)
@@ -18,13 +18,13 @@ make install
 if [[ ":$PATH:" != *":$install_path/bin:"* ]]; then
 	echo "Add lsp information to the end of ~/. bash_profile"
 	echo "# Here start writing lsp into \$PATH" >> ~/.bash_profile
-	echo "module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmp" >> ~/.bash_profile
+	echo "module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi" >> ~/.bash_profile
 	echo "PATH=\$PATH:\$HOME/bin:$install_path/bin" >> ~/.bash_profile
 	echo "export PATH" >> ~/.bash_profile
 	echo "# Complete writeing lsp information" >> ~/.bash_profile
 
 	echo "# Here start writing lsp into \$PATH" >> ~/.profile
-	echo "module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmp" >> ~/.profile
+	echo "module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi" >> ~/.profile
 	echo "PATH=\$PATH:\$HOME/bin:$install_path/bin" >> ~/.profile
 	echo "export PATH" >> ~/.profile
 	echo "# Complete writeing lsp information" >> ~/.profile

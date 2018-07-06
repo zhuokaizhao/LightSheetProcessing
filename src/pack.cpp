@@ -63,11 +63,11 @@ int Pack::find_tmax(){
 		return tmax;
 
 	std::string exist_path, path_pattern;
-	if(exists(data_dir+"/proj/")){
-		//find the max file number based on nhdr/ (for run_anim)
-		exist_path = data_dir+"/proj/";
-		//find "iii" in pattern "../../iii-projXX.nrrd"
-		path_pattern = "(\\w{3})-proj\\w{2}\\.nrrd";
+	if(exists(data_dir+"/nhdr/")){
+		//find the max file number based on nhdr/ (for run_proj)
+		exist_path = data_dir+"/nhdr/";
+		//find "iii" in pattern "../../iii.nhdr"
+		path_pattern = "(\\w{3})\\.nhdr";
 	}
 	else if(exists(data_dir+"/reg/")){
 		//find the max file number based on reg/ (for corr*s)
@@ -94,7 +94,6 @@ int Pack::find_tmax(){
   		}
   	}
   }
-  return 50;
   return tmax;
 }
 
@@ -227,7 +226,7 @@ void Pack::run_anim(std::string anim, std::string proj){
 	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
 	anim_opt.scale_x = std::stof(x("ScalingX"));
 	anim_opt.scale_z = std::stof(x("ScalingZ"));
-
+anim_opt.verbose = 1;
 	Anim(anim_opt).main();	//parallelized in function
 }
 
@@ -253,13 +252,17 @@ void Pack::main(){
 		run_skim();
 		run_proj("/nhdr/", "/proj/");
 	}
+	else if(cmd == "proj")
+		run_proj("/nhdr/", "/proj/");
 	else if(cmd == "anim")
 		run_anim("/anim/", "/proj/");
-	else if(cmd == "corr"){
+	else if(cmd == "corrimg"){
 		run_corrimg();
-		run_corrfind();
-		run_corrnhdr();
 	}
+	else if(cmd == "corrfind")
+		run_corrfind();
+	else if(cmd == "corrnhdr")
+		run_corrnhdr();
 	else if(cmd == "anim_corr"){
 		run_proj("/nhdr-corr/", "/proj-corr/");
 		run_anim("/anim-corr/", "/proj-corr/");
