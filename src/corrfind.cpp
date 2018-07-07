@@ -21,7 +21,7 @@ void setup_corrfind(CLI::App &app) {
   sub->add_option("-f, --file_number", opt->file_number, "File number. This command expects files to be of the form reg/%d-{XY,XZ,YX}.png.")->required();
   sub->add_option("-o, --output", opt->output_name, "Base name to use when saving out the optimal alignemnt of images. (Default: -corr1.txt)");
   sub->add_option("-k, --kernels", opt->kernels, "Kernels to pass to lsp corr. (Default: c4hexic c4hexicd)")->expected(2);
-  sub->add_option("-b, --bound", opt->bound, "Max offset to be passed to lsp corr. (Default: 20)");
+  sub->add_option("-b, --bound", opt->bound, "Max offset to be passed to lsp corr. (Default: 40)");
   sub->add_option("-e, --epsilon", opt->epsilon, "Epsilon to be passed to lsp corr. (Default: 0.00000000000001)");
 
   sub->set_callback([opt]() {
@@ -77,6 +77,7 @@ void Corrfind::main() {
     double zz = (shifts[3] + shifts[5])/2.0;
 
     outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, opt.file_number)} << std::endl;
+    std::cout << std::vector<double>{xx, yy, zz, AIR_CAST(double, opt.file_number)} << std::endl;
   }
 
   outfile.close();

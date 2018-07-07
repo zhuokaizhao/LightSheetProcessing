@@ -129,7 +129,7 @@ void Pack::run_skim(){
 	  		skim_opt.file = current_file;
 	  		skim_opt.no	= data_dir + "/nhdr/" + iii + ".nhdr";
 	  		skim_opt.xo = data_dir + "/xml/" + iii + ".xml";
-	  		//skim_opt.po = data_dir + "/proj/" + iii; //do not create projection here.
+	  		skim_opt.po = data_dir + "/proj/" + iii; //do not create projection here.
 			Skim(skim_opt).main();
 		}
 	}
@@ -236,7 +236,6 @@ void Pack::run_untext(){}
 void Pack::run_all(){
 	//temporarily
 	run_skim();
-	run_proj("/nhdr/", "/proj/");
 	run_anim("/anim/", "/proj/");
 	run_corrimg();
 	run_corrfind();

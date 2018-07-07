@@ -36,7 +36,7 @@ private:
   	void build_video();
 
 	animOptions const opt;
-	airArray* mop;
+	airArray* mop; //in parallelized part, use a thread_loacal mop instead
 };
 
 

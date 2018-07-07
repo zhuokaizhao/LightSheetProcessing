@@ -260,13 +260,13 @@ void Skim::update_projections(){
       auto idx = x + sizeX*y;
       auto cval = current_f[idx];
 
-      if (proj_max_xy[idx] < cval) proj_max_xy[idx] = cval;
-      proj_mean_xy[off_xy+ idx] += cval / sizeZ;
+      if (proj_max_xy[off_xy + idx] < cval) proj_max_xy[off_xy + idx] = cval;
+      proj_mean_xy[off_xy + idx] += cval / sizeZ;
 
-      if (proj_max_xz[x] < cval) proj_max_xz[x] = cval;
+      if (proj_max_xz[off_xz + x] < cval) proj_max_xz[off_xz + x] = cval;
       proj_mean_xz[off_xz + x] += cval/sizeY;
 
-      if (proj_max_yz[y] < cval) proj_max_yz[y] = cval;
+      if (proj_max_yz[off_yz + y] < cval) proj_max_yz[off_yz + y] = cval;
       proj_mean_yz[off_yz + y] += cval / sizeX;
     }
   }
@@ -564,7 +564,7 @@ void Skim::generate_proj(){
     nrrd_checker(E,
                 mop, "Couldn't save projections:\n",
                 "skimczi.cpp", "Skim::generate_proj");
-
+/*
     nrrdStateVerboseIO = 0;
     Nrrd *nin = safe_nrrd_load(mop, nhdrFileName); 
 
@@ -586,7 +586,7 @@ void Skim::generate_proj(){
     }
 
     airMopSingleOkay(mop, nin);
-
+*/
     if (opt.verbose)
       fprintf(stdout, "DONE!\n");
   }
