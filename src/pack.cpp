@@ -212,7 +212,7 @@ void Pack::run_corrnhdr(){
 }
 
 
-void Pack::run_anim(std::string anim, std::string proj){
+void Pack::run_anim(std::string nhdr, std::string anim, std::string proj){
 	//build anim folder
 	if(!exists(data_dir+anim))
 		create_directory(data_dir+anim);
@@ -221,6 +221,7 @@ void Pack::run_anim(std::string anim, std::string proj){
 
 	animOptions anim_opt;
 	anim_opt.tmax = find_tmax();
+	anim_opt.proj_path = data_dir + nhdr;
 	anim_opt.proj_path = data_dir + proj;
 	anim_opt.anim_path = data_dir + anim;
 	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
@@ -236,12 +237,11 @@ void Pack::run_untext(){}
 void Pack::run_all(){
 	//temporarily
 	run_skim();
-	run_anim("/anim/", "/proj/");
+	run_anim("/nhdr/", "/anim/", "/proj/");
 	run_corrimg();
 	run_corrfind();
 	run_corrnhdr();
-	run_proj("/nhdr-corr/", "/proj-corr/");
-	run_anim("/anim-corr/", "/proj-corr/");
+	run_anim("/nhdr-corr/", "/anim-corr/", "/proj/");
 }
 
 
@@ -249,12 +249,9 @@ void Pack::main(){
 	std::string cmd = opt.command;
 	if(cmd == "skim"){
 		run_skim();
-		run_proj("/nhdr/", "/proj/");
 	}
-	else if(cmd == "proj")
-		run_proj("/nhdr/", "/proj/");
 	else if(cmd == "anim")
-		run_anim("/anim/", "/proj/");
+		run_anim("/nhdr/", "/anim/", "/proj/");
 	else if(cmd == "corrimg"){
 		run_corrimg();
 	}
@@ -263,8 +260,7 @@ void Pack::main(){
 	else if(cmd == "corrnhdr")
 		run_corrnhdr();
 	else if(cmd == "anim_corr"){
-		run_proj("/nhdr-corr/", "/proj-corr/");
-		run_anim("/anim-corr/", "/proj-corr/");
+		run_anim("/nhdr-corr/", "/anim-corr/", "/proj/");
 	}
 	else if(cmd == "untext")
 		run_untext();

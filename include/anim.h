@@ -10,6 +10,7 @@
 #include "CLI11.hpp"
 
 struct animOptions {
+    std::string nhdr_path = "nhdr/";
     std::string proj_path = "proj/";
     std::string anim_path = "anim/";
     uint tmax;
@@ -35,8 +36,10 @@ private:
     void build_png();
   	void build_video();
 
-	animOptions const opt;
-	airArray* mop; //in parallelized part, use a thread_loacal mop instead
+    std::vector<double> get_origin(int file_number);
+
+    animOptions const opt;
+    airArray* mop; //in parallelized part, use a thread_loacal mop instead
 };
 
 

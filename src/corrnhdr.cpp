@@ -17,7 +17,7 @@ void setup_corrnhdr(CLI::App &app) {
   auto opt = std::make_shared<corrnhdrOptions>();
   auto sub = app.add_subcommand("corrnhdr", "Apply the corrections calculated by corrimg and corrfind.");
 
-  sub->add_option("-d, --file_dir", opt->file_dir, "Where 'nhdr', nhdr-corr/' and 'reg/' are. Defualt path is working path. (Default: .)");
+  sub->add_option("-d, --file_dir", opt->file_dir, "Where 'nhdr/', nhdr-corr/' and 'reg/' are. Defualt path is working path. (Default: .)");
   sub->add_option("-n, --num_nhdr", opt->num, "The number of the last nhdr file.");
 
   sub->set_callback([opt] {
@@ -199,7 +199,7 @@ void Corrnhdr::main() {
   std::string line;
   while(getline(ifile, line)){
     if(line.find("directions:") != std::string::npos){
-      std::regex reg(".*\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
+      std::regex reg("\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
       std::smatch res;
       if(std::regex_search(line, res, reg)){
         xs = std::stof(res[1]);
@@ -234,8 +234,8 @@ void Corrnhdr::main() {
       while(getline(ifile, line)){
         if(line.find("type:") != std::string::npos)
           ofile << "type: signed short" << std::endl;
-	else if(line.find("space origin:") != std::string::npos)
-	  ofile << origin << std::endl;
+        else if(line.find("space origin:") != std::string::npos)
+          ofile << origin << std::endl;
         else
           ofile << line << std::endl;
       }

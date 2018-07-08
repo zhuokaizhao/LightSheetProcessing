@@ -32,7 +32,7 @@ public:
 private:
 	void run_skim();
 	void run_proj(std::string nhdr, std::string proj);
-	void run_anim(std::string anim, std::string proj);
+	void run_anim(std::string nhdr, std::string anim, std::string proj);
 	void run_nhdrcheck();
 	void run_untext();
 	void run_corrimg();

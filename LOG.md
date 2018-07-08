@@ -42,3 +42,7 @@ Did correctness check.
 07/04/2018  
 1. Completed `anim` lib(resampling part).        
 2. `proj` in fact returns bad results because bad points(abnormal peaks) in original dataset.       
+
+07/06/2018
+1. Rolled `proj` back. Combined projection functions back into `skim`.  
+2. Fixed bugs in `skim`, it can generate correct projs now.
