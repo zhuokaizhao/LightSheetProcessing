@@ -32,7 +32,7 @@ private:
 	airArray* mop;
 	std::string file_dir;
 
-	Nrrd *offset_origin, *offset_median, *offset_smooth1, *offset_smooth;
+	Nrrd *offset_origin, *offset_median, *offset_smooth;
 };
 
 #endif //LSP_CORRNHDR_H
