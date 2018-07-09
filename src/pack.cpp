@@ -252,9 +252,8 @@ void Pack::main(){
 	}
 	else if(cmd == "anim")
 		run_anim("/nhdr/", "/anim/", "/proj/");
-	else if(cmd == "corrimg"){
+	else if(cmd == "corrimg")
 		run_corrimg();
-	}
 	else if(cmd == "corrfind")
 		run_corrfind();
 	else if(cmd == "corrnhdr")

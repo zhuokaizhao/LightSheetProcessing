@@ -44,26 +44,29 @@ Anim::~Anim() {
 }
 
 
-std::vector<double> Anim::get_origin(int file_number){
-  std::vector<double> origin(3, 0);
+std::vector<std::vector<double>> Anim::get_origins(){
+  std::vector<std::vector<double>> origins(opt.tmax, std::vector<double>(3, 0));
 
-  std::ifstream ifile(opt.nhdr_path + zero_pad(file_number, 3) + ".nhdr");
-  std::string line;
-  while(getline(ifile, line)){
-    if(line.find("space origin") != std::string::npos){
-      std::regex reg("\\((.*?), (.*?), (.*?)\\)");
-      std::smatch res;
-      if(std::regex_search(line, res, reg)){
-        origin[0] = std::stof(res[1]);
-        origin[1] = std::stof(res[2]);
-        origin[2] = std::stof(res[3]);
+  //get origins
+  #pragma omp parallel for
+  for(auto i=0; i<opt.tmax; ++i){
+    std::ifstream ifile(opt.nhdr_path + zero_pad(i, 3) + ".nhdr");
+    std::string line;
+    while(getline(ifile, line)){
+      if(line.find("space origin") != std::string::npos){
+        std::regex reg("\\((.*?), (.*?), (.*?)\\)");
+        std::smatch res;
+        if(std::regex_search(line, res, reg)){
+          origins[i][0] = std::stof(res[1])/opt.scale_x;
+          origins[i][1] = std::stof(res[2])/opt.scale_x;
+          origins[i][2] = std::stof(res[3])/opt.scale_z;
+        }
+        break;
       }
-      break;
     }
+    ifile.close();
   }
-  ifile.close();
-
-  return origin;
+  return origins;
 }
 
 
@@ -72,8 +75,10 @@ void Anim::split_type(){
   double resample_xy = opt.scale_x / opt.scale_z / opt.dwn_sample;
   double resample_z = 1.0 / opt.dwn_sample;
 
+  auto origins = get_origins();
+
   if(opt.verbose)
-    std::cout << "Resampling Factors: resample_xy = " << resample_xy << ", resample_z = " << resample_z << std::endl;
+    std::cout << "Resampling Factors: resample_xy = " + std::to_string(resample_xy) + ", resample_z = " + std::to_string(resample_z) << std::endl;
 
   // slice and resample projection files
   #pragma omp parallel for
@@ -83,7 +88,7 @@ void Anim::split_type(){
     std::string iii = zero_pad(i, 3);
 
     if(opt.verbose)
-      std::cout << "===== " << iii << "/" << opt.tmax << " =====================" << std::endl;
+      std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================" << std::endl;
 
     std::string xy_proj_file = opt.proj_path + iii + "-projXY.nrrd";
     std::string yz_proj_file = opt.proj_path + iii + "-projYZ.nrrd";
@@ -93,17 +98,10 @@ void Anim::split_type(){
                   			    safe_nrrd_new(mop_t, (airMopper)nrrdNuke)},
                            {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop_t, (airMopper)nrrdNuke)}
-			  };
+			                    };
 
     Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
                          safe_nrrd_load(mop_t, yz_proj_file)};
-    //set origin
-    std::vector<double> origin3d = get_origin(i);
-    double origin[2][4] = {{origin3d[0], origin3d[1], 0, 0},
-                           {origin3d[1], origin3d[2], 0, 0}};
-    nrrd_checker(nrrdSpaceOriginSet(proj_rsm[0], origin[0]) ||
-                  nrrdSpaceOriginSet(proj_rsm[1], origin[1]),
-                mop_t, "Error setting space origins:\n", "anim.cpp", "Anim::split_type"); 
 
     //resample
     double resample_rsm[2][2] = {{resample_xy, resample_xy},
@@ -211,7 +209,7 @@ void Anim::make_max_frame(std::string direction){
     std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-max-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_max_frames"  << " =====================" << std::endl;
+      std::cout << "===== " + zero_pad(t, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames"  + " =====================" << std::endl;
 
     nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
                   nrrdSlice(bit1_t, bit1, 2, t) ||
@@ -325,7 +323,7 @@ void Anim::make_avg_frame(std::string direction){
     std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "===== " << zero_pad(t, 3) << "/" << opt.tmax << " " << direction << "_avg_frames"  << " =====================" << std::endl;
+      std::cout << "===== " + zero_pad(t, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================" << std::endl;
 
     nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
                   nrrdSlice(bit1_t, bit1, 2, t) ||
@@ -348,7 +346,7 @@ void Anim::build_png() {
       auto mop_t = airMopNew();
 
       if(opt.verbose)
-        std::cout << "===== " << zero_pad(i, 3) << "/" << opt.tmax << " " << type << "_pngs" << " =====================" << std::endl;
+        std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================" << std::endl;
 
       std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
       Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
@@ -377,7 +375,23 @@ void Anim::build_png() {
   }
 }
 
+/*
+void set_shifts(){
+  //set origin
+  std::vector<double> origin3d = get_origin(i);
+  double origin[2][4] = {{origin3d[0], origin3d[1], 0, 0},
+                         {origin3d[1], origin3d[2], 0, 0}};
 
+  nrrd_checker(nrrdSpaceDimensionSet(proj_rsm[0], 3) ||
+                nrrdSpaceDimensionSet(proj_rsm[1], 3),
+              mop_t, "Error setting space origins:\n", "anim.cpp", "Anim::split_type"); 
+
+  nrrd_checker(nrrdSpaceOriginSet(proj_rsm[0], origin[0]) ||
+                nrrdSpaceOriginSet(proj_rsm[1], origin[1]),
+              mop_t, "Error setting space origins:\n", "anim.cpp", "Anim::split_type"); 
+
+}
+*/
 void Anim::build_video(){
   int tmax = opt.tmax;
   std::string base_name = opt.anim_path;
@@ -386,10 +400,10 @@ void Anim::build_video(){
   
   for(std::string type: {"max", "avg"}){ 
     if(opt.verbose)
-      std::cout << "===== " << type << "_mp4" << " =====================" << std::endl;
+      std::cout << "===== " + type + "_mp4 =====================" << std::endl;
 
     std::string out_file = base_name + type + ".avi";
-    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 10, s, true);
+    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, s, true);
     if(!vw.isOpened()) 
       std::cout << "cannot open videoWriter." << std::endl;
     for(auto i=0; i<=tmax; ++i){

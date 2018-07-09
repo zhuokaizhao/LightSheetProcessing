@@ -36,7 +36,7 @@ private:
     void build_png();
   	void build_video();
 
-    std::vector<double> get_origin(int file_number);
+    std::vector<std::vector<double>> get_origins();
 
     animOptions const opt;
     airArray* mop; //in parallelized part, use a thread_loacal mop instead

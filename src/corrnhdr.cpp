@@ -74,9 +74,15 @@ void Corrnhdr::compute_offsets(){
   }
   offsets.erase(offsets.begin());   //Remove first entry of {0,0,0}
 
+  //change 2d vector to 2d array
+  double *data = AIR_CALLOC(3*offsets.size(), double);
+  airMopAdd(mop, data, airFree, airMopAlways);
+  for(auto i=0; i<3*offsets.size(); ++i)
+    data[i] = offsets[i/3][i%3];
+
   //save offsets into nrrd file
   offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
-  nrrd_checker(nrrdWrap_va(offset_origin, offsets.data(), nrrdTypeDouble, 2, 3, offsets.size()) ||
+  nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, offsets.size()) ||
                 nrrdSave((file_dir+"/reg/offsets.nrrd").c_str(), offset_origin, NULL),
               mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 }
@@ -138,8 +144,8 @@ void Corrnhdr::smooth(){
                 nrrdResampleExecute(rsmc, offset_blur),
               mop, "Error resampling nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
   
-  // create a helper nrrd array to help smooth the boundary
-  std::vector<double> data(3, 1);
+  // create a helper nrrd array to help fix the boundary
+  std::vector<float> data(3, 1);
   data.insert(data.end(), 3*offset_blur->axis[1].size-6, 0);
   data.insert(data.end(), 3, 1);
 
@@ -148,6 +154,10 @@ void Corrnhdr::smooth(){
               mop, "Error wrapping data vector:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
   nrrdAxisInfoCopy(base, offset_blur, NULL, NRRD_AXIS_INFO_ALL);
 
+  Nrrd *offset_bound = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  nrrd_checker(nrrdArithBinaryOp(offset_bound, nrrdBinaryOpMultiply, offset_blur, base),
+              mop, "Error multiplying nrrds:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
+
   offset_smooth1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
   airMopSingleOkay(mop, rsmc);
@@ -155,19 +165,19 @@ void Corrnhdr::smooth(){
   airMopAdd(mop, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
   kparm[0] = 1.5;
-  nrrd_checker(nrrdResampleInputSet(rsmc, base) ||
+  nrrd_checker(nrrdResampleInputSet(rsmc, offset_bound) ||
                 nrrdResampleKernelSet(rsmc, 0, NULL, NULL) ||
                 nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
                 nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
                 nrrdResampleKernelSet(rsmc, 1, nrrdKernelGaussian, kparm) ||
-                nrrdResampleSamplesSet(rsmc, 1, base->axis[1].size) ||
+                nrrdResampleSamplesSet(rsmc, 1, offset_bound->axis[1].size) ||
                 nrrdResampleRangeFullSet(rsmc, 1) ||
-                nrrdResampleExecute(rsmc, offset_smooth1),
+                nrrdResampleExecute(rsmc, offset_bound),
               mop, "Error resampling nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
   
-  nrrdQuantize(offset_smooth1, offset_smooth1, NULL, 32);
-  nrrdUnquantize(offset_smooth1, offset_smooth1, nrrdTypeDouble);
-
+  nrrdQuantize(offset_bound, offset_bound, NULL, 32);
+  nrrdUnquantize(offset_bound, offset_bound, nrrdTypeDouble);
+//nrrdSave("bound.nrrd", offset_bound, nullptr);
   // smooth the boundary
   NrrdIter *n1 = nrrdIterNew();
   NrrdIter *n2 = nrrdIterNew();
@@ -192,6 +202,12 @@ void Corrnhdr::main() {
   compute_offsets();
   median_filtering();
   smooth();
+
+nrrdSave("origin.nrrd", offset_origin, nullptr);
+nrrdSave("median.nrrd", offset_median, nullptr);
+nrrdSave("smooth1.nrrd", offset_smooth1, nullptr);
+nrrdSave("smooth.nrrd", offset_smooth, nullptr);
+
 
   //read spacing from first nhdr file
   double xs, ys, zs;
