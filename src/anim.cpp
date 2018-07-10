@@ -7,6 +7,8 @@
 #include <omp.h>
 #include <fstream>
 #include <regex>
+#include <algorithm>
+#include <limits>
 
 #include "anim.h"
 #include "util.h"
@@ -44,12 +46,13 @@ Anim::~Anim() {
 }
 
 
-std::vector<std::vector<double>> Anim::get_origins(){
-  std::vector<std::vector<double>> origins(opt.tmax, std::vector<double>(3, 0));
+int Anim::set_origins(){
+  origins = std::vector<std::vector<int>>(opt.tmax+1, std::vector<int>(3, 0));
 
   //get origins
+  int found = 0;
   #pragma omp parallel for
-  for(auto i=0; i<opt.tmax; ++i){
+  for(int i=0; i<=opt.tmax; ++i){
     std::ifstream ifile(opt.nhdr_path + zero_pad(i, 3) + ".nhdr");
     std::string line;
     while(getline(ifile, line)){
@@ -60,22 +63,47 @@ std::vector<std::vector<double>> Anim::get_origins(){
           origins[i][0] = std::stof(res[1])/opt.scale_x;
           origins[i][1] = std::stof(res[2])/opt.scale_x;
           origins[i][2] = std::stof(res[3])/opt.scale_z;
+          #pragma omp atomic
+          found++;
         }
         break;
       }
     }
     ifile.close();
   }
-  return origins;
+
+  //if all nhdr have origin field?
+  if(found < opt.tmax+1){
+  //if(std::find(found.begin(), found.end(), 0)!=found.end()){
+    std::cerr << "[ANIM WARNING]: (Part of) nhdr files lack of space origin field, will not implement origin relocation." << std::endl;
+    return 1;
+  }
+  //if all origins are {0, 0, 0}.
+  else if(!std::accumulate(origins.begin(), origins.end(), 0,
+                            [](int acc, std::vector<int> o){return acc || (o!=std::vector<int>(3, 0));}
+                          )){
+    printf("tmp print: origins are all 0s\n");
+    return 1;
+  }
+
+  //find minmax values in each dimension.
+  for(auto i: {0, 1, 2}){
+    int o_min = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::max(),
+                              [i](int acc, std::vector<int> o){return AIR_MIN(acc, o[i]);});
+    int o_max = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::min(),
+                              [i](int acc, std::vector<int> o){return AIR_MAX(acc, o[i]);});
+    minmax.push_back(std::vector<int>{o_min, o_max});
+  }
+
+  return 0;
 }
 
 
 void Anim::split_type(){
+  int no_origin = set_origins();
 
   double resample_xy = opt.scale_x / opt.scale_z / opt.dwn_sample;
   double resample_z = 1.0 / opt.dwn_sample;
-
-  auto origins = get_origins();
 
   if(opt.verbose)
     std::cout << "Resampling Factors: resample_xy = " + std::to_string(resample_xy) + ", resample_z = " + std::to_string(resample_z) << std::endl;
@@ -88,22 +116,50 @@ void Anim::split_type(){
     std::string iii = zero_pad(i, 3);
 
     if(opt.verbose)
-      std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================" << std::endl;
+      std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================\n";
 
+    //read proj files
     std::string xy_proj_file = opt.proj_path + iii + "-projXY.nrrd";
     std::string yz_proj_file = opt.proj_path + iii + "-projYZ.nrrd";
 
+    Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
+                         safe_nrrd_load(mop_t, yz_proj_file)};
+
+    //reset projs to space coordinate using new origins
+    Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
+                       safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+    if(!no_origin){
+      int x = origins[i][0], y = origins[i][1], z = origins[i][2];
+      int minx = minmax[0][0], maxx = minmax[0][1];
+      int miny = minmax[1][0], maxy = minmax[1][1];
+      int minz = minmax[2][0], maxz = minmax[2][1];
+
+      size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
+      size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
+                        static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
+                        proj_rsm[0]->axis[2].size-1,
+                        proj_rsm[0]->axis[3].size-1}; 
+      size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
+      size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
+                        static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
+                        proj_rsm[1]->axis[2].size-1,
+                        proj_rsm[1]->axis[3].size-1};
+
+      nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min0, max0) ||
+                    nrrdCrop(proj_t[1], proj_rsm[1], min1, max1),
+                  mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
+
+      proj_rsm[0] = proj_t[0];
+      proj_rsm[1] = proj_t[1];
+    }
+
+    //resample
     Nrrd* res_rsm[2][2] = { //store {{max_z, avg_z}, {max_x, avg_x}}
                   			   {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
                   			    safe_nrrd_new(mop_t, (airMopper)nrrdNuke)},
                            {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop_t, (airMopper)nrrdNuke)}
 			                    };
-
-    Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
-                         safe_nrrd_load(mop_t, yz_proj_file)};
-
-    //resample
     double resample_rsm[2][2] = {{resample_xy, resample_xy},
                                   {resample_xy, resample_z}};
     double kparm[3] = {1, 0, 0.5};
@@ -209,7 +265,7 @@ void Anim::make_max_frame(std::string direction){
     std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-max-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "===== " + zero_pad(t, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames"  + " =====================" << std::endl;
+      std::cout << "===== " + zero_pad(t, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
 
     nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
                   nrrdSlice(bit1_t, bit1, 2, t) ||
@@ -323,7 +379,7 @@ void Anim::make_avg_frame(std::string direction){
     std::string bit1_name = opt.anim_path + zero_pad(t, 3) + "-avg-" + direction + "-1.ppm";
 
     if(opt.verbose)
-      std::cout << "===== " + zero_pad(t, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================" << std::endl;
+      std::cout << "===== " + zero_pad(t, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
 
     nrrd_checker(nrrdSlice(bit0_t, bit0, 2, t)  ||
                   nrrdSlice(bit1_t, bit1, 2, t) ||
@@ -346,7 +402,7 @@ void Anim::build_png() {
       auto mop_t = airMopNew();
 
       if(opt.verbose)
-        std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================" << std::endl;
+        std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
       std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
       Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
@@ -375,23 +431,7 @@ void Anim::build_png() {
   }
 }
 
-/*
-void set_shifts(){
-  //set origin
-  std::vector<double> origin3d = get_origin(i);
-  double origin[2][4] = {{origin3d[0], origin3d[1], 0, 0},
-                         {origin3d[1], origin3d[2], 0, 0}};
 
-  nrrd_checker(nrrdSpaceDimensionSet(proj_rsm[0], 3) ||
-                nrrdSpaceDimensionSet(proj_rsm[1], 3),
-              mop_t, "Error setting space origins:\n", "anim.cpp", "Anim::split_type"); 
-
-  nrrd_checker(nrrdSpaceOriginSet(proj_rsm[0], origin[0]) ||
-                nrrdSpaceOriginSet(proj_rsm[1], origin[1]),
-              mop_t, "Error setting space origins:\n", "anim.cpp", "Anim::split_type"); 
-
-}
-*/
 void Anim::build_video(){
   int tmax = opt.tmax;
   std::string base_name = opt.anim_path;

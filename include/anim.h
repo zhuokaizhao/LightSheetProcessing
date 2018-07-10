@@ -14,7 +14,7 @@ struct animOptions {
     std::string proj_path = "proj/";
     std::string anim_path = "anim/";
     uint tmax;
-    uint dwn_sample = 1;    // How much to down-sample
+    uint dwn_sample = 2;    // How much to down-sample
     double scale_x = 1.0;
     double scale_z = 1.0;
     uint verbose = 0;
@@ -36,7 +36,10 @@ private:
     void build_png();
   	void build_video();
 
-    std::vector<std::vector<double>> get_origins();
+    //! \brief calculate frame origins; return 1 if all origins is 0 or calculation fails.
+    int set_origins();
+    std::vector<std::vector<int>> origins;
+    std::vector<std::vector<int>> minmax;
 
     animOptions const opt;
     airArray* mop; //in parallelized part, use a thread_loacal mop instead

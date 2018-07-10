@@ -75,9 +75,11 @@ std::ostream &operator<<(std::ostream &os, std::vector<T> vec){
   std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
   return os;
 }
-template std::ostream &operator<<(std::ostream &os, std::vector<double> vec);
 // Ugly trick here: W/o this call, lib will not build specialization for double type,
 // then compiler cannot link files correctly.
+template std::ostream &operator<<(std::ostream &os, std::vector<double> vec);
+template std::ostream &operator<<(std::ostream &os, std::vector<int> vec);
+
 
 Xml_getter::Xml_getter(std::string file)
 : doc(xmlParseFile(file.c_str())),

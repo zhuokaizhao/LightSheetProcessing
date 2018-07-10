@@ -221,12 +221,12 @@ void Pack::run_anim(std::string nhdr, std::string anim, std::string proj){
 
 	animOptions anim_opt;
 	anim_opt.tmax = find_tmax();
-	anim_opt.proj_path = data_dir + nhdr;
+	anim_opt.nhdr_path = data_dir + nhdr;
 	anim_opt.proj_path = data_dir + proj;
 	anim_opt.anim_path = data_dir + anim;
 	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
-	anim_opt.scale_x = std::stof(x("ScalingX"));
-	anim_opt.scale_z = std::stof(x("ScalingZ"));
+	anim_opt.scale_x = std::stof(x("ScalingX"))*1e7;
+	anim_opt.scale_z = std::stof(x("ScalingZ"))*1e7;
 anim_opt.verbose = 1;
 	Anim(anim_opt).main();	//parallelized in function
 }

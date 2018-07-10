@@ -200,11 +200,6 @@ void Corrnhdr::main() {
   median_filtering();
   smooth();
 
-nrrdSave("origin.nrrd", offset_origin, nullptr);
-nrrdSave("median.nrrd", offset_median, nullptr);
-nrrdSave("smooth.nrrd", offset_smooth, nullptr);
-
-
   //read spacing from first nhdr file
   double xs, ys, zs;
   std::ifstream ifile(file_dir+"/nhdr/000.nhdr");
