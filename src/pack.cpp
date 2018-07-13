@@ -94,6 +94,7 @@ int Pack::find_tmax(){
   		}
   	}
   }
+  return 10;
   return tmax;
 }
 
@@ -227,21 +228,47 @@ void Pack::run_anim(std::string nhdr, std::string anim, std::string proj){
 	anim_opt.dwn_sample = 2; // TODO: How to decide down_samp??
 	anim_opt.scale_x = std::stof(x("ScalingX"))*1e7;
 	anim_opt.scale_z = std::stof(x("ScalingZ"))*1e7;
-anim_opt.verbose = 1;
+
 	Anim(anim_opt).main();	//parallelized in function
 }
 
 
+void Pack::run_untext(){
+	//build untext folder for projections
+	if(!exists(data_dir+"/proj-untext/"))
+		create_directory(data_dir+"/proj-untext/");
+
+	tmax = find_tmax();
+
+	#pragma omp parallel for
+	for(auto i=0; i<=tmax; ++i){
+		untextOptions untext_opt;
+		untext_opt.input = data_dir + "/proj/" + zero_pad(i, 3) + "-projXY.nrrd";
+		untext_opt.output = data_dir + "/proj-untext/" + zero_pad(i, 3) + "-projXY.nrrd";
+
+		Untext(untext_opt).main();
+	}
+
+	//tmp: do not untext XZ and YZ projs, so copy them to new folder
+	for(std::string d: {"XZ", "YZ"})
+		for(auto i=0; i<=tmax; ++i){
+			std::string src = data_dir + "/proj/" + zero_pad(i, 3) + "-proj" + d + ".nrrd";
+			std::string dst = data_dir + "/proj-untext/" + zero_pad(i, 3) + "-proj" + d + ".nrrd";
+			copy_file(src, dst, copy_option::overwrite_if_exists);
+		}
+}
+
+
 void Pack::run_nhdrcheck(){}
-void Pack::run_untext(){}
 void Pack::run_all(){
 	//temporarily
-	run_skim();
-	run_anim("/nhdr/", "/anim/", "/proj/");
-	run_corrimg();
-	run_corrfind();
-	run_corrnhdr();
-	run_anim("/nhdr-corr/", "/anim-corr/", "/proj/");
+	//run_skim();
+	//run_anim("/nhdr/", "/anim/", "/proj/");
+	run_untext();
+	//run_corrimg();
+	//run_corrfind();
+	//run_corrnhdr();
+	run_anim("/nhdr-corr/", "/anim-untext/", "/proj-untext/");
 }
 
 
@@ -263,6 +290,9 @@ void Pack::main(){
 	}
 	else if(cmd == "untext")
 		run_untext();
+	else if(cmd == "anim_untext"){
+		run_anim("/nhdr-corr/", "/anim-untext/", "/proj-untext/");
+	}
 	else if(cmd == "all")
 		run_all();
 	else

@@ -13,7 +13,7 @@ add_executable(lsp ${SOURCES})
 
 target_include_directories(lsp PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-target_link_libraries(lsp teem xml2 boost_filesystem boost_system opencv_core opencv_videoio opencv_imgcodecs)
+target_link_libraries(lsp teem xml2 boost_filesystem boost_system opencv_core opencv_videoio opencv_imgcodecs fftw3f)
 
 install (TARGETS lsp DESTINATION bin)
 

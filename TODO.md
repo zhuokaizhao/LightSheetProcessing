@@ -1,4 +1,5 @@
 TODO:
+1. improve masking algo.
 
 Slide works:
 1. Skim: Imcompete dataset(nhdr and nrrd size dismatch) -> it will cause nrrdLoad error. (Work around: fullfill empty lines with last line)            

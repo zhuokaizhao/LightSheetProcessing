@@ -45,4 +45,14 @@ Did correctness check.
 
 07/06/2018
 1. Rolled `proj` back. Combined projection functions back into `skim`.  
-2. Fixed bugs in `skim`, it can generate correct projs now.
+2. Fixed bugs in `skim`, it can generate correct projs now.		
+
+07/09/2018
+1. Fixed bugs in `corrnhdr`.		
+2. Added functionality in `anim`. It can crop nrrd arrays based on space origin now. So the anim after `corr` can be generated correctly.		
+
+07/11/2018
+Learnt FFT and libfftw3.		
+
+07/12/2018
+Built `untext`. In `untext`, the masking algo is brutal and does not work well for xz projs.

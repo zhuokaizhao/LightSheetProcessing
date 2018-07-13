@@ -1,18 +1,40 @@
-//
-// Created by Jake Stover on 5/9/18.
-//
+//! \file untext.h
+//! \author Jiawei Jiang
+//! \date 07-11-2018
+//! \brief Untexture a projection file.
 
 #ifndef LSP_UNTEXT_H
 #define LSP_UNTEXT_H
 
 #include "CLI11.hpp"
 
+#include <fftw3.h>
+
 struct untextOptions {
-    std::string filename;
+    std::string input;
+    std::string output;
 };
 
 void setup_untext(CLI::App &app);
 
-void untext_main(untextOptions const &opt);
+class Untext{
+public:
+	Untext(untextOptions const &opt = untextOptions());
+	~Untext();
+
+	void main();
+private:
+	void masking(fftwf_complex *data);
+	Nrrd* untext_slice(Nrrd* proj, int ch, int type);
+
+	untextOptions const opt;
+	airArray* mop;
+
+	Nrrd* nin;
+	size_t szx, szy;
+	fftwf_complex *in, *out;
+	fftwf_plan p, ip;
+
+};
 
 #endif //LSP_UNTEXT_H
