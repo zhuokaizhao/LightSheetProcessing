@@ -94,7 +94,6 @@ int Pack::find_tmax(){
   		}
   	}
   }
-  return 10;
   return tmax;
 }
 
@@ -241,27 +240,20 @@ void Pack::run_untext(){
 	tmax = find_tmax();
 
 	#pragma omp parallel for
-	for(auto i=0; i<=tmax; ++i){
-		untextOptions untext_opt;
-		untext_opt.input = data_dir + "/proj/" + zero_pad(i, 3) + "-projXY.nrrd";
-		untext_opt.output = data_dir + "/proj-untext/" + zero_pad(i, 3) + "-projXY.nrrd";
+	for(auto i=0; i<=tmax; ++i)
+		for(std::string d: {"XY", "YZ"}){
+			untextOptions untext_opt;
+			untext_opt.input = data_dir + "/proj/" + zero_pad(i, 3) + "-proj" + d + ".nrrd";
+			untext_opt.output = data_dir + "/proj-untext/" + zero_pad(i, 3) + "-proj" + d + ".nrrd";
 
-		Untext(untext_opt).main();
-	}
-
-	//tmp: do not untext XZ and YZ projs, so copy them to new folder
-	for(std::string d: {"XZ", "YZ"})
-		for(auto i=0; i<=tmax; ++i){
-			std::string src = data_dir + "/proj/" + zero_pad(i, 3) + "-proj" + d + ".nrrd";
-			std::string dst = data_dir + "/proj-untext/" + zero_pad(i, 3) + "-proj" + d + ".nrrd";
-			copy_file(src, dst, copy_option::overwrite_if_exists);
+			Untext(untext_opt).main();
 		}
 }
 
 
 void Pack::run_nhdrcheck(){}
 void Pack::run_all(){
-	//temporarily
+	//temporary
 	//run_skim();
 	//run_anim("/nhdr/", "/anim/", "/proj/");
 	run_untext();

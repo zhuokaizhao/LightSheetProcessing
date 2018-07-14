@@ -56,3 +56,6 @@ Learnt FFT and libfftw3.
 
 07/12/2018
 Built `untext`. In `untext`, the masking algo is brutal and does not work well for xz projs.
+
+07/13/2018
+Fixed bugs in `untext` and paralleled it. It works for all projs now, but masking algo still need to be optimized.

@@ -6,6 +6,8 @@
 #include <teem/nrrd.h>
 #include <fftw3.h>
 #include <cmath>
+#include <complex>
+#include <vector>
 
 #include "untext.h"
 #include "util.h"
@@ -30,49 +32,36 @@ void setup_untext(CLI::App &app) {
 Untext::Untext(untextOptions const &opt)
 : opt(opt), mop(airMopNew()), nin(safe_nrrd_load(mop, opt.input)) {
   //TODO: check if nin is a vaild input
-
   szx = nin->axis[0].size;
   szy = nin->axis[1].size;
-
-  //init fft plan
-  in = AIR_CALLOC(szx*szy, fftwf_complex);
-  out = AIR_CALLOC(szx*szy, fftwf_complex);
-  airMopAdd(mop, in, airFree, airMopAlways);
-  airMopAdd(mop, out, airFree, airMopAlways);
-
-  p = fftwf_plan_dft_2d(szx, szy, in, out, FFTW_BACKWARD, FFTW_MEASURE);
-  ip = fftwf_plan_dft_2d(szx, szy, out, in, FFTW_FORWARD, FFTW_MEASURE);
 }
 
 
 Untext::~Untext(){
-  fftwf_destroy_plan(p);
-  fftwf_destroy_plan(ip);
+  #pragma omp critical
+  {
+    fftwf_destroy_plan(p);
+    fftwf_destroy_plan(ip);
+  }
 
   airMopOkay(mop);
 }
 
 
-void Untext::masking(fftwf_complex *data){
-  float mask_width = 0.005;
-  float center_radius = 0.05;
-  float soften = 0.000001;
+void Untext::masking(){
+  float mask_width = 0.007;
+  float center_radius = 0.07;
+  std::complex<float> soften = {0.00001, 0.00001};
 
-  for(size_t i=szx*center_radius; i<szx*(1-center_radius); ++i)
-    for(size_t j=0; j<szy*mask_width; ++j){
-      data[j*szx+i][0] = soften;
-      data[j*szx+i][1] = soften;
-      data[(szy-1-j)*szx+i][0] = soften;
-      data[(szy-1-j)*szx+i][1] = soften;
-    }
-  for(size_t i=0; i<szx*mask_width; ++i)
-    for(size_t j=szy*center_radius; j<szy*(1-center_radius); ++j){
-      data[j*szx+i][0] = soften;
-      data[j*szx+i][1] = soften;
-      data[j*szx+szx-1+i][0] = soften;
-      data[j*szx+szx-1+i][1] = soften;
-    }
+  for(size_t i=0; i<szx; ++i)
+    for(size_t j=szy*(.5-mask_width); j<szy*(.5+mask_width); ++j)
+      if(i<szx*(.5-center_radius) || i>szx*(.5+center_radius))
+        ft[j*szx+i] = soften;
 
+  for(size_t i=szx*(.5-mask_width); i<szx*(.5+mask_width); ++i)
+    for(size_t j=0; j<szy; ++j)
+      if(j<szy*(.5-center_radius) || j>szy*(.5+center_radius))
+        ft[j*szx+i] = soften;
 }
 
 
@@ -89,24 +78,28 @@ Nrrd* Untext::untext_slice(Nrrd* proj, int ch, int type){
 
   //read nrrdFloats into fftw_complexs
   for(auto i=0; i<szx*szy; ++i){
-    in[i][0] = original[i];
-    in[i][1] = 0;
+    ft[i] = original[i];
+    ft[i] *= std::pow<float>(-1, i/szx+i%szx);  //for wrapping DC component to center
   }
 
   //do fft
   fftwf_execute(p);
 
   //masking
-  masking(out);
+  masking();
 
   //do ifft
   fftwf_execute(ip);
 
   //set fftw_complexs back to floats
+  //std::vector<float> res(szx*szy, 0);
   float* res = AIR_CALLOC(szx*szy, float);
   airMopAdd(mop, res, airFree, airMopAlways);
-  for(auto i=0; i<szx*szy; ++i)
-    res[i] = in[i][0];
+
+  for(auto i=0; i<szx*szy; ++i){
+    ft[i] *= std::pow(-1, i/szx+i%szx); //offsetting the wrapping operation
+    res[i] = ft[i].real();  
+  }
 
   //build output nrrd array
   Nrrd* n3 = safe_nrrd_new(mop, (airMopper)nrrdNix);
@@ -121,7 +114,8 @@ void Untext::main(){
   size_t const old_szx = szx;
   size_t const old_szy = szy;
   szx = static_cast<size_t>(std::pow(2, std::ceil(std::log2(szx))));
-  szy = static_cast<size_t>(std::pow(2, std::ceil(std::log2(szy))));
+  szy = szx;
+  //szy = static_cast<size_t>(std::pow(2, std::ceil(std::log2(szy))));
 
   auto nt = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   double kparm[3] = {1, 0, 0.5};
@@ -142,6 +136,22 @@ void Untext::main(){
                 nrrdResampleExecute(rsmc1, nt),
               mop, "Error resampling(padding) nrrd:\n", "untext.cpp", "Untext::main");
 
+  //init fft plan
+  ft.assign(szx*szy, 0);
+
+  //TODO: omp critical is SLOW! Try get rid of it. Maybe pass plans as argument from outside?
+  #pragma omp critical
+  {
+    p = fftwf_plan_dft_2d(szx, szy, 
+                          reinterpret_cast<fftwf_complex*>(ft.data()),
+                          reinterpret_cast<fftwf_complex*>(ft.data()),
+                          FFTW_BACKWARD, FFTW_MEASURE);
+
+    ip = fftwf_plan_dft_2d(szx, szy,
+                           reinterpret_cast<fftwf_complex*>(ft.data()),
+                           reinterpret_cast<fftwf_complex*>(ft.data()),
+                           FFTW_FORWARD, FFTW_MEASURE);
+  }
 
   //untext every slice and join them together
   Nrrd* type[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), safe_nrrd_new(mop, (airMopper)nrrdNuke)};

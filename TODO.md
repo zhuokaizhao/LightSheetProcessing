@@ -1,5 +1,6 @@
 TODO:
-1. improve masking algo.
+1. untext:  improve masking algo.
+2. untext:  bad ft results if szx!=szy
 
 Slide works:
 1. Skim: Imcompete dataset(nhdr and nrrd size dismatch) -> it will cause nrrdLoad error. (Work around: fullfill empty lines with last line)            

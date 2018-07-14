@@ -9,6 +9,8 @@
 #include "CLI11.hpp"
 
 #include <fftw3.h>
+#include <complex>
+#include <vector>
 
 struct untextOptions {
     std::string input;
@@ -24,7 +26,7 @@ public:
 
 	void main();
 private:
-	void masking(fftwf_complex *data);
+	void masking();
 	Nrrd* untext_slice(Nrrd* proj, int ch, int type);
 
 	untextOptions const opt;
@@ -32,7 +34,7 @@ private:
 
 	Nrrd* nin;
 	size_t szx, szy;
-	fftwf_complex *in, *out;
+	std::vector<std::complex<float>> ft;
 	fftwf_plan p, ip;
 
 };
