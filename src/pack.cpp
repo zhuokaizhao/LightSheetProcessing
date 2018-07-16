@@ -254,13 +254,18 @@ void Pack::run_untext(){
 void Pack::run_nhdrcheck(){}
 void Pack::run_all(){
 	//temporary
-	//run_skim();
-	//run_anim("/nhdr/", "/anim/", "/proj/");
+	run_skim();
+	std::cout << "skim done!" << std::endl;
 	run_untext();
-	//run_corrimg();
-	//run_corrfind();
-	//run_corrnhdr();
+	std::cout << "untext done!" << std::endl;
+	run_corrimg();
+	std::cout << "corrimg done!" << std::endl;
+	run_corrfind();
+	std::cout << "corrfind done!" << std::endl;
+	run_corrnhdr();
+	std::cout << "corrnhdr done!" << std::endl;
 	run_anim("/nhdr-corr/", "/anim-untext/", "/proj-untext/");
+	std::cout << "anim done!" << std::endl;
 }
 
 
