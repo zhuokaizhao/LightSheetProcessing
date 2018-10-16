@@ -3,7 +3,10 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/Users/zhuokaizhao/Desktop/UChicago/Research/Teem/teem-install/include/",
+                "/usr/local/opt/libxml2/include/libxml2/",
+                "/Users/zhuokaizhao/Desktop/UChicago/Research/LSP/include/"
             ],
             "defines": [],
             "macFrameworkPath": [

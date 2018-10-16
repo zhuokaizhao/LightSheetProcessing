@@ -63,6 +63,8 @@ Skim::Skim(SkimOptions const &opt)
   xmlFileName(opt.xo),
   nhdrFileName(opt.no)
 {
+
+  // check if input file is a .czi file
   u_long suff = cziFileName.rfind(".czi");
   if (!suff || (suff != cziFileName.length() - 4)) {
     std::string msg = "Input file " + cziFileName + " does not end with .czi\n";
@@ -74,6 +76,7 @@ Skim::Skim(SkimOptions const &opt)
 
   std::string baseName = cziFileName.substr(0,suff);
 
+  // default names for .nhdr and .xml if not predefined
   if (nhdrFileName.empty()) {
     /* the -no option was not used */
     nhdrFileName = baseName + ".nhdr";
