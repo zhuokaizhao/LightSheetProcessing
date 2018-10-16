@@ -25,6 +25,7 @@
 
 void setup_skim(CLI::App &app) {
   auto opt = std::make_shared<SkimOptions>();
+  // App *add_subcommand(std::string name, std::string description = "") 
   auto sub = app.add_subcommand("skim", "Utility for getting information out of CZI files. Currently for "
                                         "generating .nhdr NRRD header files to permit extracting the image "
                                         "and essential meta data from CZI file.");

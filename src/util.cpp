@@ -9,10 +9,13 @@
 #include <algorithm>
 #include <teem/nrrd.h>
 #include <libxml/parser.h>
+#include <stdint.h>
 
 /*
  * CLASSES
  */
+
+typedef unsigned int uint;
 
 // LSPException Class
 LSPException::LSPException(std::string const &_msg, std::string const &_file, std::string const &_func) : std::runtime_error(_msg.c_str()),

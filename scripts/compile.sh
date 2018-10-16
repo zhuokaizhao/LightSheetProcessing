@@ -1,6 +1,7 @@
-module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi
+#module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi
 
-CXX=$(which g++)
+#CXX=$(which g++)
+CXX=g++-8
 outer_path=$(cd $(dirname $0); cd ../..; pwd -P)
 build_path=$outer_path/LSP-BUILD
 install_path=$outer_path/LSP-INSTALL
