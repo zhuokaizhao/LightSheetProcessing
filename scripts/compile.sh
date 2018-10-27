@@ -2,16 +2,16 @@
 
 #CXX=$(which g++)
 CXX=g++-8
-outer_path=$(cd $(dirname $0); cd ../..; pwd -P)
-build_path=$outer_path/LSP-BUILD
-install_path=$outer_path/LSP-INSTALL
+LSP_path=$(cd $(dirname $0); cd ..; pwd -P)
+build_path=$LSP_path/LSP-BUILD
+install_path=$LSP_path/LSP-INSTALL
 
 mkdir -p $build_path $install_path
 
 cd $build_path
 cmake -DCMAKE_CXX_COMPILER=$CXX \
 	-DCMAKE_INSTALL_PREFIX=$install_path\
-	$outer_path/LSP
+	$LSP_path
 
 make install
 
