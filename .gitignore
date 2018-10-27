@@ -1,0 +1,3 @@
+# ignore LSP-BUILD and LSP-INSTALL
+#**/LSP-BUILD
+#**/LSP-INSTALL
