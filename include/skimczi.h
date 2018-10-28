@@ -148,31 +148,15 @@ typedef enum {
     CZIPIXELTYPE_UNDEFINED         = -1,
     CZIPIXELTYPE_GRAY8             = 0,  //--- 1 Byte/Pixel;  8 bit unsigned
     CZIPIXELTYPE_GRAY16            = 1,  //--- 2 Byte/Pixel; 16 bit unsigned
-    CZIPIXELTYPE_GRAY32FLOAT       = 2,  //--- 4 Byte/Pixel; 32 bit IEEE float
-    CZIPIXELTYPE_BGR24             = 3,  //--- 3 Byte/Pixel; 8 bit triples,
-    //    representing the color channels
-    //    Blue, Green and Red
-            CZIPIXELTYPE_BGR48             = 4,  //--- 6 Byte/Pixel; 16 bit triples,
-    //    representing the color channels
-    //    Blue, Green and Red
-            CZIPIXELTYPE_BGR96FLOAT        = 8,  //--- 12 Byte/Pixel; Triple of 4 byte
-    //    IEEE float, representing the color
-    //    channels Blue, Green and Red
-            CZIPIXELTYPE_BGRA32            = 9,  //--- 4 Byte/Pixel; 8 bit triples
-    //    followed by an alpha
-    //    (transparency) channel
-            CZIPIXELTYPE_GRAY64COMPEXFLOAT = 10, //--- 8 Byte/Pixel; 2 x 4 byte IEEE
-    //    float, representing real and
-    //    imaginary part of a complex number
-            CZIPIXELTYPE_BGR192COMPEXFLOAT = 11, //--- 24 Byte/Pixel; A triple of 2 x 4
-    //    byte IEEE float, representing real
-    //    and imaginary part of a complex
-    //    number, for the color channels
-    //    Blue, Green and Red
-            CZIPIXELTYPE_GRAY32            = 12, //--- 4 Byte/Pixel; 32 Bit integer
-    //    [planned]
-            CZIPIXELTYPE_GRAY64            = 13  //--- 8 Byte/Pixel; Double precision
-    //    floating point [planned]
+    CZIPIXELTYPE_GRAY32FLOAT       = 2,  //--- 4 Byte/Pixel (32 bit IEEE float representing color in each pixel)
+    CZIPIXELTYPE_BGR24             = 3,  //--- 3 Byte/Pixel; 8 bit triples (Blue, Green and Red)
+    CZIPIXELTYPE_BGR48             = 4,  //--- 6 Byte/Pixel; 16 bit triples (Blue, Green and Red)
+    CZIPIXELTYPE_BGR96FLOAT        = 8,  //--- 12 Byte/Pixel; Triple (Blue, Green and Red) of 4 byte plus 4 byte alpha (transparency)
+    CZIPIXELTYPE_BGRA32            = 9,  //--- 4 Byte/Pixel; 8 bit triples (Blue, Green and Red) plus 8 bit alpha (transparency)
+    CZIPIXELTYPE_GRAY64COMPEXFLOAT = 10, //--- 8 Byte/Pixel; 2 x 4 byte IEEE (float, representing real and imaginary part of a complex number)
+    CZIPIXELTYPE_BGR192COMPEXFLOAT = 11, //--- 24 Byte/Pixel; Similar to above, just a triple (Blue, Green and Red) of 2 x 4 byte IEEE float
+    CZIPIXELTYPE_GRAY32            = 12, //--- 4 Byte/Pixel; 32 Bit integer [planned]
+    CZIPIXELTYPE_GRAY64            = 13  //--- 8 Byte/Pixel; Double precision floating point [planned]
 } CziPixelType;
 
 

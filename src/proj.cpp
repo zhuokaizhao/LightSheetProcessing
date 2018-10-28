@@ -43,6 +43,9 @@ void Proj::main(){
                         safe_nrrd_new(mop, (airMopper)nrrdNuke)};
   std::string xy = proj_common + "XY.nrrd";
 
+  // void nrrd_checker(bool status, airArray* mop, string prompt, string file, string function)
+  // int nrrdProject(Nrrd *nout, const Nrrd *nin, unsigned int axis, int measr, int type)
+  // int nrrdJoin(Nrrd *nout, const Nrrd *const *nin, unsigned int numNin, unsigned int axis, int incrDim);
   nrrd_checker(nrrdProject(nproj_xy_t[0], nin, 3, nrrdMeasureMax, nrrdTypeFloat) ||
                 nrrdProject(nproj_xy_t[1], nin, 3, nrrdMeasureMean, nrrdTypeFloat) ||
                 nrrdJoin(nproj_xy, nproj_xy_t, 2, 3, 1),
