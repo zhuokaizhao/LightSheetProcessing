@@ -69,6 +69,7 @@ Nrrd* Untext::untext_slice(Nrrd* proj, int ch, int type){
   //slicing the input nrrd file
   Nrrd* n1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
   Nrrd* n2 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+  // int nrrdSlice(Nrrd *nout, const Nrrd *nin, unsigned int axis, size_t pos);
   nrrd_checker(nrrdSlice(n1, proj, 3, type) || //proj type
                 nrrdSlice(n2, n1, 2, ch),  //ch
               mop, "Error slicing nrrd file:\n", "untext.cpp", "Untext::untext_slice");
@@ -137,11 +138,15 @@ void Untext::main(){
               mop, "Error resampling(padding) nrrd:\n", "untext.cpp", "Untext::main");
 
   //init fft plan
+  // vector<std::complex<float>>
+  // szx*szy number of floats with value initialized as 0
   ft.assign(szx*szy, 0);
 
   //TODO: omp critical is SLOW! Try get rid of it. Maybe pass plans as argument from outside?
   #pragma omp critical
   {
+    // documents available at http://www.fftw.org/fftw3.pdf
+    // fftw_plan_dft_2d(int n0, int n1, fftw_complex *in, fftw_complex *out, int sign (+1 for backward), unsigned flags);
     p = fftwf_plan_dft_2d(szx, szy, 
                           reinterpret_cast<fftwf_complex*>(ft.data()),
                           reinterpret_cast<fftwf_complex*>(ft.data()),

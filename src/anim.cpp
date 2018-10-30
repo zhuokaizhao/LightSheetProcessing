@@ -302,17 +302,17 @@ void Anim::make_avg_frame(std::string direction){
     Nrrd* ch0 = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
     Nrrd* ch1 = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
 
-    // changed to shared pointer for better memory allocation
-    /*
     NrrdIter* nit1 = nrrdIterNew();
     NrrdIter* nit2 = nrrdIterNew();
     NrrdIter* nit3 = nrrdIterNew();
     NrrdIter* nit4 = nrrdIterNew();
+    
+    /* shared_ptr would not work
+    std::shared_ptr<NrrdIter> nit1 (nrrdIterNew());
+    std::shared_ptr<NrrdIter> nit2 (nrrdIterNew());
+    std::shared_ptr<NrrdIter> nit3 (nrrdIterNew());
+    std::shared_ptr<NrrdIter> nit4 (nrrdIterNew());
     */
-    std::shared_ptr<NrrdIter> nit1 (new nrrdIterNew());
-    std::shared_ptr<NrrdIter> nit2 (new nrrdIterNew());
-    std::shared_ptr<NrrdIter> nit3 (new nrrdIterNew());
-    std::shared_ptr<NrrdIter> nit4 (new nrrdIterNew());
 
     nrrdIterSetOwnNrrd(nit1, ch);
     nrrdIterSetValue(nit2, 0.5);
@@ -350,13 +350,11 @@ void Anim::make_avg_frame(std::string direction){
 
     //TODO: In fact, we' better add cleanup function to mop, but nrrd lib only provide `nrrdIterNix` which will clean iter->nrrd also.
     //This simple free() here may cause memory leak.
-    // nit1-4 are now shared pointers, we don't need to free manually anymore
-    /*
     free(nit1);
     free(nit2);
     free(nit3);
     free(nit4);
-    */
+    
 
     airMopOkay(mop_t);
   }
