@@ -1,6 +1,6 @@
-#module load boost/1.62.0+gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi
+# this CMakeLists.txt file is used for server at Zhuokai's Mac
 
-#CXX=$(which g++)
+
 CXX=g++-8
 LSP_path=$(cd $(dirname $0); cd ..; pwd -P)
 build_path=$LSP_path/LSP-BUILD
