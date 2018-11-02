@@ -1,3 +1,6 @@
 # ignore LSP-BUILD and LSP-INSTALL
 **/LSP-BUILD
 **/LSP-INSTALL
+
+# we don't need to upload the pdf
+*.pdf
