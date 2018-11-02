@@ -1,5 +1,7 @@
 # this CMakeLists.txt file is used for server at dali-login.rcc.uchicago.edu
 
+module load boost/1.62.0 gcc-6.1 cmake teem libxml2 opencv/3.1 openmpi fftw3
+
 #CXX=$(which g++)
 CXX=g++
 LSP_path=$(cd $(dirname $0); cd ..; pwd -P)
