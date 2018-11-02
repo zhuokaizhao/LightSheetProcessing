@@ -15,7 +15,8 @@ cmake -DCMAKE_CXX_COMPILER=$CXX \
 	-DCMAKE_INSTALL_PREFIX=$install_path\
 	$LSP_path
 
-make install
+#make install (we can't make this on server)
+make
 
 # write informations into ~/.bash_profile
 if [[ ":$PATH:" != *":$install_path/bin:"* ]]; then
