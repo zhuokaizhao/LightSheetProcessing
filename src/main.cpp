@@ -20,35 +20,36 @@
 
 
 int main(int argc, char** argv) {
-  CLI::App app{"Collection of utilities for processing of lightsheet data"};
+    CLI::App app{"Collection of utilities for processing of lightsheet data"};
 
-  // getting information out of CZI files, generate .nhdr NRRD header files
-  setup_skim(app);
-  // Create projection files based on nhdr files
-  setup_proj(app);
-  // Create animations from projection files
-  setup_anim(app);
-  // Creates line graph summary of nhdr files
-  setup_nhdr_check(app);
-  // Remove grid texture from a projection
-  setup_untext(app);
-  // Measure 2D image correlation over a 2D array of offsets; 
-  // Prints out offset coordinates that maximized the cross correlation
-  setup_corr(app);
-  // Construct image to be used for cross correlation
-  setup_corrimg(app);
-  // Computes the shift between file specified by <file_number> and <file_number>-1
-  setup_corrfind(app);
-  // Apply the corrections calculated by corrimg and corrfind
-  setup_corrnhdr(app);
-  // Process dataset with standard format
-  setup_pack(app);
+    // getting information out of CZI files, generate .nhdr NRRD header files
+    setup_skim(app);
+    // Create projection files based on nhdr files
+    setup_proj(app);
+    // Create animations from projection files
+    setup_anim(app);
+    // Creates line graph summary of nhdr files
+    setup_nhdr_check(app);
+    // Remove grid texture from a projection
+    setup_untext(app);
+    // Measure 2D image correlation over a 2D array of offsets; 
+    // Prints out offset coordinates that maximized the cross correlation
+    setup_corr(app);
+    // Construct image to be used for cross correlation
+    setup_corrimg(app);
+    // Computes the shift between file specified by <file_number> and <file_number>-1
+    setup_corrfind(app);
+    // Apply the corrections calculated by corrimg and corrfind
+    setup_corrnhdr(app);
+    // Process dataset with standard format
+    setup_pack(app);
 
-  CLI11_PARSE(app, argc, argv);
+    CLI11_PARSE(app, argc, argv);
 
-  if (argc == 1) {
-    std::cout << app.help();
-  }
+    if (argc == 1) 
+    {
+        std::cout << app.help();
+    }
 
-  return 0;
+    return 0;
 }

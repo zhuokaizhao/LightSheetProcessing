@@ -4,3 +4,6 @@
 
 # we don't need to upload the pdf
 *.pdf
+
+# don't want to change the MakeLists since it would be developing locally and running on server
+#*.txt
