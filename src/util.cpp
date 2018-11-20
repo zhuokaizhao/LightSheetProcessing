@@ -18,9 +18,10 @@
 typedef unsigned int uint;
 
 // LSPException Class
-LSPException::LSPException(std::string const &_msg, std::string const &_file, std::string const &_func) : std::runtime_error(_msg.c_str()),
-                                                                                     file(_file),
-                                                                                     func(_func) {}
+LSPException::LSPException(std::string const &_msg, std::string const &_file, std::string const &_func) 
+: std::runtime_error(_msg.c_str()), file(_file), func(_func) {}
+
+
 std::string const & LSPException::get_file() const { return file; }
 std::string const & LSPException::get_func() const { return func; }
 
@@ -31,14 +32,16 @@ std::string const & LSPException::get_func() const { return func; }
 
 void nrrd_checker(bool status, airArray* mop, std::string prompt,
                  std::string file, std::string function){
-  if(status){
-    char *err = biffGetDone(NRRD);
-    std::string msg = prompt + std::string(err); 
+    if(status)
+    {
+        char *err = biffGetDone(NRRD);
+        std::string msg = prompt + std::string(err); 
+        //std::string msg = prompt;
 
-    airMopAdd(mop, err, airFree, airMopAlways);
+        airMopAdd(mop, err, airFree, airMopAlways);
 
-    throw LSPException(msg, file.c_str(), function.c_str());
-  }
+        throw LSPException(msg, file.c_str(), function.c_str());
+    }
 }
 
 
@@ -51,17 +54,17 @@ Nrrd* safe_nrrd_new(airArray* mop, airMopper mopper){
 }
 
 
-Nrrd* safe_nrrd_load(airArray* mop, std::string filename) {
-  Nrrd *nin;
+Nrrd* safe_nrrd_load(airArray* mop, std::string filename) 
+{
+    Nrrd *nin;
+    /* create a nrrd; at this point this is just an empty container */
+    // nin is goint to be the loaded nrrd file
+    nin = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
-  /* create a nrrd; at this point this is just an empty container */
-  nin = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    /* read in the nrrd from file */
+    nrrd_checker(nrrdLoad(nin, filename.c_str(), NULL), mop, "Error loading file:\n", "util.cpp", "safe_nrrd_load");
 
-  /* read in the nrrd from file */
-  nrrd_checker(nrrdLoad(nin, filename.c_str(), NULL),
-              mop, "Error loading file:\n", "util.cpp", "safe_nrrd_load");
-
-  return nin;
+    return nin;
 }
 
 
