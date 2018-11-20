@@ -2,13 +2,16 @@
 #include "proj.h"
 #include "util.h"
 
+using namespace std;
+
 void setup_proj(CLI::App &app) {
   auto opt = std::make_shared<projOptions>();
   auto sub = app.add_subcommand("proj", "Create projection files based on nhdr file.");
 
-  sub->add_option("-n, --file_number", opt->file_number, "Target file number. (Default: 0)");
-  sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Input nhdr file path. (Default: .)");
-  sub->add_option("-o, --proj_path", opt->proj_path, "Where to output projection files. (Default: nhdr .)");
+  sub->add_option("-n, --file_number", opt->file_number, "Target file number. (Starts at 0)")->required();
+  sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Input nhdr file path. (Default: .)")->required();
+  sub->add_option("-o, --proj_path", opt->proj_path, "Where to output projection files. (Default: nhdr .)")->required();
+  sub->add_option("-v, --verbose", opt->verbose, "Turn on (1) or off (0) debug messages, by default turned off");
 
   sub->set_callback([opt]() { 
     try{
@@ -23,13 +26,17 @@ void setup_proj(CLI::App &app) {
 
 Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew()) 
 {
-    // if the number of file is 1, use absolute name
-    if (opt.file_number == 1)
+    // if the number of file is 0 (starts at 0), use absolute name
+    if (opt.file_number == 0)
     {
         nhdr_name = opt.nhdr_path;
         // in this case we keep the proj file name same as nhdr base name
-        u_long suff = nhdr_name.rfind(".nhdr");
-        std::string baseName = nhdr_name.substr(0,suff);
+        int end = nhdr_name.rfind(".nhdr");
+        int start = nhdr_name.rfind("/") + 1;
+        int length = end - start;
+        std::string baseName = nhdr_name.substr(start, length);
+        if (opt.verbose)
+            cout << "Base name is " << baseName << endl;
         proj_common = opt.proj_path + baseName + "-proj";
     }
     else
@@ -46,9 +53,13 @@ Proj::~Proj(){
 
 
 void Proj::main(){
-
     nrrdStateVerboseIO = 0;
+    int verbose = opt.verbose;
 
+    if (verbose)
+        cout << "Start Proj::main()" << endl;
+
+    // load input nhdr header file
     Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
 
     //xy proj
@@ -57,17 +68,19 @@ void Proj::main(){
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
     std::string xy = proj_common + "XY.nrrd";
 
-    // void nrrd_checker(bool status, airArray* mop, string prompt, string file, string function)
-    // int nrrdProject(Nrrd *nout, const Nrrd *nin, unsigned int axis, int measr, int type)
-    // int nrrdJoin(Nrrd *nout, const Nrrd *const *nin, unsigned int numNin, unsigned int axis, int incrDim);
     nrrd_checker(nrrdProject(nproj_xy_t[0], nin, 3, nrrdMeasureMax, nrrdTypeFloat) ||
                     nrrdProject(nproj_xy_t[1], nin, 3, nrrdMeasureMean, nrrdTypeFloat) ||
-                    nrrdJoin(nproj_xy, nproj_xy_t, 2, 3, 1),
-                mop, "Error building XY projection:\n", "proj.cpp", "Proj::main");
+                    nrrdJoin(nproj_xy, nproj_xy_t, 2, 3, 1), mop, "Error building XY projection:\n", "proj.cpp", "Proj::main");
 
     nrrdAxisInfoSet_va(nproj_xy, nrrdAxisInfoLabel, "x", "y", "c", "proj");
+    // save
     nrrd_checker(nrrdSave(xy.c_str(), nproj_xy, nullptr),
                 mop, "Error saving XY projection:\n", "proj.cpp", "Proj::main");
+    
+    if (verbose)
+    {
+        cout << "X-Y Projection file has been saved to " << xy << endl;
+    }
 
     //xz proj
     unsigned int permute[4] = {0, 2, 1, 3}; //same permute array for xz and yz coincidently
@@ -78,12 +91,16 @@ void Proj::main(){
     nrrd_checker(nrrdProject(nproj_xz_t[0], nin, 1, nrrdMeasureMax, nrrdTypeFloat) ||
                     nrrdProject(nproj_xz_t[1], nin, 1, nrrdMeasureMean, nrrdTypeFloat) ||
                     nrrdJoin(nproj_xz, nproj_xz_t, 2, 3, 1) ||
-                    nrrdAxesPermute(nproj_xz, nproj_xz, permute),
-                mop, "Error building XZ projection:\n", "proj.cpp", "Proj::main");
+                    nrrdAxesPermute(nproj_xz, nproj_xz, permute), mop, "Error building XZ projection:\n", "proj.cpp", "Proj::main");
 
     nrrdAxisInfoSet_va(nproj_xz, nrrdAxisInfoLabel, "x", "z", "c", "proj");
+    // save
     nrrd_checker(nrrdSave(xz.c_str(), nproj_xz, nullptr),
                 mop, "Error saving XZ projection:\n", "proj.cpp", "Proj::main");
+    if (verbose)
+    {
+        cout << "X-Z Projection file has been saved to " << xz << endl;
+    }
 
     //yz proj
     Nrrd* nproj_yz = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -97,7 +114,14 @@ void Proj::main(){
                 mop, "Error building YZ projection:\n", "proj.cpp", "Proj::main");
 
     nrrdAxisInfoSet_va(nproj_yz, nrrdAxisInfoLabel, "y", "z", "c", "proj");
+
+    // save
     nrrd_checker(nrrdSave(yz.c_str(), nproj_yz, nullptr),
                 mop, "Error saving YZ projection:\n", "proj.cpp", "Proj::main");
+
+    if (verbose)
+    {
+        cout << "Y-Z Projection file has been saved to " << yz << endl;
+    }
 
 }

@@ -46,11 +46,12 @@ void nrrd_checker(bool status, airArray* mop, std::string prompt,
 
 
 // REMEMBER: (nrrdNew-nrrdNuke) and (nrrdWrap-nrrdNix)
-Nrrd* safe_nrrd_new(airArray* mop, airMopper mopper){
-  Nrrd* nrrd = nrrdNew();
-  airMopAdd(mop, nrrd, mopper, airMopAlways);
+Nrrd* safe_nrrd_new(airArray* mop, airMopper mopper)
+{
+    Nrrd* nrrd = nrrdNew();
+    airMopAdd(mop, nrrd, mopper, airMopAlways);
 
-  return nrrd;
+    return nrrd;
 }
 
 
