@@ -186,6 +186,7 @@ typedef struct{
 
 
 struct SkimOptions {
+    std::string path;
     std::string file;
     std::string no;
     std::string xo;
@@ -211,7 +212,7 @@ private:
     void generate_proj();
     void update_projections();
 
-    std::string cziFileName, projBaseFileName, nhdrFileName, xmlFileName;
+    std::string outputPath, cziFileName, projBaseFileName, nhdrFileName, xmlFileName;
 
     int cziFile, xmlFile;
     FILE *nhdrFile;
