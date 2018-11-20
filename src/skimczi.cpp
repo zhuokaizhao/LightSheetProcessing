@@ -80,8 +80,9 @@ Skim::Skim(SkimOptions const &opt)
     nhdrFileName(opt.no)
 {
     cout << "Output path is " << outputPath << endl;
-    cout << "cziFileName is " << cziFileName << endl;
-    cout << "nhdrFileName is " << nhdrFileName << endl;
+    cout << "Input .czi file name is " << cziFileName << endl;
+    //cout << "nhdrFileName is " << nhdrFileName << endl;
+    
     // check if input file is a .czi file
     u_long suff = cziFileName.rfind(".czi");
     // cout << suff << endl;
@@ -95,7 +96,7 @@ Skim::Skim(SkimOptions const &opt)
     }
 
     std::string baseName = cziFileName.substr(0,suff);
-    cout << "Base Name is " << baseName << endl;
+    //cout << "Base Name is " << baseName << endl;
 
     // default names for .nhdr and .xml if not predefined
     if (nhdrFileName.empty()) {
@@ -105,6 +106,11 @@ Skim::Skim(SkimOptions const &opt)
     if (xmlFileName.empty()) {
         /* the -xo option was not used */
         xmlFileName = baseName + ".xml";
+    }
+    if (!outputPath.empty())
+    {
+        nhdrFileName = outputPath + nhdrFileName;
+        xmlFileName = outputPath + xmlFileName;
     }
 
     if (opt.verbose) 
@@ -130,13 +136,14 @@ Skim::Skim(SkimOptions const &opt)
     if (errno)
     {
         cout << "errno is " << errno << endl;
-        throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n",
-                        "skimczi.cpp", "Skim::Skim");
+        throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n", "skimczi.cpp", "Skim::Skim");
     }
     */
+    
     // 0_RDONLY: open for reading only
-    //cziFile = open(cziFileName.c_str(), O_RDONLY);
-    cziFile = 3;
+    cziFile = open(cziFileName.c_str(), O_RDONLY);
+    //cziFile = 3;
+    
     // 0_TRUNC: truncate to zero length
     // 0_CREAT: create if nonexistant
     // O_WRONLY: open for writing only
@@ -144,6 +151,7 @@ Skim::Skim(SkimOptions const &opt)
     
     // output file
     nhdrFile = fopen(nhdrFileName.c_str(), "w");
+    
 
     // Re-used for all SID segments
     currentSID = (SID*)malloc(sizeof(SID));
@@ -230,8 +238,7 @@ void Skim::parse_file(){
     xmlDoc *doc = NULL;
     doc = xmlReadMemory(xml, metaDataSegment->XmlSize, "noname.xml", NULL, 0);
     if (doc == NULL)
-        throw LSPException("Could not parse XML\n",
-                        "skimczi.cpp", "Skim::parse_file");
+        throw LSPException("Could not parse XML\n", "skimczi.cpp", "Skim::parse_file");
 
     // Get the root element node
     xmlNode *root_element = NULL;
@@ -644,11 +651,15 @@ void Skim::generate_proj(){
 
 
 
-void Skim::main(){
-  
+void Skim::main()
+{  
     cout << "Start Skim main" << endl;
     parse_file();
+    cout << "Finshed parsing the input file" << endl;
     generate_nhdr();
+    cout << "Generated nhdr header" << endl;
     generate_nrrd();
+    cout << "Generated nrrd file" << endl;
     generate_proj();
+    cout << "Generated proj file" << endl;
 }
