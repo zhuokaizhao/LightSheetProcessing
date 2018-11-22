@@ -174,29 +174,30 @@ void Anim::split_type()
                         safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
         
         // crop the area that we are going to perform resample
-        if(!no_origin){
-        int x = origins[i][0], y = origins[i][1], z = origins[i][2];
-        int minx = minmax[0][0], maxx = minmax[0][1];
-        int miny = minmax[1][0], maxy = minmax[1][1];
-        int minz = minmax[2][0], maxz = minmax[2][1];
+        if(!no_origin)
+        {
+            int x = origins[i][0], y = origins[i][1], z = origins[i][2];
+            int minx = minmax[0][0], maxx = minmax[0][1];
+            int miny = minmax[1][0], maxy = minmax[1][1];
+            int minz = minmax[2][0], maxz = minmax[2][1];
 
-        size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
-        size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
-                            static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
-                            proj_rsm[0]->axis[2].size-1,
-                            proj_rsm[0]->axis[3].size-1}; 
-        size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
-        size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
-                            static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
-                            proj_rsm[1]->axis[2].size-1,
-                            proj_rsm[1]->axis[3].size-1};
+            size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
+            size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
+                                static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
+                                proj_rsm[0]->axis[2].size-1,
+                                proj_rsm[0]->axis[3].size-1}; 
+            size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
+            size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
+                                static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
+                                proj_rsm[1]->axis[2].size-1,
+                                proj_rsm[1]->axis[3].size-1};
 
-        nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min0, max0) ||
-                        nrrdCrop(proj_t[1], proj_rsm[1], min1, max1),
-                    mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
+            nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min0, max0) ||
+                            nrrdCrop(proj_t[1], proj_rsm[1], min1, max1),
+                            mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
 
-        proj_rsm[0] = proj_t[0];
-        proj_rsm[1] = proj_t[1];
+            proj_rsm[0] = proj_t[0];
+            proj_rsm[1] = proj_t[1];
         }
 
         //resample
@@ -204,11 +205,13 @@ void Anim::split_type()
         Nrrd* res_rsm[2][2] = { //store {{max_z, avg_z}, {max_x, avg_x}}
                                 {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
                                     safe_nrrd_new(mop_t, (airMopper)nrrdNuke)},
-                            {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
-                                safe_nrrd_new(mop_t, (airMopper)nrrdNuke)}
-                                    };
+                                {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
+                                    safe_nrrd_new(mop_t, (airMopper)nrrdNuke)}
+                                };
+        
         double resample_rsm[2][2] = {{resample_xy, resample_xy},
                                     {resample_xy, resample_z}};
+        
         // k parameter
         double kparm[3] = {1, 0, 0.5};
         for(auto i=0; i<2; ++i){
@@ -227,18 +230,20 @@ void Anim::split_type()
                         nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
                         nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
                         nrrdResampleExecute(rsmc, proj_rsm[i]),
-                    mop_t, "Error resampling nrrd:\n", "anim.cpp", "Anim::split_type");
+                        mop_t, "Error resampling nrrd:\n", "anim.cpp", "Anim::split_type");
 
-        //SWAP(AX0 AX1) for yz plane
-        if(i==1)
-            nrrd_checker(nrrdAxesSwap(proj_rsm[i], proj_rsm[i], 0, 1),
-                        mop_t, "Error swaping yz axes:\n", "anim.cpp", "Anim::split_type");
+            //SWAP(AX0 AX1) for yz plane
+            if(i==1)
+            {
+                nrrd_checker(nrrdAxesSwap(proj_rsm[i], proj_rsm[i], 0, 1),
+                            mop_t, "Error swaping yz axes:\n", "anim.cpp", "Anim::split_type");
+            }
 
             nrrd_checker(nrrdSlice(res_rsm[i][0], proj_rsm[i], 3, 0) || 
                             nrrdSlice(res_rsm[i][1], proj_rsm[i], 3, 1),
-                        mop_t, "Error slicing nrrd:\n", "anim.cpp", "Anim::split_type");
+                            mop_t, "Error slicing nrrd:\n", "anim.cpp", "Anim::split_type");
 
-        airMopSingleOkay(mop_t, rsmc);
+            airMopSingleOkay(mop_t, rsmc);
         }
 
         std::string max_z = opt.anim_path + zero_pad(i, 3) + "-max-z.nrrd";
@@ -398,40 +403,43 @@ void Anim::make_avg_frame(std::string direction){
 }
 
 // build pngs for the animation
-void Anim::build_png() {
-  for(auto type: {"max", "avg"}){
-    #pragma omp parallel for
-    for(auto i=0; i<=opt.tmax; ++i){
-      auto mop_t = airMopNew();
+void Anim::build_png() 
+{
+    for(auto type: {"max", "avg"})
+    {
+        #pragma omp parallel for
+        for(auto i=0; i<=opt.tmax; ++i)
+        {
+            auto mop_t = airMopNew();
 
-      if(opt.verbose)
-        std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
+            if(opt.verbose)
+                std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
-      std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
-      Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
-      Nrrd *ppm_z_1 = safe_nrrd_load(mop_t, base_path + "-z-1.ppm");
-      Nrrd *ppm_x_0 = safe_nrrd_load(mop_t, base_path + "-x-0.ppm");
-      Nrrd *ppm_x_1 = safe_nrrd_load(mop_t, base_path + "-x-1.ppm");
-      std::vector<Nrrd*> ppms_z = {ppm_z_1, ppm_z_0, ppm_z_1};
-      std::vector<Nrrd*> ppms_x = {ppm_x_1, ppm_x_0, ppm_x_1};
+            std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
+            Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
+            Nrrd *ppm_z_1 = safe_nrrd_load(mop_t, base_path + "-z-1.ppm");
+            Nrrd *ppm_x_0 = safe_nrrd_load(mop_t, base_path + "-x-0.ppm");
+            Nrrd *ppm_x_1 = safe_nrrd_load(mop_t, base_path + "-x-1.ppm");
+            std::vector<Nrrd*> ppms_z = {ppm_z_1, ppm_z_0, ppm_z_1};
+            std::vector<Nrrd*> ppms_x = {ppm_x_1, ppm_x_0, ppm_x_1};
 
-      Nrrd *nout_z = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
-      Nrrd *nout_x = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
-      Nrrd *tmp_nout_array[2] = {nout_z, nout_x};
-      Nrrd *nout = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+            Nrrd *nout_z = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+            Nrrd *nout_x = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+            Nrrd *tmp_nout_array[2] = {nout_z, nout_x};
+            Nrrd *nout = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
 
-      nrrd_checker(nrrdJoin(nout_z, ppms_z.data(), ppms_z.size(), 0, 1) ||
-                    nrrdJoin(nout_x, ppms_x.data(), ppms_x.size(), 0, 1) ||
-                    nrrdJoin(nout, tmp_nout_array, 2, 1, 0),
-                  mop_t, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
+            nrrd_checker(nrrdJoin(nout_z, ppms_z.data(), ppms_z.size(), 0, 1) ||
+                            nrrdJoin(nout_x, ppms_x.data(), ppms_x.size(), 0, 1) ||
+                            nrrdJoin(nout, tmp_nout_array, 2, 1, 0),
+                            mop_t, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
 
-      std::string out_name = base_path + ".png";
-      nrrd_checker(nrrdSave(out_name.c_str(), nout, nullptr), 
-                  mop_t, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
+            std::string out_name = base_path + ".png";
+            nrrd_checker(nrrdSave(out_name.c_str(), nout, nullptr), 
+                        mop_t, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
 
-      airMopOkay(mop_t);
+            airMopOkay(mop_t);
+        }
     }
-  }
 }
 
 
@@ -460,7 +468,7 @@ void Anim::build_video(){
 
 
 void Anim::main(){
-  int verbose = opt.verbose;
+    int verbose = opt.verbose;
 
     if(verbose)
         std::cout << "Spliting nrrd on type dimension..." << std::endl;
@@ -471,16 +479,16 @@ void Anim::main(){
     make_max_frame("x");
     make_max_frame("z");
 
-  if(verbose)
-    std::cout << "Making frames for avg channel..." << std::endl;
-  make_avg_frame("x");
-  make_avg_frame("z");
+    if(verbose)
+        std::cout << "Making frames for avg channel..." << std::endl;
+    make_avg_frame("x");
+    make_avg_frame("z");
 
-  if(verbose)
-    std::cout << "Building pngs..." << std::endl;
-  build_png();
+    if(verbose)
+        std::cout << "Building pngs..." << std::endl;
+    build_png();
 
-  if(verbose)
-    std::cout << "Building video..." << std::endl;
-  build_video();
+    if(verbose)
+        std::cout << "Building video..." << std::endl;
+    build_video();
 }
