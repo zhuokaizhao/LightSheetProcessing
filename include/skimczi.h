@@ -186,10 +186,15 @@ typedef struct{
 
 
 struct SkimOptions {
-    std::string path;
+    std::string input_path;
+    std::string output_path;
+    //std::string no;
+    std::string base_name;
+    // no has been changed to nhdr_out_name
+    std::string nhdr_out_name;
+    // xo has been changed to xml_out_name
+    std::string xml_out_name;
     std::string file;
-    std::string no;
-    std::string xo;
     std::string po;
     int verbose = 0;
 };

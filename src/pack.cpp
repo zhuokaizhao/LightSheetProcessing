@@ -127,8 +127,8 @@ void Pack::run_skim(){
 	  		std::string iii = zero_pad(num, 3);
 	  		SkimOptions skim_opt;
 	  		skim_opt.file = current_file;
-	  		skim_opt.no	= data_dir + "/nhdr/" + iii + ".nhdr";
-	  		skim_opt.xo = data_dir + "/xml/" + iii + ".xml";
+	  		skim_opt.nhdr_out_name	= data_dir + "/nhdr/" + iii + ".nhdr";
+	  		skim_opt.xml_out_name = data_dir + "/xml/" + iii + ".xml";
 	  		skim_opt.po = data_dir + "/proj/" + iii; //do not create projection here.
 			Skim(skim_opt).main();
 		}

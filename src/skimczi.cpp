@@ -1,5 +1,6 @@
 //
 // Created by Robin Weiss
+// Modified by Zhuokai Zhao
 //
 
 #include <cstdio>
@@ -23,6 +24,9 @@
 #include "util.h"
 #include "skimczi_util.h"
 
+#include <boost/filesystem.hpp>
+#include <boost/range/iterator_range.hpp>
+
 using namespace std;
 
 void setup_skim(CLI::App &app) {
@@ -32,34 +36,71 @@ void setup_skim(CLI::App &app) {
                                         "generating .nhdr NRRD header files to permit extracting the image "
                                         "and essential meta data from CZI file.");
 
-    sub->add_option("file", opt->file, "Input CZI file to process")->required();
-    sub->add_option("-v, --verbose", opt->verbose, "Level of verbose debugging messages");
-    sub->add_option("-o, --output_path", opt->path, "Output directory where outputs will be saved at");
-    sub->add_option("-n, --nhdr", opt->no, "Filename for output nrrd header ending in \".nhdr\". (Default: .czi file name)");
-    sub->add_option("-x, --xml", opt->xo, "Filename for output XML metadata. (Default: .czi file name)");
+    //sub->add_option("file", opt->file, "Input CZI file to process")->required();
+    sub->add_option("-i, --input_path", opt->input_path, "Input czi files path. (Default: ./czi)")->required();
+    sub->add_option("-o, --output_path", opt->output_path, "Output directory where outputs will be saved at")->required();
+    sub->add_option("-b, --base_name", opt->base_name, "Base name that for the sequence of input czi files, for example, the files might be named as 1811131.czi, 1811132.czi, base name is 181113")->required();
+    sub->add_option("-n, --nhdr_out_name", opt->nhdr_out_name, "Filename for output nrrd header ending in \".nhdr\". (Default: .czi file name)");
+    sub->add_option("-x, --xml_out_name", opt->xml_out_name, "Filename for output XML metadata. (Default: .czi file name)");
     sub->add_option("-p, --proj", opt->po, "Given a non-empty string \"foo\" axis-aligned projections saved out as foo-projXY.nrrd, foo-projXZ.nrrd, and foo-projYZ.nrrd. ");
-    
+    sub->add_option("-v, --verbose", opt->verbose, "Level of verbose debugging messages");
 
     sub->set_callback([opt]() 
     {
-        try {
-            // if (opt->file == "")
-            //     cout << "Warning: Empty file name" << endl;
-            // else
-            //     cout << "Input file path: " << opt->file << endl;
-            // if (opt->no == "")
-            //     cout << "Warning: Empty nhdr" << endl;
-            // else
-            //     cout << "Output path: " << opt->no << endl;
+        // we need to go through all the files in the given path "input_path" and find all .czi files
+        // first we need to know the number of czi files
+        if(boost::filesystem::is_directory(opt->input_path)) 
+        {
+            cout << opt->input_path << " is valid, start processing" << endl;
+            for ( auto& curFileName : boost::make_iterator_range(boost::filesystem::directory_iterator(opt->input_path), {}) )
+            {
+                std::cout << "Current file name is: " << curFileName << endl;
+                // check if the current input file is a .czi file
+                string curExtension = curFileName.path().extension().string();
+                cout << "Current file extension is: " << curExtension << endl;
+                if (curExtension == ".czi")
+                {
+                    cout << "This file is a .czi file" << endl;
+                    // make this file name into opt->file
+                    opt->file = curFileName.path().filename().string();  
 
-            Skim(*opt).main();
-        } 
-        catch(LSPException &e) {
-            std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                    // now we are trying to process this file 
+                    // original program to run the file
+                    try 
+                    {
+                        // if (opt->file == "")
+                        //     cout << "Warning: Empty file name" << endl;
+                        // else
+                        //     cout << "Input file path: " << opt->file << endl;
+                        // if (opt->no == "")
+                        //     cout << "Warning: Empty nhdr" << endl;
+                        // else
+                        //     cout << "Output path: " << opt->no << endl;
+                        Skim(*opt).main();
+                    } 
+                    catch(LSPException &e) 
+                    {
+                        std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                    }
+                }
+                else
+                {
+                    cout << "This file is not a .czi file, next" << endl;
+                }
+
+            }
+                
         }
     });
 }
 
+// helper function that checks if a string is a number
+bool is_number(const string& s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it)) ++it;
+    return !s.empty() && it == s.end();
+}
 
 Skim::Skim(SkimOptions const &opt)
 : opt(opt), mop(airMopNew()),
@@ -73,16 +114,18 @@ Skim::Skim(SkimOptions const &opt)
     nproj_xy(nullptr),
     nproj_xz(nullptr),
     nproj_yz(nullptr),
-    outputPath(opt.path),
+    outputPath(opt.output_path),
     cziFileName(opt.file),
     projBaseFileName(opt.po),
-    xmlFileName(opt.xo),
-    nhdrFileName(opt.no)
+    xmlFileName(opt.xml_out_name),
+    nhdrFileName(opt.nhdr_out_name)
 {
     cout << "Output path is " << outputPath << endl;
     cout << "Input .czi file name is " << cziFileName << endl;
     //cout << "nhdrFileName is " << nhdrFileName << endl;
     
+    // we no longer need to check here
+    /*
     // check if input file is a .czi file
     u_long suff = cziFileName.rfind(".czi");
     // cout << suff << endl;
@@ -94,18 +137,33 @@ Skim::Skim(SkimOptions const &opt)
 
         throw LSPException(msg, "skimczi.cpp", "Skim::Skim");
     }
-
     std::string baseName = cziFileName.substr(0,suff);
-    //cout << "Base Name is " << baseName << endl;
+    */
+
+    string baseName = opt.base_name;
+    cout << "Base Name is " << baseName << endl;
+
+    // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
+    int end = cziFileName.rfind(".czi");
+    int start = cziFileName.rfind(baseName.back()) + 1;
+    int length = end - start;
+    std::string sequenceNumString = cziFileName.substr(start, length);
+
+    // check if that is a valid number
+    bool isNumber = is_number(sequenceNumString);
+    if (!isNumber)
+        return;
+    
+    //int sequenceNumber = stoi(sequenceNumString);
 
     // default names for .nhdr and .xml if not predefined
     if (nhdrFileName.empty()) {
         /* the -no option was not used */
-        nhdrFileName = baseName + ".nhdr";
+        nhdrFileName = baseName + "_" + sequenceNumString + ".nhdr";
     }
     if (xmlFileName.empty()) {
         /* the -xo option was not used */
-        xmlFileName = baseName + ".xml";
+        xmlFileName = baseName + "_" + sequenceNumString + ".xml";
     }
     if (!outputPath.empty())
     {
