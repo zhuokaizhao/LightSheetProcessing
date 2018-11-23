@@ -84,6 +84,7 @@ void setup_skim(CLI::App &app) {
             fs::path inPath(opt->input_path);
             cout << "Input path " << inPath << " is valid, start processing" << endl;
             
+            /*
             // some testing stuff
             std::vector<fs::directory_entry> v;
             copy(fs::directory_iterator(inPath), fs::directory_iterator(), back_inserter(v));
@@ -94,6 +95,19 @@ void setup_skim(CLI::App &app) {
                 //std::cout<< (*it).path().string()<<endl;
                 cout << "aaaaa" << endl;
             }  
+            */
+
+            fs::directory_iterator end_itr;
+            // cycle through the directory
+            for (fs::directory_iterator itr(inPath); itr != end_itr; ++itr)
+            {
+                // If it's not a directory, list it. If you want to list directories too, just remove this check.
+                if (is_regular_file(itr->path())) {
+                    // assign current file name to current_file and echo it out to the console.
+                    string current_file = itr->path().string();
+                    cout << current_file << endl;
+                }
+            }
             
             
             for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
