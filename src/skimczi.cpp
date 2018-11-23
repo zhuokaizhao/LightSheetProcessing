@@ -82,7 +82,8 @@ void setup_skim(CLI::App &app) {
         if (checkIfDirectory(opt->input_path))
         {
             cout << opt->input_path << " is valid, start processing" << endl;
-            for ( auto& curFileName : boost::make_iterator_range(boost::filesystem::directory_iterator(opt->input_path), {}) )
+            fs::path inPath(opt->input_path);
+            for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
             {
                 std::cout << "Current file name is: " << curFileName << endl;
                 // check if the current input file is a .czi file
