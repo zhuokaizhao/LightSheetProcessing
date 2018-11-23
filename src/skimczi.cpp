@@ -91,7 +91,8 @@ void setup_skim(CLI::App &app) {
 
             for ( std::vector<fs::directory_entry>::const_iterator it = v.begin(); it != v.end();  ++it )
             {
-                std::cout<< (*it).path().string()<<endl;
+                //std::cout<< (*it).path().string()<<endl;
+                cout << "aaaaa" << endl;
             }  
             
             
