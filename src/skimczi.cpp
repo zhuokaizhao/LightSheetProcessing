@@ -81,8 +81,8 @@ void setup_skim(CLI::App &app) {
         //if(boost::filesystem::exists(opt->input_path)) 
         if (checkIfDirectory(opt->input_path))
         {
-            cout << opt->input_path << " is valid, start processing" << endl;
             fs::path inPath(opt->input_path);
+            cout << "Input path " << inPath << " is valid, start processing" << endl;
             for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
             {
                 std::cout << "Current file name is: " << curFileName.path().string() << endl;
