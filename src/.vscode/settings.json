@@ -19,6 +19,7 @@
         "vector": "cpp",
         "stdexcept": "cpp",
         "iostream": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "functional": "cpp"
     }
 }

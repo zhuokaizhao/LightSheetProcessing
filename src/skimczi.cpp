@@ -83,6 +83,18 @@ void setup_skim(CLI::App &app) {
         {
             fs::path inPath(opt->input_path);
             cout << "Input path " << inPath << " is valid, start processing" << endl;
+            
+            // some testing stuff
+            std::vector<fs::directory_entry> v;
+            copy(fs::directory_iterator(inPath), fs::directory_iterator(), back_inserter(v));
+            std::cout << inPath << " is a directory containing:\n";
+
+            for ( std::vector<fs::directory_entry>::const_iterator it = v.begin(); it != v.end();  ++it )
+            {
+                std::cout<< (*it).path().string()<<endl;
+            }  
+            
+            
             for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
             {
                 std::cout << "Current file name is: " << curFileName.path().string() << endl;
