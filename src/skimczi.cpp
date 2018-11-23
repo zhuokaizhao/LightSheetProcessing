@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <libxml/parser.h>
+#include <iostream>
+#include <cassert>
 
 #include <teem/air.h>
 #include <teem/biff.h>
@@ -28,6 +30,25 @@
 #include <boost/range/iterator_range.hpp>
 
 using namespace std;
+
+
+// Helper function that checks if given string path is of a Directory
+bool checkIfDirectory(std::string filePath)
+{
+	try 
+    {
+		// Create a Path object from given path string
+		boost::filesystem::path pathObj(filePath);
+		// Check if path exists and is of a directory file
+		if (boost::filesystem::exists(pathObj) && boost::filesystem::is_directory(pathObj))
+			return true;
+	}
+	catch (boost::filesystem::filesystem_error & e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+	return false;
+}
 
 void setup_skim(CLI::App &app) {
     auto opt = std::make_shared<SkimOptions>();
@@ -49,7 +70,9 @@ void setup_skim(CLI::App &app) {
     {
         // we need to go through all the files in the given path "input_path" and find all .czi files
         // first we need to know the number of czi files
-        if(boost::filesystem::is_directory(opt->input_path)) 
+        //boost::filesystem::path inputPath(opt->input_path);
+        //if(boost::filesystem::exists(opt->input_path)) 
+        if (checkIfDirectory(opt->input_path))
         {
             cout << opt->input_path << " is valid, start processing" << endl;
             for ( auto& curFileName : boost::make_iterator_range(boost::filesystem::directory_iterator(opt->input_path), {}) )
@@ -91,6 +114,10 @@ void setup_skim(CLI::App &app) {
             }
                 
         }
+        else
+        {
+            cout << opt->input_path << " is not valid, exit" << endl;
+        }
     });
 }
 
@@ -122,6 +149,13 @@ Skim::Skim(SkimOptions const &opt)
 {
     cout << "Output path is " << outputPath << endl;
     cout << "Input .czi file name is " << cziFileName << endl;
+
+    // if output path does not exist, create one
+    if (checkIfDirectory(outputPath))
+    {
+        cout << outputPath << " does not exits, but has been created" << endl;
+        boost::filesystem::create_directory(outputPath);
+    }
     //cout << "nhdrFileName is " << nhdrFileName << endl;
     
     // we no longer need to check here
@@ -157,11 +191,13 @@ Skim::Skim(SkimOptions const &opt)
     //int sequenceNumber = stoi(sequenceNumString);
 
     // default names for .nhdr and .xml if not predefined
-    if (nhdrFileName.empty()) {
+    if (nhdrFileName.empty()) 
+    {
         /* the -no option was not used */
         nhdrFileName = baseName + "_" + sequenceNumString + ".nhdr";
     }
-    if (xmlFileName.empty()) {
+    if (xmlFileName.empty()) 
+    {
         /* the -xo option was not used */
         xmlFileName = baseName + "_" + sequenceNumString + ".xml";
     }
