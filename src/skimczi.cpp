@@ -13,7 +13,6 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <libxml/parser.h>
-#include <iostream>
 #include <cassert>
 
 #include <teem/air.h>
@@ -32,6 +31,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
+// these are used while iterating filesystem
 #include <dirent.h>
 #include <cstring>
 #include <iostream>
