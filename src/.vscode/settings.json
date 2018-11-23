@@ -18,6 +18,7 @@
         "utility": "cpp",
         "vector": "cpp",
         "stdexcept": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "filesystem": "cpp"
     }
 }

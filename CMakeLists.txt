@@ -4,10 +4,16 @@ project(lsp)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lstdc++fs")
 
 file(GLOB HEADERS "include/*.h" "include/*.hpp")
 file(GLOB SOURCES "src/*.cpp")
+
+#add_library(boost STATIC IMPORTED)
+#set_property(TARGET boost PROPERTY IMPORTED_LOCATION "/usr/local/Cellar/boost/1.68.0/lib/*.a")
+
+#add_library(boost-filesystem STATIC IMPORTED)
+#set_property(TARGET boost-filesystem PROPERTY IMPORTED_LOCATION "/usr/local/Cellar/boost/1.68.0/lib/libboost_filesystem.a")
 
 # add teem library that is on my mac
 add_library(teem STATIC IMPORTED)
@@ -30,6 +36,7 @@ add_executable(lsp ${SOURCES})
 target_link_libraries(lsp teem fftw3 libxml2 png z)
 
 # teem include directory that is on my mac
+include_directories("/usr/local/Cellar/boost/1.68.0/include/")
 include_directories("/Users/zhuokaizhao/Desktop/UChicago/Research/Teem/teem-install/include/")
 #include_directories("/usr/local/opt/libxml2/include/libxml2/")
 include_directories("/usr/local/Cellar/libxml2/2.9.7/include/libxml2")
@@ -51,7 +58,7 @@ target_include_directories(lsp PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # endif()
 
 # find boost library
-#set(Boost_NO_BOOST_CMAKE ON)
+set(Boost_NO_BOOST_CMAKE ON)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 if (${Boost_FOUND})
     include_directories(lsp PRIVATE ${Boost_INCLUDE_DIRS})
@@ -64,6 +71,11 @@ if (${OpenCV_FOUND})
 	include_directories(lsp PRIVATE ${OpenCV_INCLUDE_DIRS})
 	target_link_libraries(lsp ${OpenCV_LIBS})
 endif()
+
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "dir='${dir}'")
+endforeach()
 
 install (TARGETS lsp DESTINATION bin)
 

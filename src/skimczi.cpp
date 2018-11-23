@@ -20,6 +20,9 @@
 #include <teem/biff.h>
 #include <teem/ell.h>
 
+#include <fstream>
+//#include <experimental/filesystem>
+
 #include "CLI11.hpp"
 
 #include "skimczi.h"
@@ -30,6 +33,8 @@
 #include <boost/range/iterator_range.hpp>
 
 using namespace std;
+//namespace fs = std::filesystem;
+namespace fs = boost::filesystem;
 
 
 // Helper function that checks if given string path is of a Directory
@@ -38,12 +43,14 @@ bool checkIfDirectory(std::string filePath)
 	try 
     {
 		// Create a Path object from given path string
-		boost::filesystem::path pathObj(filePath);
+		fs::path pathObj(filePath);
 		// Check if path exists and is of a directory file
-		if (boost::filesystem::exists(pathObj) && boost::filesystem::is_directory(pathObj))
-			return true;
+        if (fs::exists(pathObj) && fs::is_directory(pathObj))
+            return true;
+		// if (boost::filesystem::exists(pathObj) && boost::filesystem::is_directory(pathObj))
+		// 	return true;
 	}
-	catch (boost::filesystem::filesystem_error & e)
+	catch (fs::filesystem_error & e)
 	{
 		std::cerr << e.what() << std::endl;
 	}

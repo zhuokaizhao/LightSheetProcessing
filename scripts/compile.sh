@@ -1,7 +1,7 @@
 # this CMakeLists.txt file is used for server at Zhuokai's Mac
 
 
-CXX=g++-8
+CXX=g++-8 
 LSP_path=$(cd $(dirname $0); cd ..; pwd -P)
 build_path=$LSP_path/LSP-BUILD
 install_path=$LSP_path/LSP-INSTALL
