@@ -85,7 +85,7 @@ void setup_skim(CLI::App &app) {
             fs::path inPath(opt->input_path);
             for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
             {
-                std::cout << "Current file name is: " << curFileName << endl;
+                std::cout << "Current file name is: " << curFileName.path().string() << endl;
                 // check if the current input file is a .czi file
                 string curExtension = curFileName.path().extension().string();
                 cout << "Current file extension is: " << curExtension << endl;
