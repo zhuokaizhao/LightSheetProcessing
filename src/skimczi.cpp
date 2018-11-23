@@ -32,6 +32,12 @@
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
+#include <dirent.h>
+#include <cstring>
+#include <iostream>
+#include <vector>
+#include <memory>
+
 using namespace std;
 //namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
@@ -55,6 +61,25 @@ bool checkIfDirectory(std::string filePath)
 		std::cerr << e.what() << std::endl;
 	}
 	return false;
+}
+
+std::vector<std::string> GetDirectoryFiles(const std::string& dir) 
+{
+    std::vector<std::string> files;
+    std::shared_ptr<DIR> directory_ptr(opendir(dir.c_str()), [](DIR* dir){ dir && closedir(dir); });
+    struct dirent *dirent_ptr;
+    
+    if (!directory_ptr) 
+    {
+        std::cout << "Error opening : " << std::strerror(errno) << dir << std::endl;
+        return files;
+    }
+    
+    while ((dirent_ptr = readdir(directory_ptr.get())) != nullptr) 
+    {
+        files.push_back(std::string(dirent_ptr->d_name));
+    }
+    return files;
 }
 
 void setup_skim(CLI::App &app) {
@@ -97,6 +122,7 @@ void setup_skim(CLI::App &app) {
             }  
             */
 
+            /*
             fs::directory_iterator end_itr;
             // cycle through the directory
             for (fs::directory_iterator itr(inPath); itr != end_itr; ++itr)
@@ -107,6 +133,14 @@ void setup_skim(CLI::App &app) {
                     string current_file = itr->path().string();
                     cout << current_file << endl;
                 }
+            }
+            */
+            
+            const auto& directory_path = std::string(opt->input_path);
+            const auto& files = GetDirectoryFiles(directory_path);
+            for (const auto& file : files) 
+            {
+                std::cout << file << std::endl;
             }
             
             
