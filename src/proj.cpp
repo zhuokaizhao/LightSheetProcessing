@@ -253,6 +253,9 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         int length = end - start;
         std::string sequenceNumString = nhdr_name.substr(start, length);
 
+        if (opt.verbose)
+            cout << "Sequence number is " << sequenceNumString << endl;
+
         // check if that is a valid number
         bool isNumber = is_number(sequenceNumString);
         if (!isNumber)
