@@ -897,14 +897,14 @@ void Skim::generate_proj(){
 
 void Skim::main(const string curFile)
 {  
-    cout << "Start Skim main" << endl;
+    //cout << "Start Skim main" << endl;
     cout << "Processing input file " << curFile << endl;
     parse_file();
-    cout << "Finshed parsing the input file" << endl;
+    cout << "Parsed the input file successfully" << endl;
     generate_nhdr();
-    cout << "Generated nhdr header" << endl;
+    cout << "Generated nhdr header successfully" << endl;
     generate_nrrd();
-    cout << "Generated nrrd file" << endl;
+    cout << "Generated nrrd file successfully" << endl;
     generate_proj();
-    cout << "Generated proj file" << endl;
+    cout << "Generated proj file successfully" << endl << endl << endl;
 }
