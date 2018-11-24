@@ -79,13 +79,13 @@ void setup_proj(CLI::App &app) {
     sub->set_callback([opt]() 
     {
         // first determine if input nhdr_path is valid
-        if (checkIfDirectory(opt->nhdr_path))
+        if (Skim::checkIfDirectory(opt->nhdr_path))
         {
             if (opt->verbose)
                 cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
             
             // count the number of files
-            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
+            const vector<string> files = Skim::GetDirectoryFiles(opt->nhdr_path);
             // note that the number starts counting at 0
             int totalNum = files.size() - 1;
             int nhdrNum = -1;
@@ -223,7 +223,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         std::string sequenceNumString = nhdr_name.substr(start, length);
 
         // check if that is a valid number
-        bool isNumber = is_number(sequenceNumString);
+        bool isNumber = Skim::is_number(sequenceNumString);
         if (!isNumber)
             return;
         
