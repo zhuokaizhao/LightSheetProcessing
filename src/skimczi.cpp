@@ -382,7 +382,8 @@ void Skim::parse_file(){
         {
             // Read the header data
             read(cziFile, headerInfo, 512);
-            if (verbose) {
+            if (verbose) 
+            {
                 fprintf(stdout, "==========HEADER==========\n");
                 fprintf(stdout, "Major      : %" PRIu32"\n", headerInfo->Major);
                 fprintf(stdout, "Minor      : %" PRIu32"\n", headerInfo->Minor);
@@ -391,6 +392,9 @@ void Skim::parse_file(){
                 fprintf(stdout, "UpdatePend : %" PRIu32"\n", headerInfo->UpdatePending);
                 fprintf(stdout, "==========================\n\n");
             }
+            if (opt.verbose)
+                cout << "ZISRAWFILE has been found" << endl;
+            
             break; // ZISRAWFILE has been found
         }
 
