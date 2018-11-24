@@ -167,7 +167,9 @@ void setup_proj(CLI::App &app) {
                 opt->file_name = curFile;
                 try
                 {
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
                     Proj(*opt).main();
+                    opt->number_of_processed++;
                 }
                 catch(LSPException &e)
                 {
@@ -253,8 +255,8 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         int length = end - start;
         std::string sequenceNumString = nhdr_name.substr(start, length);
 
-        if (opt.verbose)
-            cout << "Sequence number is " << sequenceNumString << endl;
+        // if (opt.verbose)
+        //     cout << "Sequence number is " << sequenceNumString << endl;
 
         // check if that is a valid number
         bool isNumber = is_number(sequenceNumString);
@@ -262,8 +264,8 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
             return;
         
         proj_common = opt.proj_path + opt.base_name + "_" + sequenceNumString + "-proj";
-        if (opt.verbose)
-            cout << "aaa proj_common is " << proj_common << endl;
+        // if (opt.verbose)
+        //     cout << "aaa proj_common is " << proj_common << endl;
     }
 }
 
@@ -288,11 +290,10 @@ void Proj::main(){
     Nrrd* nproj_xy_t[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
     
-    if (verbose)
-    {
-        //cout << "File number is " << opt.file_number << endl;
-        cout << "proj_common is " << proj_common << endl;
-    }
+    // if (verbose)
+    // {
+    //     cout << "proj_common is " << proj_common << endl;
+    // }
         
     std::string xy = proj_common + "XY.nrrd";
 

@@ -16,6 +16,7 @@ struct projOptions {
 	std::string proj_path = "./proj";
     std::string base_name;
     std::string file_name;
+    int number_of_processed = 0;
     int verbose = 0;
 };
 
