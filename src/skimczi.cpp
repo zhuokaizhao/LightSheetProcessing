@@ -330,11 +330,13 @@ Skim::Skim(SkimOptions const &opt)
 
     // Open the files
     cziFile  = open(cziFileName.c_str(), O_RDONLY);
-    cout << cziFileName << " has been openned" << endl;
+    if (opt.verbose)
+        cout << cziFileName << " has been openned" << endl;
     //cout << "Open result " << cziFile << endl;
     if (errno)
     {
-        cout << "errno is " << errno << endl;
+        if (opt.verbose)
+            cout << "errno is " << errno << endl;
         throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n", "skimczi.cpp", "Skim::Skim");
     }
     
