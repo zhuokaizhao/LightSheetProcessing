@@ -43,6 +43,14 @@ using namespace std;
 namespace fs = boost::filesystem;
 
 
+// helper function that checks if a string is a number
+bool is_number(const string& s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it)) ++it;
+    return !s.empty() && it == s.end();
+}
+
 // Helper function that checks if given string path is of a Directory
 bool checkIfDirectory(std::string filePath)
 {
@@ -251,14 +259,6 @@ void setup_skim(CLI::App &app) {
         }
         
     });
-}
-
-// helper function that checks if a string is a number
-bool is_number(const string& s)
-{
-    std::string::const_iterator it = s.begin();
-    while (it != s.end() && std::isdigit(*it)) ++it;
-    return !s.empty() && it == s.end();
 }
 
 Skim::Skim(SkimOptions const &opt)

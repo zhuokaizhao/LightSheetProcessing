@@ -1,6 +1,7 @@
 #include <teem/nrrd.h>
 #include "proj.h"
 #include "util.h"
+#include "skimczi.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -15,7 +16,7 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-
+/*
 // helper function that checks if a string is a number
 bool is_number(const string& s)
 {
@@ -63,6 +64,7 @@ vector<string> GetDirectoryFiles(const std::string& dir)
     }
     return files;
 }
+*/
 
 void setup_proj(CLI::App &app) {
     auto opt = std::make_shared<projOptions>();

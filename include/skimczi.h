@@ -207,6 +207,14 @@ public:
     ~Skim();
 
     void main(const std::string curFile);
+
+    // Helper function that checks if given string path is of a Directory
+    bool checkIfDirectory(std::string filePath);
+    // helper function that gets all the file names in a directory
+    vector<string> GetDirectoryFiles(const std::string& dir);
+    // helper function that checks if a string is a number
+    bool is_number(const string& s);
+
 private:
     SkimOptions const &opt;
     airArray* mop;
