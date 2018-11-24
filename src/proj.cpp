@@ -197,6 +197,12 @@ void setup_proj(CLI::App &app) {
 
 Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew()) 
 {
+    if (!checkIfDirectory(opt.proj_path))
+    {
+        cout << opt.proj_path << " does not exits, but has been created" << endl;
+        boost::filesystem::create_directory(opt.proj_path);
+    }
+
     // if the number of file is 0 (single file since count starts at 0), use absolute name
     if (opt.file_number == 0)
     {
