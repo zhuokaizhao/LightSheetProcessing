@@ -202,15 +202,14 @@ void setup_skim(CLI::App &app) {
                 {
                     cout << "This file is not a .czi file, next" << endl;
                 }
-                */
-
             }
-                
+            */  
         }
         else
         {
             cout << opt->input_path << " is not valid, exit" << endl;
         }
+        
     });
 }
 
