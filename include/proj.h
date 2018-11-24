@@ -13,6 +13,8 @@ struct projOptions {
 	int file_number = 0;
 	std::string nhdr_path = ".";
 	std::string proj_path = ".";
+    std::string base_name;
+    std::string file_name;
     int verbose = 0;
 };
 
