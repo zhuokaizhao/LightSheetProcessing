@@ -63,7 +63,8 @@ bool checkIfDirectory(std::string filePath)
 	return false;
 }
 
-std::vector<std::string> GetDirectoryFiles(const std::string& dir) 
+// helper function that gets all the file names in a directory
+vector<string> GetDirectoryFiles(const std::string& dir) 
 {
     std::vector<std::string> files;
     std::shared_ptr<DIR> directory_ptr(opendir(dir.c_str()), [](DIR* dir){ dir && closedir(dir); });
@@ -71,7 +72,7 @@ std::vector<std::string> GetDirectoryFiles(const std::string& dir)
     
     if (!directory_ptr) 
     {
-        std::cout << "Error opening : " << std::strerror(errno) << dir << std::endl;
+        std::cout << "Error opening : "  << dir << std::endl;
         return files;
     }
     
@@ -106,8 +107,8 @@ void setup_skim(CLI::App &app) {
         //if(boost::filesystem::exists(opt->input_path)) 
         if (checkIfDirectory(opt->input_path))
         {
-            fs::path inPath(opt->input_path);
-            cout << "Input path " << inPath << " is valid, start processing" << endl;
+            //fs::path inPath(opt->input_path);
+            cout << "Input path " << opt->input_path << " is valid, start processing" << endl;
             
             /*
             // some testing stuff
@@ -135,15 +136,37 @@ void setup_skim(CLI::App &app) {
                 }
             }
             */
-            
-            const auto& directory_path = std::string(opt->input_path);
-            const auto& files = GetDirectoryFiles(directory_path);
-            for (const auto& file : files) 
+        
+            const vector<string> files = GetDirectoryFiles(opt->input_path);
+            for (const string curFile : files) 
             {
-                std::cout << file << std::endl;
+                //std::cout << file << std::endl;
+                std::cout << "Current file name is: " << curFile << endl;
+                
+                // check if input file is a .czi file
+                int suff = curFile.rfind(".czi");
+                // cout << suff << endl;
+                if (!suff || (suff != curFile.length() - 4)) 
+                {
+                    cout << "Input file " + curFile + " does not end with .czi" << endl;
+                    continue;
+                }
+
+                // this is a valid file
+                opt->file = curFile;
+                try 
+                {
+                    Skim(*opt).main();
+                } 
+                catch(LSPException &e) 
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+
+
             }
             
-            
+            /*
             for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
             {
                 std::cout << "Current file name is: " << curFileName.path().string() << endl;
@@ -179,6 +202,7 @@ void setup_skim(CLI::App &app) {
                 {
                     cout << "This file is not a .czi file, next" << endl;
                 }
+                */
 
             }
                 
