@@ -279,7 +279,12 @@ Skim::Skim(SkimOptions const &opt)
     xmlFileName(opt.xml_out_name),
     nhdrFileName(opt.nhdr_out_name)
 {
-    cziFileName = opt.input_path + opt.file;
+    // check if input path is a directory or a single file
+    if (checkIfDirectory(opt.input_path))
+        cziFileName = opt.input_path + opt.file;
+    else
+        cziFileName = opt.file;
+
     if (opt.verbose)
     {
         cout << "Output path is " << outputPath << endl;
