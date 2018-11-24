@@ -327,18 +327,17 @@ Skim::Skim(SkimOptions const &opt)
     }
 
     // Open the files
-    /*
     cziFile  = open(cziFileName.c_str(), O_RDONLY);
-    cout << "Open result " << cziFile << endl;
+    //cout << "Open result " << cziFile << endl;
     if (errno)
     {
         cout << "errno is " << errno << endl;
         throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n", "skimczi.cpp", "Skim::Skim");
     }
-    */
+    
     
     // 0_RDONLY: open for reading only
-    cziFile = open(cziFileName.c_str(), O_RDONLY);
+    //cziFile = open(cziFileName.c_str(), O_RDONLY);
     //cziFile = 3;
     
     // 0_TRUNC: truncate to zero length
