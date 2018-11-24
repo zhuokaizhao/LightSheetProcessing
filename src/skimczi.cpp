@@ -247,10 +247,11 @@ Skim::Skim(SkimOptions const &opt)
     xmlFileName(opt.xml_out_name),
     nhdrFileName(opt.nhdr_out_name)
 {
+    cziFileName = opt.input_path + opt.file;
     if (opt.verbose)
     {
         cout << "Output path is " << outputPath << endl;
-        cout << "Input .czi file name is " << cziFileName << endl;
+        cout << "Input .czi file path is " << cziFileName << endl;
     }
 
     // if output path does not exist, create one
@@ -312,18 +313,18 @@ Skim::Skim(SkimOptions const &opt)
 
     if (opt.verbose) 
     {
-        std::cout << "===========PATHS==========\n";
+        std::cout << "===========PATHS==========" << endl;
         std::cout << "Output Dir: " << outputPath << endl;
-        std::cout << "===========FILES==========\n";
-        std::cout << "CZI  : " <<  cziFileName << "\n";
-        std::cout << "NHDR : " <<  nhdrFileName << "\n";
-        std::cout << "XML  : " <<  xmlFileName << "\n";
+        std::cout << "===========FILES==========" << endl;
+        std::cout << "CZI  : " <<  cziFileName << endl;
+        std::cout << "NHDR : " <<  nhdrFileName << endl;
+        std::cout << "XML  : " <<  xmlFileName << endl;
     
         if (!projBaseFileName.empty()) 
         {
-            std::cout << "PROJs: " << projBaseFileName << "-projXX.nrrd\n";
+            std::cout << "PROJs: " << projBaseFileName << "-projXX.nrrd" << endl;
         }
-        std::cout << "==========================\n\n";
+        std::cout << "==========================" << endl;
     }
 
     // Open the files
