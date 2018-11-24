@@ -161,8 +161,8 @@ void setup_proj(CLI::App &app) {
                     }
                 }
                 */
-                if (opt->verbose)
-                    cout << "Currently processing " << curFile << endl;
+                // if (opt->verbose)
+                //     cout << "Currently processing " << curFile << endl;
 
                 opt->file_name = curFile;
                 try
@@ -244,6 +244,9 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         //proj_common = opt.proj_path + zero_pad(opt.file_number, numZeroPad) + "-proj";
         nhdr_name = opt.nhdr_path + opt.file_name;
 
+        if (opt.verbose)
+            cout << "Currently processing " << nhdr_name << endl;
+
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
         int end = nhdr_name.rfind(".nhdr");
         int start = nhdr_name.rfind(opt.base_name.back()) + 1;
@@ -256,6 +259,8 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
             return;
         
         proj_common = opt.proj_path + opt.base_name + "_" + sequenceNumString + "-proj";
+        if (opt.verbose)
+            cout << "proj_common is " << proj_common << endl;
     }
 }
 
@@ -282,7 +287,7 @@ void Proj::main(){
     
     if (verbose)
     {
-        cout << "File number is " << opt.file_number << endl;
+        //cout << "File number is " << opt.file_number << endl;
         cout << "proj_common is " << proj_common << endl;
     }
         
