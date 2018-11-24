@@ -14,6 +14,8 @@
 #ifndef LSP_SKIMCZI_H
 #define LSP_SKIMCZI_H
 
+using namespace std;
+
 
 // ================= //
 // SEGMENT ID HEADER //
