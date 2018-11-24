@@ -206,7 +206,7 @@ public:
     Skim(SkimOptions const &opt = SkimOptions());
     ~Skim();
 
-    void main();
+    void main(const std::string curFile);
 private:
     SkimOptions const &opt;
     airArray* mop;

@@ -164,7 +164,7 @@ void setup_skim(CLI::App &app) {
                 opt->file = curFile;
                 try 
                 {
-                    Skim(*opt).main();
+                    Skim(*opt).main(curFile);
                 } 
                 catch(LSPException &e) 
                 {
@@ -241,7 +241,7 @@ void setup_skim(CLI::App &app) {
             opt->file = curFile;
             try 
             {
-                Skim(*opt).main();
+                Skim(*opt).main(curFile);
             } 
             catch(LSPException &e) 
             {
@@ -895,9 +895,10 @@ void Skim::generate_proj(){
 
 
 
-void Skim::main()
+void Skim::main(const string curFile)
 {  
     cout << "Start Skim main" << endl;
+    cout << "Processing input file " << curFile << endl;
     parse_file();
     cout << "Finshed parsing the input file" << endl;
     generate_nhdr();
