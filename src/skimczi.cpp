@@ -328,6 +328,7 @@ Skim::Skim(SkimOptions const &opt)
 
     // Open the files
     cziFile  = open(cziFileName.c_str(), O_RDONLY);
+    cout << cziFileName << " has been openned" << endl;
     //cout << "Open result " << cziFile << endl;
     if (errno)
     {
