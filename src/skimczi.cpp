@@ -108,7 +108,8 @@ void setup_skim(CLI::App &app) {
         if (checkIfDirectory(opt->input_path))
         {
             //fs::path inPath(opt->input_path);
-            cout << "Input path " << opt->input_path << " is valid, start processing" << endl;
+            if (opt->verbose)
+                cout << "Input path " << opt->input_path << " is valid, start processing" << endl;
             
             /*
             // some testing stuff
@@ -141,15 +142,22 @@ void setup_skim(CLI::App &app) {
             for (const string curFile : files) 
             {
                 //std::cout << file << std::endl;
-                std::cout << "Current file name is: " << curFile << endl;
+                if (opt->verbose)
+                    std::cout << "Current file name is: " << curFile << endl;
                 
                 // check if input file is a .czi file
                 int suff = curFile.rfind(".czi");
                 // cout << suff << endl;
                 if (!suff || (suff != curFile.length() - 4)) 
                 {
-                    cout << "Input file " + curFile + " does not end with .czi" << endl;
+                    if (opt->verbose)
+                        cout << "Current input file " + curFile + " does not end with .czi, continue to the next" << endl;
                     continue;
+                }
+                else
+                {
+                    if (opt->verbose)
+                        cout << "Current input file " + curFile + "ends with .czi, process this file" << endl;
                 }
 
                 // this is a valid file
@@ -239,11 +247,14 @@ Skim::Skim(SkimOptions const &opt)
     xmlFileName(opt.xml_out_name),
     nhdrFileName(opt.nhdr_out_name)
 {
-    cout << "Output path is " << outputPath << endl;
-    cout << "Input .czi file name is " << cziFileName << endl;
+    if (opt.verbose)
+    {
+        cout << "Output path is " << outputPath << endl;
+        cout << "Input .czi file name is " << cziFileName << endl;
+    }
 
     // if output path does not exist, create one
-    if (checkIfDirectory(outputPath))
+    if (!checkIfDirectory(outputPath))
     {
         cout << outputPath << " does not exits, but has been created" << endl;
         boost::filesystem::create_directory(outputPath);
