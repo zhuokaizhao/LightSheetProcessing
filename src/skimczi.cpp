@@ -157,7 +157,7 @@ void setup_skim(CLI::App &app) {
                 else
                 {
                     if (opt->verbose)
-                        cout << "Current input file " + curFile + "ends with .czi, process this file" << endl;
+                        cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
                 }
 
                 // this is a valid file
