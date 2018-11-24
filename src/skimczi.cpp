@@ -279,7 +279,8 @@ Skim::Skim(SkimOptions const &opt)
     */
 
     string baseName = opt.base_name;
-    cout << "Base Name is " << baseName << endl;
+    if (opt.verbose)
+        cout << "Base Name is " << baseName << endl;
 
     // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
     int end = cziFileName.rfind(".czi");
