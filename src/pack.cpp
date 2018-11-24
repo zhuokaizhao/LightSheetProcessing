@@ -130,7 +130,7 @@ void Pack::run_skim(){
 	  		skim_opt.nhdr_out_name	= data_dir + "/nhdr/" + iii + ".nhdr";
 	  		skim_opt.xml_out_name = data_dir + "/xml/" + iii + ".xml";
 	  		skim_opt.po = data_dir + "/proj/" + iii; //do not create projection here.
-			Skim(skim_opt).main();
+			Skim(skim_opt).main(current_file);
 		}
 	}
 }
