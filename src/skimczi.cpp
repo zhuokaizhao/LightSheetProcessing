@@ -215,7 +215,39 @@ void setup_skim(CLI::App &app) {
         }
         else
         {
-            cout << opt->input_path << " is not valid, exit" << endl;
+            // the program also handles if input file is a single file
+            cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
+            const string curFile = opt->input_path;
+
+            if (opt->verbose)
+                std::cout << "Current file name is: " << curFile << endl;
+            
+            // check if input file is a .czi file
+            int suff = curFile.rfind(".czi");
+            // cout << suff << endl;
+            if (!suff || (suff != curFile.length() - 4)) 
+            {
+                if (opt->verbose)
+                    cout << "Current input file " + curFile + " does not end with .czi, error" << endl;
+                return;
+            }
+            else
+            {
+                if (opt->verbose)
+                    cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
+            }
+
+            // this is a valid file
+            opt->file = curFile;
+            try 
+            {
+                Skim(*opt).main();
+            } 
+            catch(LSPException &e) 
+            {
+                std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+            }
+
         }
         
     });
