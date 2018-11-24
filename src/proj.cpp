@@ -249,7 +249,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
 
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
         int end = nhdr_name.rfind(".nhdr");
-        int start = nhdr_name.rfind(opt.base_name.back()) + 1;
+        int start = nhdr_name.rfind("_") + 1;
         int length = end - start;
         std::string sequenceNumString = nhdr_name.substr(start, length);
 
@@ -263,7 +263,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         
         proj_common = opt.proj_path + opt.base_name + "_" + sequenceNumString + "-proj";
         if (opt.verbose)
-            cout << "proj_common is " << proj_common << endl;
+            cout << "aaa proj_common is " << proj_common << endl;
     }
 }
 
