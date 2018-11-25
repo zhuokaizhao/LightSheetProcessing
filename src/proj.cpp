@@ -163,6 +163,40 @@ void setup_proj(CLI::App &app) {
                 */
                 // if (opt->verbose)
                 //     cout << "Currently processing " << curFile << endl;
+                int end = curFile.rfind(".nhdr");
+                int start = curFile.rfind("_") + 1;
+                int length = end - start;
+                std::string sequenceNumString = curFile.substr(start, length);
+
+                // if (opt.verbose)
+                //     cout << "Sequence number is " << sequenceNumString << endl;
+
+                // check if that is a valid number
+                bool isNumber = is_number(sequenceNumString);
+                if (!isNumber)
+                    continue;
+                
+                string proj_common = opt->proj_path + opt->base_name + "_" + sequenceNumString + "-proj";
+
+                // we want to know if this proj file exists (processed before), don't overwrite it
+                string proj_name_1 = proj_common + "XY.nrrd";
+                string proj_name_2 = proj_common + "XZ.nrrd";
+                string proj_name_3 = proj_common + "YZ.nrrd";
+                fs::path projPath_1(proj_name_1);
+                fs::path projPath_2(proj_name_2);
+                fs::path projPath_3(proj_name_3);
+
+                // when all three exists, skip this file
+                if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
+                {
+                    cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exit, continue to next." << endl;
+                    continue;
+                }
+                else //if (!fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
+                {
+                    cout << "No all three proj exist, resume building" << endl;
+                }
+
                 opt->file_name = curFile;
                 try
                 {
@@ -264,6 +298,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         
         proj_common = opt.proj_path + opt.base_name + "_" + sequenceNumString + "-proj";
 
+        /*
         // we want to know if this proj file exists (processed before), don't overwrite it
         string proj_name_1 = proj_common + "XY.nrrd";
         string proj_name_2 = proj_common + "XZ.nrrd";
@@ -282,6 +317,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         {
             cout << "No all three proj exist, resume building" << endl;
         }
+        */
         // if (opt.verbose)
         //     cout << "aaa proj_common is " << proj_common << endl;
     }
