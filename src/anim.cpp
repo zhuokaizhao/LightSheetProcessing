@@ -143,13 +143,17 @@ int Anim::set_origins()
     //#pragma omp parallel for
     for(int i = 0; i <= opt.tmax; i++)
     {
-        int curNum = opt.allFileNames[i];
         //cout << "Current for loop with i = " << i << endl;
         // same zero padding as used when saving
         std::ifstream ifile;
         string nhdrFileName;
+
+        nhdrFileName = opt.allFileNames[i];
+
+
         // when base_name is not empty, for example, it is 181113
         // base_name is required, just double check here
+        /*
         if (!opt.base_name.empty())
         {
             // for example, nhdr_path is nhdr/, this would become nhdr/181113_0.nhdr
@@ -158,6 +162,7 @@ int Anim::set_origins()
                 cout << "Input nhdr file is: " << nhdrFileName << endl;
             ifile.open(nhdrFileName);
         }
+        */
         // actually it is impossible, since base_name is now required
         /*
         else
