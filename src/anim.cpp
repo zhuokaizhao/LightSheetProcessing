@@ -60,7 +60,7 @@ void setup_anim(CLI::App &app) {
                 // get the actually serial number after the base name
                 int nhdr_start = curFile.rfind("_") + 1;
                 int length = nhdr_suff - nhdr_start;
-                string sequenceNumString = curFile.substr(start, length);
+                string sequenceNumString = curFile.substr(nhdr_start, length);
 
                 if (nhdr_suff && (nhdr_suff == curFile.length() - 5))
                 {
