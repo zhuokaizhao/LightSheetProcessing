@@ -58,6 +58,7 @@ void setup_anim(CLI::App &app) {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
                     nhdrNum++;
+                    opt->allFileNames.push_back(curFile);
                 }
 
             }
@@ -139,10 +140,11 @@ int Anim::set_origins()
 
     // distribute the work load of the for loop within the threads that have been created
     // tmax is the number of nrrd files, but its count starts at zero
-    #pragma omp parallel for
-    for(int i=0; i<=opt.tmax; i++)
+    //#pragma omp parallel for
+    for(int i = 0; i <= opt.tmax; i++)
     {
-        cout << "Current for loop with i = " << i << endl;
+        int curNum = opt.allFileNames[i];
+        //cout << "Current for loop with i = " << i << endl;
         // same zero padding as used when saving
         std::ifstream ifile;
         string nhdrFileName;
@@ -151,7 +153,7 @@ int Anim::set_origins()
         if (!opt.base_name.empty())
         {
             // for example, nhdr_path is nhdr/, this would become nhdr/181113_0.nhdr
-            nhdrFileName = opt.nhdr_path + opt.base_name + "_" + to_string(i) + ".nhdr";
+            nhdrFileName = opt.nhdr_path + opt.base_name + "_" + to_string(curNum) + ".nhdr";
             if (opt.verbose)
                 cout << "Input nhdr file is: " << nhdrFileName << endl;
             ifile.open(nhdrFileName);
@@ -181,7 +183,7 @@ int Anim::set_origins()
                     origins[i][0] = std::stof(res[1])/opt.scale_x;
                     origins[i][1] = std::stof(res[2])/opt.scale_x;
                     origins[i][2] = std::stof(res[3])/opt.scale_z;
-                    #pragma omp atomic
+                    //#pragma omp atomic
                     found++;
                 }
                 cout << "Found space origin of " << nhdrFileName << endl;

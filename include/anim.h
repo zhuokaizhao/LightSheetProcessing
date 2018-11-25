@@ -7,7 +7,11 @@
 #ifndef LSP_AMIN_H
 #define LSP_AMIN_H
 
+#include <vector>
+
 #include "CLI11.hpp"
+
+using namespace std;
 
 struct animOptions {
     std::string nhdr_path = "nhdr/";
@@ -15,6 +19,7 @@ struct animOptions {
     std::string anim_path = "anim/";
     // base name used for nhdr, proj and potentially anim
     std::string base_name;
+    vector<string> allFileNames;
     uint tmax;
     uint dwn_sample = 2;    // How much to down-sample
     double scale_x = 1.0;
