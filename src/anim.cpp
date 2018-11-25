@@ -147,6 +147,7 @@ int Anim::set_origins()
         std::ifstream ifile;
         string nhdrFileName;
         // when base_name is not empty, for example, it is 181113
+        // base_name is required, just double check here
         if (!opt.base_name.empty())
         {
             // for example, nhdr_path is nhdr/, this would become nhdr/181113_0.nhdr
@@ -155,6 +156,8 @@ int Anim::set_origins()
                 cout << "Input nhdr file is: " << nhdrFileName << endl;
             ifile.open(nhdrFileName);
         }
+        // actually it is impossible, since base_name is now required
+        /*
         else
         {
             nhdrFileName = opt.nhdr_path + zero_pad(i, 3) + ".nhdr";
@@ -162,10 +165,12 @@ int Anim::set_origins()
                 cout << "Input nhdr file is: " << nhdrFileName << endl;
             ifile.open(nhdrFileName);
         }
+        */
 
         std::string line;
         while(getline(ifile, line))
         {
+            // finding space origin in .nhdr file
             if(line.find("space origin") != std::string::npos)
             {
                 std::regex reg("\\((.*?), (.*?), (.*?)\\)");
@@ -176,7 +181,7 @@ int Anim::set_origins()
                     origins[i][0] = std::stof(res[1])/opt.scale_x;
                     origins[i][1] = std::stof(res[2])/opt.scale_x;
                     origins[i][2] = std::stof(res[3])/opt.scale_z;
-                    #pragma omp atomic
+                    //#pragma omp atomic
                     found++;
                 }
                 cout << "Found space origin of " << nhdrFileName << endl;
