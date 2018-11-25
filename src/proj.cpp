@@ -164,10 +164,17 @@ void setup_proj(CLI::App &app) {
                 // if (opt->verbose)
                 //     cout << "Currently processing " << curFile << endl;
 
+                // we want to know if this proj file exists (processed before), don't overwrite it
+                if (fs::exists(curFile))
+                {
+                    cout << curFile << " exits, continue to next." << endl;
+                    continue;
+                }
+
                 opt->file_name = curFile;
                 try
                 {
-                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    //cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
                     Proj(*opt).main();
                     opt->number_of_processed++;
                 }
@@ -352,5 +359,7 @@ void Proj::main(){
     {
         cout << "Y-Z Projection file has been saved to " << yz << endl;
     }
+
+    cout << opt.number_of_processed << " out of " << opt.file_number << " files have been processed" << endl;
 
 }
