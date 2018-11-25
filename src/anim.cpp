@@ -64,6 +64,7 @@ void setup_anim(CLI::App &app) {
 
             // update file number
             opt->tmax = nhdrNum;
+            cout << endl << "Total nhdr file number is (start at 0): " << opt->tmax << endl << endl;
 
             try
             {
@@ -119,7 +120,7 @@ Anim::Anim(animOptions const &opt): opt(opt), mop(airMopNew())
     if (!checkIfDirectory(opt.anim_path))
     {
         boost::filesystem::create_directory(opt.anim_path);
-        cout << opt.anim_path << " does not exits, but has been created" << endl;
+        cout << "Anim output path " << opt.anim_path << " does not exits, but has been created" << endl;
     }
 }
 
@@ -550,9 +551,12 @@ void Anim::build_video(){
 
 void Anim::main(){
     int verbose = opt.verbose;
+    cout << endl << "Anim::main() starts" << endl << endl;
 
+    if (verbose)
+        cout << "Splitting nrrd on type dimension" << endl;
     split_type();
-    if(verbose)
+    if (verbose)
         std::cout << "Split nrrd on type dimension" << std::endl;
 
     make_max_frame("x");
