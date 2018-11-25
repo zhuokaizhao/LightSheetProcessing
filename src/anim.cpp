@@ -194,6 +194,7 @@ int Anim::set_origins()
     //if all nhdr have origin field?
     if(found < opt.tmax+1)
     {
+        cout << "Found " << found << " files instead of " << opt.tmax+1 << endl;
         //if(std::find(found.begin(), found.end(), 0)!=found.end()){
         std::cerr << "[ANIM WARNING]: (Part of) nhdr files lack of space origin field, will not implement origin relocation." << std::endl;
         return 1;
