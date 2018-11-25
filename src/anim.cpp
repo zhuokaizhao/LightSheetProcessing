@@ -58,7 +58,7 @@ void setup_anim(CLI::App &app) {
                 int nhdr_suff = curFile.rfind(".nhdr");
                 
                 // get the actually serial number after the base name
-                int nhdr_start = cziFileName.rfind("_") + 1;
+                int nhdr_start = curFile.rfind("_") + 1;
                 int length = nhdr_suff - nhdr_start;
                 string sequenceNumString = curFile.substr(start, length);
 
