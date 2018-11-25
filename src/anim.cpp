@@ -145,9 +145,11 @@ int Anim::set_origins()
         // same zero padding as used when saving
         std::ifstream ifile;
         string nhdrFileName;
+        // when base_name is not empty, for example, it is 181113
         if (!opt.base_name.empty())
         {
-            nhdrFileName = opt.nhdr_path + opt.base_name + ".nhdr";
+            // for example, nhdr_path is nhdr/, this would become nhdr/181113_0.nhdr
+            nhdrFileName = opt.nhdr_path + opt.base_name + "_" + to_string(i) + ".nhdr";
             if (opt.verbose)
                 cout << "Input nhdr file is: " << nhdrFileName << endl;
             ifile.open(nhdrFileName);
