@@ -1,5 +1,6 @@
 //
 // Created by Jake Stover on 4/24/18.
+// Modified by Zhuokai Zhao
 //
 
 #include <teem/nrrd.h>
@@ -14,7 +15,11 @@
 #include "util.h"
 #include "skimczi.h"
 
+#include <boost/filesystem.hpp>
+#include <boost/range/iterator_range.hpp>
+
 using namespace std;
+namespace fs = boost::filesystem;
 
 void setup_anim(CLI::App &app) {
     auto opt = std::make_shared<animOptions>();
@@ -109,7 +114,14 @@ void setup_anim(CLI::App &app) {
 }
 
 
-Anim::Anim(animOptions const &opt): opt(opt), mop(airMopNew()) {}
+Anim::Anim(animOptions const &opt): opt(opt), mop(airMopNew()) 
+{
+    if (!checkIfDirectory(opt.anim_path))
+    {
+        boost::filesystem::create_directory(opt.anim_path);
+        cout << opt.anim_path << " does not exits, but has been created" << endl;
+    }
+}
 
 Anim::~Anim() {
     airMopOkay(mop);
