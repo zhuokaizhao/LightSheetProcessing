@@ -142,6 +142,7 @@ int Anim::set_origins()
     // tmax is the number of nrrd files, but its count starts at zero
     for(int i=0; i<=opt.tmax; i++)
     {
+        cout << "Current for loop with i = " << i << endl;
         // same zero padding as used when saving
         std::ifstream ifile;
         string nhdrFileName;
@@ -178,6 +179,7 @@ int Anim::set_origins()
                     #pragma omp atomic
                     found++;
                 }
+                cout << "Found space origin of " << nhdrFileName << endl;
                 break;
             }
         }
