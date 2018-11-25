@@ -165,7 +165,8 @@ void setup_proj(CLI::App &app) {
                 //     cout << "Currently processing " << curFile << endl;
 
                 // we want to know if this proj file exists (processed before), don't overwrite it
-                if (fs::exists(curFile))
+                fs::path curPath(opt->nhdr_path + curFile);
+                if (fs::exists(curPath))
                 {
                     cout << curFile << " exits, continue to next." << endl;
                     continue;
