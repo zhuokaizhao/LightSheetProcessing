@@ -94,11 +94,11 @@ void setup_anim(CLI::App &app) {
 
                 // update file number
                 opt->tmax = 0;          
-                try 
+                try
                 {
-                    Proj(*opt).main();
-                } 
-                catch(LSPException &e) 
+                    Anim(*opt).main();
+                }
+                catch(LSPException &e)
                 {
                     std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
                 }
