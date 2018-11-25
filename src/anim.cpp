@@ -148,7 +148,7 @@ int Anim::set_origins()
         std::ifstream ifile;
         string nhdrFileName;
 
-        nhdrFileName = opt.allFileNames[i];
+        nhdrFileName = opt.nhdr_path + opt.allFileNames[i];
 
 
         // when base_name is not empty, for example, it is 181113
