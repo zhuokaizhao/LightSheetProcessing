@@ -138,7 +138,7 @@ int Anim::set_origins()
     int found = 0;
 
     // distribute the work load of the for loop within the threads that have been created
-    #pragma omp parallel for
+    //#pragma omp parallel for
     // tmax is the number of nrrd files, but its count starts at zero
     for(int i=0; i<=opt.tmax; i++)
     {
