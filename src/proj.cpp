@@ -163,17 +163,6 @@ void setup_proj(CLI::App &app) {
                 */
                 // if (opt->verbose)
                 //     cout << "Currently processing " << curFile << endl;
-
-                // we want to know if this proj file exists (processed before), don't overwrite it
-                fs::path curPath(opt->nhdr_path + curFile);
-                if (fs::exists(curPath))
-                {
-                    cout << curFile << " exits, continue to next." << endl;
-                    opt->number_of_processed++;
-                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
-                    continue;
-                }
-
                 opt->file_name = curFile;
                 try
                 {
@@ -258,6 +247,14 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
 
         if (opt.verbose)
             cout << "Currently processing " << nhdr_name << endl;
+
+        // we want to know if this proj file exists (processed before), don't overwrite it
+        fs::path curPath(nhdr_name);
+        if (fs::exists(curPath))
+        {
+            cout << nhdr_name << " exits, continue to next." << endl;
+            return;
+        }
 
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
         int end = nhdr_name.rfind(".nhdr");
