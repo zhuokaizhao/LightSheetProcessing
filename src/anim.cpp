@@ -226,7 +226,7 @@ void Anim::split_type()
         std::cout << "Resampling Factors: resample_xy = " + std::to_string(resample_xy) + ", resample_z = " + std::to_string(resample_z) << std::endl;
 
     // slice and resample projection files
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int i = 0; i <= opt.tmax; i++) 
     {
         // mot_t is a new airArray
