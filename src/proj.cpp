@@ -248,14 +248,6 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         if (opt.verbose)
             cout << "Currently processing " << nhdr_name << endl;
 
-        // we want to know if this proj file exists (processed before), don't overwrite it
-        fs::path curPath(nhdr_name);
-        if (fs::exists(curPath))
-        {
-            cout << nhdr_name << " exits, continue to next." << endl;
-            return;
-        }
-
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
         int end = nhdr_name.rfind(".nhdr");
         int start = nhdr_name.rfind("_") + 1;
@@ -271,6 +263,25 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
             return;
         
         proj_common = opt.proj_path + opt.base_name + "_" + sequenceNumString + "-proj";
+
+        // we want to know if this proj file exists (processed before), don't overwrite it
+        string proj_name_1 = proj_common + "XY.nrrd";
+        string proj_name_2 = proj_common + "XZ.nrrd";
+        string proj_name_3 = proj_common + "YZ.nrrd";
+        fs::path projPath_1(proj_name_1);
+        fs::path projPath_2(proj_name_2);
+        fs::path projPath_3(proj_name_3);
+
+        // when all three exists, skip this file
+        if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
+        {
+            cout << nhdr_name << " exits, continue to next." << endl;
+            return;
+        }
+        else //if (!fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
+        {
+            cout << "No all three proj exist, resume building" << endl;
+        }
         // if (opt.verbose)
         //     cout << "aaa proj_common is " << proj_common << endl;
     }

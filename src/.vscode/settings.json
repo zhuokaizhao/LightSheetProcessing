@@ -20,6 +20,7 @@
         "stdexcept": "cpp",
         "iostream": "cpp",
         "filesystem": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "iosfwd": "cpp"
     }
 }
