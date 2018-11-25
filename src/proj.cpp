@@ -90,10 +90,10 @@ void setup_proj(CLI::App &app) {
             
             // count the number of files
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
-            // note that the number starts counting at 0
-            int totalNum = files.size() - 1;
-            int nhdrNum = -1;
-            int xmlNum = -1;
+            // note that the number starts counting at 1 (not 0, don't mix this with the naming of the data inputs)
+            int totalNum = files.size();
+            int nhdrNum = 0;
+            int xmlNum = 0;
 
             // since files include .nhdr and .xml file in pairs, we want to count individual number
             for (const string curFile : files) 
@@ -169,8 +169,8 @@ void setup_proj(CLI::App &app) {
                 if (fs::exists(curPath))
                 {
                     cout << curFile << " exits, continue to next." << endl;
-                    opt->number_of_processed++;
                     cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    opt->number_of_processed++;
                     continue;
                 }
 
@@ -212,7 +212,7 @@ void setup_proj(CLI::App &app) {
                     cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
 
                 // update file number
-                opt->file_number = 0;   
+                opt->file_number = 1;   
                 opt->file_name = curFile;         
                 try 
                 {
@@ -237,8 +237,8 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         boost::filesystem::create_directory(opt.proj_path);
     }
 
-    // if the number of file is 0 (single file since count starts at 0), use absolute name
-    if (opt.file_number == 0)
+    // if the number of file is 1 (single file since count starts at 1), use absolute name
+    if (opt.file_number == 1)
     {
         nhdr_name = opt.nhdr_path;
         // in this case we keep the proj file name same as nhdr base name
