@@ -169,6 +169,8 @@ void setup_proj(CLI::App &app) {
                 if (fs::exists(curPath))
                 {
                     cout << curFile << " exits, continue to next." << endl;
+                    opt->number_of_processed++;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
                     continue;
                 }
 
