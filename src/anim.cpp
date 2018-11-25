@@ -138,8 +138,8 @@ int Anim::set_origins()
     int found = 0;
 
     // distribute the work load of the for loop within the threads that have been created
-    //#pragma omp parallel for
     // tmax is the number of nrrd files, but its count starts at zero
+    #pragma omp parallel for
     for(int i=0; i<=opt.tmax; i++)
     {
         cout << "Current for loop with i = " << i << endl;
@@ -181,7 +181,7 @@ int Anim::set_origins()
                     origins[i][0] = std::stof(res[1])/opt.scale_x;
                     origins[i][1] = std::stof(res[2])/opt.scale_x;
                     origins[i][2] = std::stof(res[3])/opt.scale_z;
-                    //#pragma omp atomic
+                    #pragma omp atomic
                     found++;
                 }
                 cout << "Found space origin of " << nhdrFileName << endl;
@@ -206,7 +206,8 @@ int Anim::set_origins()
     }
 
     //find minmax values in each dimension.
-    for(auto i: {0, 1, 2}){
+    for(auto i: {0, 1, 2})
+    {
         int o_min = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::max(),
                                     [i](int acc, std::vector<int> o){return AIR_MIN(acc, o[i]);});
         
