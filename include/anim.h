@@ -19,7 +19,7 @@ struct animOptions {
     std::string anim_path = "anim/";
     // base name used for nhdr, proj and potentially anim
     std::string base_name;
-    vector<string> allFileNames;
+    vector<int> allFileSerialNumber;
     uint tmax;
     uint dwn_sample = 2;    // How much to down-sample
     double scale_x = 1.0;
