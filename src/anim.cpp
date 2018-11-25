@@ -149,6 +149,7 @@ int Anim::set_origins()
         string nhdrFileName;
 
         nhdrFileName = opt.nhdr_path + opt.allFileNames[i];
+        ifile.open(nhdrFileName);
 
 
         // when base_name is not empty, for example, it is 181113
