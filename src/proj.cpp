@@ -275,7 +275,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         // when all three exists, skip this file
         if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
         {
-            cout << nhdr_name << " exits, continue to next." << endl;
+            cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exit, continue to next." << endl;
             return;
         }
         else //if (!fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
