@@ -343,10 +343,18 @@ Skim::Skim(SkimOptions const &opt)
         /* the -xo option was not used */
         xmlFileName = baseName + "_" + sequenceNumString + ".xml";
     }
+    // actually outputpath cannot be empty as it is required
     if (!outputPath.empty())
     {
         nhdrFileName = outputPath + nhdrFileName;
         xmlFileName = outputPath + xmlFileName;
+    }
+
+    // we want to check if current potential output file already exists, if so, skip
+    if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
+    {
+        cout << "Both " << nhdrFileName << " and " << xmlFileName << " exit, continue to next." << endl;
+        return;
     }
 
     if (opt.verbose) 
