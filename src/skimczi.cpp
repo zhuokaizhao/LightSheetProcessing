@@ -41,6 +41,10 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
+struct myclass {
+  bool operator() (int i,int j) { return (i<j);}
+} SmallToLarge;
+
 // These helper functions are also used in other files
 // helper function that checks if a string is a number
 bool is_number(const string& s)
@@ -116,7 +120,7 @@ void setup_skim(CLI::App &app) {
                 cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
-            vector<string> allValidFiles;
+            vector<string> allValidFiles, allFileSerialNumber;
             // count the number of valid .czi files first
             int numFiles = 0;
             for (int i = 0; i < files.size(); i++)
@@ -129,13 +133,28 @@ void setup_skim(CLI::App &app) {
                     numFiles++;
                     allValidFiles.push_back(curFile);
                 }
+
+                // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
+                int end = curFile.rfind(".czi");
+                int start = curFile.rfind(opt->base_name.back()) + 1;
+                int length = end - start;
+                std::string sequenceNumString = curFile.substr(start, length);
+                allFileSerialNumber.push_back(sequenceNumString);
             }
+
+            // after finding all the files, sort the allFileSerialNumber
+            sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), SmallToLarge);
+
+            if (allValidFiles.size() != allFileSerialNumber.size())
+                cout << "Warning: input .czi files are badly named, errors may exist while loading" << endl << endl; 
 
             if (opt->verbose)
                 cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
 
-            for (const string curFile : allValidFiles) 
+            for (int i = 0; i < allFileSerialNumber.size(); i++) 
             {
+                string curFile = opt->input_path + opt->base_name + allFileSerialNumber[i] + ".czi";
+                
                 if (opt->verbose)
                     std::cout << "Current procesing file is: " << curFile << endl;
                 
