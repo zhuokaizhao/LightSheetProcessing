@@ -39,10 +39,9 @@
 #include <memory>
 
 using namespace std;
-//namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 
-
+// These helper functions are also used in other files
 // helper function that checks if a string is a number
 bool is_number(const string& s)
 {
@@ -99,7 +98,7 @@ void setup_skim(CLI::App &app) {
                                         "and essential meta data from CZI file.");
 
     //sub->add_option("file", opt->file, "Input CZI file to process")->required();
-    sub->add_option("-i, --input_path", opt->input_path, "Input czi files path. (Default: ./czi)")->required();
+    sub->add_option("-i, --input_path", opt->input_path, "Input czi files directory or single file name (single file mode)")->required();
     sub->add_option("-o, --output_path", opt->output_path, "Output directory where outputs will be saved at")->required();
     sub->add_option("-b, --base_name", opt->base_name, "Base name that for the sequence of input czi files, for example, the files might be named as 1811131.czi, 1811132.czi, base name is 181113")->required();
     sub->add_option("-n, --nhdr_out_name", opt->nhdr_out_name, "Filename for output nrrd header ending in \".nhdr\". (Default: .czi file name)");
@@ -110,65 +109,36 @@ void setup_skim(CLI::App &app) {
     sub->set_callback([opt]() 
     {
         // we need to go through all the files in the given path "input_path" and find all .czi files
-        // first we need to know the number of czi files
-        //boost::filesystem::path inputPath(opt->input_path);
-        //if(boost::filesystem::exists(opt->input_path)) 
+        // first check this input path is a directory or a single file name
         if (checkIfDirectory(opt->input_path))
         {
-            //fs::path inPath(opt->input_path);
             if (opt->verbose)
                 cout << "Input path " << opt->input_path << " is valid, start processing" << endl;
-            
-            /*
-            // some testing stuff
-            std::vector<fs::directory_entry> v;
-            copy(fs::directory_iterator(inPath), fs::directory_iterator(), back_inserter(v));
-            std::cout << inPath << " is a directory containing:\n";
-
-            for ( std::vector<fs::directory_entry>::const_iterator it = v.begin(); it != v.end();  ++it )
-            {
-                //std::cout<< (*it).path().string()<<endl;
-                cout << "aaaaa" << endl;
-            }  
-            */
-
-            /*
-            fs::directory_iterator end_itr;
-            // cycle through the directory
-            for (fs::directory_iterator itr(inPath); itr != end_itr; ++itr)
-            {
-                // If it's not a directory, list it. If you want to list directories too, just remove this check.
-                if (is_regular_file(itr->path())) {
-                    // assign current file name to current_file and echo it out to the console.
-                    string current_file = itr->path().string();
-                    cout << current_file << endl;
-                }
-            }
-            */
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
             for (const string curFile : files) 
             {
-                //std::cout << file << std::endl;
                 if (opt->verbose)
                     std::cout << "Current file name is: " << curFile << endl;
                 
                 // check if input file is a .czi file
                 int suff = curFile.rfind(".czi");
-                // cout << suff << endl;
+
+                // if the current file does not end with .czi, continue to the next file
                 if (!suff || (suff != curFile.length() - 4)) 
                 {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " does not end with .czi, continue to the next" << endl;
                     continue;
                 }
+                // process the file if it indeed ends with .czi
                 else
                 {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
                 }
 
-                // this is a valid file
+                // update the opt information
                 opt->file = curFile;
                 try 
                 {
@@ -178,53 +148,13 @@ void setup_skim(CLI::App &app) {
                 {
                     std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
                 }
-
-
             }
-            
-            /*
-            for ( auto& curFileName : boost::make_iterator_range(fs::directory_iterator(inPath), {}) )
-            {
-                std::cout << "Current file name is: " << curFileName.path().string() << endl;
-                // check if the current input file is a .czi file
-                string curExtension = curFileName.path().extension().string();
-                cout << "Current file extension is: " << curExtension << endl;
-                if (curExtension == ".czi")
-                {
-                    cout << "This file is a .czi file" << endl;
-                    // make this file name into opt->file
-                    opt->file = curFileName.path().filename().string();  
-
-                    // now we are trying to process this file 
-                    // original program to run the file
-                    try 
-                    {
-                        // if (opt->file == "")
-                        //     cout << "Warning: Empty file name" << endl;
-                        // else
-                        //     cout << "Input file path: " << opt->file << endl;
-                        // if (opt->no == "")
-                        //     cout << "Warning: Empty nhdr" << endl;
-                        // else
-                        //     cout << "Output path: " << opt->no << endl;
-                        Skim(*opt).main();
-                    } 
-                    catch(LSPException &e) 
-                    {
-                        std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
-                    }
-                }
-                else
-                {
-                    cout << "This file is not a .czi file, next" << endl;
-                }
-            }
-            */  
         }
+        // Single file mode if the input_path is a single file path
         else
         {
-            // the program also handles if input file is a single file
             cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
+            
             const string curFile = opt->input_path;
 
             if (opt->verbose)
@@ -232,6 +162,7 @@ void setup_skim(CLI::App &app) {
             
             // check if input file is a .czi file
             int suff = curFile.rfind(".czi");
+
             // cout << suff << endl;
             if (!suff || (suff != curFile.length() - 4)) 
             {
@@ -297,24 +228,8 @@ Skim::Skim(SkimOptions const &opt)
         cout << outputPath << " does not exits, but has been created" << endl;
         boost::filesystem::create_directory(outputPath);
     }
-    //cout << "nhdrFileName is " << nhdrFileName << endl;
-    
-    // we no longer need to check here
-    /*
-    // check if input file is a .czi file
-    u_long suff = cziFileName.rfind(".czi");
-    // cout << suff << endl;
-    if (!suff || (suff != cziFileName.length() - 4)) 
-    {
-        std::string msg = "Input file " + cziFileName + " does not end with .czi\n";
 
-        airMopError(mop);
-
-        throw LSPException(msg, "skimczi.cpp", "Skim::Skim");
-    }
-    std::string baseName = cziFileName.substr(0,suff);
-    */
-
+    // get the base name
     string baseName = opt.base_name;
     if (opt.verbose)
         cout << "Base Name is " << baseName << endl;
@@ -326,29 +241,27 @@ Skim::Skim(SkimOptions const &opt)
     std::string sequenceNumString = cziFileName.substr(start, length);
 
     // check if that is a valid number
+    /*
     bool isNumber = is_number(sequenceNumString);
     if (!isNumber)
         return;
-    
-    //int sequenceNumber = stoi(sequenceNumString);
+
+    int sequenceNumber = stoi(sequenceNumString);
+    */
 
     // default names for .nhdr and .xml if not predefined
     if (nhdrFileName.empty()) 
     {
-        /* the -no option was not used */
         nhdrFileName = baseName + "_" + sequenceNumString + ".nhdr";
     }
     if (xmlFileName.empty()) 
     {
-        /* the -xo option was not used */
         xmlFileName = baseName + "_" + sequenceNumString + ".xml";
     }
-    // actually outputpath cannot be empty as it is required
-    if (!outputPath.empty())
-    {
-        nhdrFileName = outputPath + nhdrFileName;
-        xmlFileName = outputPath + xmlFileName;
-    }
+    
+    // generate the complete path for output files
+    nhdrFileName = outputPath + nhdrFileName;
+    xmlFileName = outputPath + xmlFileName;
 
     // we want to check if current potential output file already exists, if so, skip
     if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -374,9 +287,24 @@ Skim::Skim(SkimOptions const &opt)
     }
 
     // Open the files
+    // 0_RDONLY: open for reading only
     cziFile  = open(cziFileName.c_str(), O_RDONLY);
+    
+    // 0_TRUNC: truncate to zero length
+    // 0_CREAT: create if nonexistant
+    // O_WRONLY: open for writing only
+    xmlFile  = open(xmlFileName.c_str(), O_TRUNC | O_CREAT | O_WRONLY, 0666);
     if (opt.verbose)
         cout << cziFileName << " has been openned" << endl;
+
+    
+    // output file
+    nhdrFile = fopen(nhdrFileName.c_str(), "w");
+
+    // Re-used for all SID segments
+    currentSID = (SID*)malloc(sizeof(SID));
+    airMopAdd(mop, currentSID, airFree, airMopAlways);
+
     //cout << "Open result " << cziFile << endl;
     /*
     if (errno)
@@ -386,24 +314,6 @@ Skim::Skim(SkimOptions const &opt)
         throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n", "skimczi.cpp", "Skim::Skim");
     }
     */
-    
-    
-    // 0_RDONLY: open for reading only
-    //cziFile = open(cziFileName.c_str(), O_RDONLY);
-    //cziFile = 3;
-    
-    // 0_TRUNC: truncate to zero length
-    // 0_CREAT: create if nonexistant
-    // O_WRONLY: open for writing only
-    xmlFile  = open(xmlFileName.c_str(), O_TRUNC | O_CREAT | O_WRONLY, 0666);
-    
-    // output file
-    nhdrFile = fopen(nhdrFileName.c_str(), "w");
-    
-
-    // Re-used for all SID segments
-    currentSID = (SID*)malloc(sizeof(SID));
-    airMopAdd(mop, currentSID, airFree, airMopAlways);
 }
 
 
