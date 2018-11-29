@@ -120,7 +120,8 @@ void setup_skim(CLI::App &app) {
                 cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
-            vector<string> allValidFiles, allFileSerialNumber;
+            vector<string> allValidFiles;
+            vector<int> allFileSerialNumber;
             // count the number of valid .czi files first
             int numFiles = 0;
             for (int i = 0; i < files.size(); i++)
@@ -139,7 +140,7 @@ void setup_skim(CLI::App &app) {
                 int start = curFile.rfind(opt->base_name.back()) + 1;
                 int length = end - start;
                 std::string sequenceNumString = curFile.substr(start, length);
-                allFileSerialNumber.push_back(sequenceNumString);
+                allFileSerialNumber.push_back(stoi(sequenceNumString));
             }
 
             // after finding all the files, sort the allFileSerialNumber
@@ -153,7 +154,7 @@ void setup_skim(CLI::App &app) {
 
             for (int i = 0; i < allFileSerialNumber.size(); i++) 
             {
-                string curFile = opt->input_path + opt->base_name + allFileSerialNumber[i] + ".czi";
+                string curFile = opt->input_path + opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
                 
                 if (opt->verbose)
                     std::cout << "Current procesing file is: " << curFile << endl;
