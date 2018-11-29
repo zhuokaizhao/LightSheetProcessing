@@ -21,9 +21,9 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-struct myclass {
-  bool operator() (int i,int j) { return (i<j);}
-} SmallToLarge;
+// struct myclass {
+//   bool operator() (int i,int j) { return (i<j);}
+// } SmallToLarge;
 
 void setup_anim(CLI::App &app) {
     auto opt = std::make_shared<animOptions>();
