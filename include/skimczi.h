@@ -201,6 +201,10 @@ struct SkimOptions {
     int verbose = 0;
 };
 
+struct myclass {
+  bool operator() (int i,int j) { return (i<j);}
+} SmallToLarge;
+
 void setup_skim(CLI::App &app);
 
 // Helper function that checks if given string path is of a Directory

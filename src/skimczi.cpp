@@ -41,10 +41,6 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-struct myclass {
-  bool operator() (int i,int j) { return (i<j);}
-} SmallToLarge;
-
 // These helper functions are also used in other files
 // helper function that checks if a string is a number
 bool is_number(const string& s)
