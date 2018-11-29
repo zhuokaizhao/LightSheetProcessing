@@ -116,43 +116,29 @@ void setup_skim(CLI::App &app) {
                 cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
+            vector<string> allValidFiles;
             // count the number of valid .czi files first
             int numFiles = 0;
-            for (const string curFile : files)
+            for (int i = 0; i < files.size(); i++)
             {
                 // check if input file is a .czi file
+                string curFile = files[i];
                 int suff = curFile.rfind(".czi");
                 if (suff && (suff == curFile.length() -4))
                 {
                     numFiles++;
+                    allValidFiles.push_back(curFile);
                 }
             }
 
             if (opt->verbose)
                 cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
 
-            for (const string curFile : files) 
+            for (const string curFile : allValidFiles) 
             {
                 if (opt->verbose)
-                    std::cout << "Current file name is: " << curFile << endl;
+                    std::cout << "Current procesing file is: " << curFile << endl;
                 
-                // check if input file is a .czi file
-                int suff = curFile.rfind(".czi");
-
-                // if the current file does not end with .czi, continue to the next file
-                if (!suff || (suff != curFile.length() - 4)) 
-                {
-                    if (opt->verbose)
-                        cout << "Current input file " + curFile + " does not end with .czi, continue to the next" << endl << endl;
-                    continue;
-                }
-                // process the file if it indeed ends with .czi
-                else
-                {
-                    if (opt->verbose)
-                        cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
-                }
-
                 // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
                 int end = curFile.rfind(".czi");
                 int start = curFile.rfind(opt->base_name.back()) + 1;
