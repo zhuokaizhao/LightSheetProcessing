@@ -144,7 +144,7 @@ void setup_skim(CLI::App &app) {
             }
 
             // after finding all the files, sort the allFileSerialNumber
-            sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), SmallToLarge);
+            sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), skimSmallToLarge);
 
             if (allValidFiles.size() != allFileSerialNumber.size())
                 cout << "Warning: input .czi files are badly named, errors may exist while loading" << endl << endl; 
