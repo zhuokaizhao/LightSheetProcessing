@@ -69,7 +69,7 @@ void setup_anim(CLI::App &app) {
             }
 
             // after finding all the files, sort the allFileSerialNumber
-            sort(opt->allFileSerialNumber.begin(), opt->allFileSerialNumber.end(), SmallToLarge);  
+            sort(opt->allFileSerialNumber.begin(), opt->allFileSerialNumber.end(), myclass::SmallToLarge);  
 
             // vector size should equal to nhdrNum
             if (opt->allFileSerialNumber.size() != (nhdrNum + 1))
