@@ -138,8 +138,47 @@ void setup_skim(CLI::App &app) {
                         cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
                 }
 
+                // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
+                int end = curFile.rfind(".czi");
+                int start = curFile.rfind(opt->base_name.back()) + 1;
+                int length = end - start;
+                std::string sequenceNumString = curFile.substr(start, length);
+
+                string nhdrFileName, xmlFileName;
+                if (opt->nhdr_out_name.empty()) 
+                {
+                    nhdrFileName = opt->base_name + "_" + sequenceNumString + ".nhdr";
+                }
+                else
+                {
+                    nhdrFileName = opt->nhdr_out_name;
+                }
+                if (opt->xml_out_name.empty()) 
+                {
+                    xmlFileName = opt->base_name + "_" + sequenceNumString + ".xml";
+                }
+                else
+                {
+                    xmlFileName = opt->xml_out_name;
+                }
+
+                // generate the complete path for output files
+                nhdrFileName = opt->output_path + nhdrFileName;
+                xmlFileName = opt->output_path + xmlFileName;
+
+                // we want to check if current potential output file already exists, if so, skip
+                if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
+                {
+                    cout << "Both " << nhdrFileName << " and " << xmlFileName << " exist, continue to next." << endl << endl;
+                    continue;
+                }
+
                 // update the opt information
                 opt->file = curFile;
+                opt->nhdr_out_name = nhdrFileName;
+                opt->xml_out_name = xmlFileName;
+                
+                // run the processing program
                 try 
                 {
                     Skim(*opt).main(curFile);
@@ -176,8 +215,46 @@ void setup_skim(CLI::App &app) {
                     cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
             }
 
+            // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
+            int end = curFile.rfind(".czi");
+            int start = curFile.rfind(opt->base_name.back()) + 1;
+            int length = end - start;
+            std::string sequenceNumString = curFile.substr(start, length);
+
+            string nhdrFileName, xmlFileName;
+            if (opt->nhdr_out_name.empty()) 
+            {
+                nhdrFileName = opt->base_name + "_" + sequenceNumString + ".nhdr";
+            }
+            else
+            {
+                nhdrFileName = opt->nhdr_out_name;
+            }
+
+            if (opt->xml_out_name.empty()) 
+            {
+                xmlFileName = opt->base_name + "_" + sequenceNumString + ".xml";
+            }
+            else
+            {
+                xmlFileName = opt->xml_out_name;
+            }
+
+            // generate the complete path for output files
+            nhdrFileName = opt->output_path + nhdrFileName;
+            xmlFileName = opt->output_path + xmlFileName;
+
+            // we want to check if current potential output file already exists, if so, skip
+            if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
+            {
+                cout << "Both " << nhdrFileName << " and " << xmlFileName << " exist, no need to process again." << endl << endl;
+                return;
+            }
+
             // this is a valid file
             opt->file = curFile;
+            opt->nhdr_out_name = nhdrFileName;
+            opt->xml_out_name = xmlFileName;
             try 
             {
                 Skim(*opt).main(curFile);
@@ -229,46 +306,35 @@ Skim::Skim(SkimOptions const &opt)
         boost::filesystem::create_directory(outputPath);
     }
 
-    // get the base name
-    string baseName = opt.base_name;
-    if (opt.verbose)
-        cout << "Base Name is " << baseName << endl;
+    // // get the base name
+    // string baseName = opt.base_name;
+    // if (opt.verbose)
+    //     cout << "Base Name is " << baseName << endl;
 
-    // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-    int end = cziFileName.rfind(".czi");
-    int start = cziFileName.rfind(baseName.back()) + 1;
-    int length = end - start;
-    std::string sequenceNumString = cziFileName.substr(start, length);
+    // // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
+    // int end = cziFileName.rfind(".czi");
+    // int start = cziFileName.rfind(baseName.back()) + 1;
+    // int length = end - start;
+    // std::string sequenceNumString = cziFileName.substr(start, length);
 
-    // check if that is a valid number
-    /*
-    bool isNumber = is_number(sequenceNumString);
-    if (!isNumber)
-        return;
+    // // check if that is a valid number
+    // /*
+    // bool isNumber = is_number(sequenceNumString);
+    // if (!isNumber)
+    //     return;
 
-    int sequenceNumber = stoi(sequenceNumString);
-    */
+    // int sequenceNumber = stoi(sequenceNumString);
+    // */
 
-    // default names for .nhdr and .xml if not predefined
-    if (nhdrFileName.empty()) 
-    {
-        nhdrFileName = baseName + "_" + sequenceNumString + ".nhdr";
-    }
-    if (xmlFileName.empty()) 
-    {
-        xmlFileName = baseName + "_" + sequenceNumString + ".xml";
-    }
-    
-    // generate the complete path for output files
-    nhdrFileName = outputPath + nhdrFileName;
-    xmlFileName = outputPath + xmlFileName;
-
-    // we want to check if current potential output file already exists, if so, skip
-    if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
-    {
-        cout << "Both " << nhdrFileName << " and " << xmlFileName << " exit, continue to next." << endl;
-        return;
-    }
+    // // default names for .nhdr and .xml if not predefined
+    // if (nhdrFileName.empty()) 
+    // {
+    //     nhdrFileName = baseName + "_" + sequenceNumString + ".nhdr";
+    // }
+    // if (xmlFileName.empty()) 
+    // {
+    //     xmlFileName = baseName + "_" + sequenceNumString + ".xml";
+    // }
 
     if (opt.verbose) 
     {
