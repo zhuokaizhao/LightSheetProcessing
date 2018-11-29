@@ -113,9 +113,24 @@ void setup_skim(CLI::App &app) {
         if (checkIfDirectory(opt->input_path))
         {
             if (opt->verbose)
-                cout << "Input path " << opt->input_path << " is valid, start processing" << endl;
+                cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
+            // count the number of valid .czi files first
+            int numFiles = 0;
+            for (const string curFile : files)
+            {
+                // check if input file is a .czi file
+                int suff = curFile.rfind(".czi");
+                if (suff && (suff == curFile.length() -4))
+                {
+                    numFiles++;
+                }
+            }
+
+            if (opt->verbose)
+                cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
+
             for (const string curFile : files) 
             {
                 if (opt->verbose)
@@ -128,7 +143,7 @@ void setup_skim(CLI::App &app) {
                 if (!suff || (suff != curFile.length() - 4)) 
                 {
                     if (opt->verbose)
-                        cout << "Current input file " + curFile + " does not end with .czi, continue to the next" << endl;
+                        cout << "Current input file " + curFile + " does not end with .czi, continue to the next" << endl << endl;
                     continue;
                 }
                 // process the file if it indeed ends with .czi
