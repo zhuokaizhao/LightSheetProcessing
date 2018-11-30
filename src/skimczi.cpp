@@ -219,32 +219,29 @@ void setup_skim(CLI::App &app) {
             opt->file = opt->input_path;
 
             cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
-
-            if (opt->verbose)
-                std::cout << "Current file name is: " << curFile << endl;
             
             // check if input file is a .czi file
-            int suff = curFile.rfind(".czi");
+            int suff = opt->input_path.rfind(".czi");
 
             // cout << suff << endl;
-            if (!suff || (suff != curFile.length() - 4)) 
+            if (!suff || (suff != opt->input_path.length() - 4)) 
             {
                 if (opt->verbose)
-                    cout << "Current input file " + curFile + " does not end with .czi, error" << endl;
+                    cout << "Current input file " + opt->input_path + " does not end with .czi, error" << endl;
                 return;
             }
             else
             {
                 if (opt->verbose)
-                    cout << "Current input file " + curFile + " ends with .czi, process this file" << endl;
+                    cout << "Current input file " + opt->input_path + " ends with .czi, process this file" << endl;
             }
 
             // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-            int end = curFile.rfind(".czi");
+            int end = opt->input_path.rfind(".czi");
             //int start = curFile.rfind(opt->base_name.back()) + 1;
             int start = opt->base_name.length();
             int length = end - start;
-            std::string sequenceNumString = curFile.substr(start, length);
+            std::string sequenceNumString = opt->input_path.substr(start, length);
 
             string nhdrFileName, xmlFileName;
             if (opt->nhdr_out_name.empty()) 
