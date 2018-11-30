@@ -169,8 +169,9 @@ void setup_skim(CLI::App &app) {
                 // note the opt->file should just be the input file name, don't include any path
                 
 
-                string nhdrFileName = "";
-                string xmlFileName = "";
+                string nhdrFileName, xmlFileName;
+                opt->nhdr_out_name = "";
+                opt->xml_out_name = "";
                 if (opt->nhdr_out_name.empty()) 
                 {
                     nhdrFileName = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
