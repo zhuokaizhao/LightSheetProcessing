@@ -167,7 +167,7 @@ void setup_skim(CLI::App &app) {
             {
                 // update the opt information
                 // note the opt->file should just be the input file name, don't include any path
-                opt->file = opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
+                
 
                 string nhdrFileName = "";
                 string xmlFileName = "";
@@ -192,9 +192,6 @@ void setup_skim(CLI::App &app) {
                 nhdrFileName = opt->output_path + nhdrFileName;
                 xmlFileName = opt->output_path + xmlFileName;
 
-                opt->nhdr_out_name = nhdrFileName;
-                opt->xml_out_name = xmlFileName;
-
                 // we want to check if current potential output file already exists, if so, skip
                 if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
                 {
@@ -205,6 +202,9 @@ void setup_skim(CLI::App &app) {
                 // run the processing program
                 try 
                 {
+                    opt->file = opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
+                    opt->nhdr_out_name = nhdrFileName;
+                    opt->xml_out_name = xmlFileName;
                     Skim(*opt).main();
                 } 
                 catch(LSPException &e) 
@@ -216,8 +216,6 @@ void setup_skim(CLI::App &app) {
         // Single file mode if the input_path is a single file path
         else
         {
-            opt->file = opt->input_path;
-
             cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
             
             // check if input file is a .czi file
@@ -266,9 +264,6 @@ void setup_skim(CLI::App &app) {
             nhdrFileName = opt->output_path + nhdrFileName;
             xmlFileName = opt->output_path + xmlFileName;
 
-            opt->nhdr_out_name = nhdrFileName;
-            opt->xml_out_name = xmlFileName;
-
             // we want to check if current potential output file already exists, if so, skip
             if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
             {
@@ -278,6 +273,9 @@ void setup_skim(CLI::App &app) {
         
             try 
             {
+                opt->file = opt->input_path;
+                opt->nhdr_out_name = nhdrFileName;
+                opt->xml_out_name = xmlFileName;
                 Skim(*opt).main();
             } 
             catch(LSPException &e) 
