@@ -153,11 +153,6 @@ void setup_skim(CLI::App &app) {
             // after finding all the files, sort the allFileSerialNumber
             sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), skimSmallToLarge);
 
-            // for (int i = 0; i < allFileSerialNumber.size(); i++)
-            // {
-            //     cout << allFileSerialNumber[i] << endl;
-            // }
-
             cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
 
             if (allValidFiles.size() != allFileSerialNumber.size())
