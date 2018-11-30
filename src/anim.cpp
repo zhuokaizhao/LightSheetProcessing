@@ -40,46 +40,60 @@ void setup_anim(CLI::App &app) {
 
     sub->set_callback([opt]() 
     { 
+        // vector of strings that contains all the valid nhdr names
+        vector<string> allNhdrFileNames;
+        vector<int> allFileSerialNumber;
+
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
         {
-            if (opt->verbose)
-                cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
+            cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
             
             // count the number of files
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
-            // note that the number starts counting at 0
-            int nhdrNum = -1;
+            
+            // note that the number starts counting at 1
+            int totalNum = files.size();
+            int nhdrNum = 0;
+
+            // since files include .nhdr and .xml file in pairs, we want to count individual number
             for (const string curFile : files) 
             {
                 // check if input file is a .nhdr file
                 int nhdr_suff = curFile.rfind(".nhdr");
-                
-                // get the actually serial number after the base name
-                int nhdr_start = curFile.rfind("_") + 1;
-                int length = nhdr_suff - nhdr_start;
-                string sequenceNumString = curFile.substr(nhdr_start, length);
-
                 if (nhdr_suff && (nhdr_suff == curFile.length() - 5))
                 {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
                     nhdrNum++;
-                    opt->allFileSerialNumber.push_back(stoi(sequenceNumString));
+                    allNhdrFileNames.push_back(curFile);
+
+                    // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
+                    int end = curFile.rfind(".nhdr");
+                    int start = curFile.rfind("_") + 1;
+                    int length = end - start;
+                    std::string sequenceNumString = curFile.substr(start, length);
+                    
+                    if (is_number(sequenceNumString))
+                        allFileSerialNumber.push_back(stoi(sequenceNumString));
+                    else
+                        cout << sequenceNumString << " is NOT a number" << endl;
                 }
 
             }
 
             // after finding all the files, sort the allFileSerialNumber
-            sort(opt->allFileSerialNumber.begin(), opt->allFileSerialNumber.end(), animSmallToLarge);  
+            sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), animSmallToLarge);
+
+            cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
             // vector size should equal to nhdrNum
-            if (opt->allFileSerialNumber.size() != (nhdrNum + 1))
+            if (opt->allFileSerialNumber.size() != nhdrNum)
                 cerr << "WARNING: allFileSerialNumber has wrong size" << endl;
 
             // update file number
             opt->tmax = nhdrNum;
-            cout << endl << "Total nhdr file number is (start at 0): " << opt->tmax << endl << endl;
+            cout << endl << "Total nhdr file number is: " << opt->tmax << endl << endl;
 
             try
             {
@@ -583,31 +597,26 @@ void Anim::build_video(){
 }
 
 
-void Anim::main(){
+void Anim::main()
+{
     int verbose = opt.verbose;
-    cout << endl << "Anim::main() starts" << endl << endl;
-
     if (verbose)
-        cout << "Splitting nrrd on type dimension" << endl;
+        cout << endl << "Anim::main() starts" << endl << endl;
+
+    cout << "Splitting nrrd on type dimension" << endl;
     split_type();
-    if (verbose)
-        std::cout << "Split nrrd on type dimension" << std::endl;
 
+    cout << "Making frames for max channel" << endl;
     make_max_frame("x");
     make_max_frame("z");
-    if(verbose)
-        std::cout << "Made frames for max channel" << std::endl;
 
+    cout << "Making frames for average channel" << endl;
     make_avg_frame("x");
     make_avg_frame("z");
-    if(verbose)
-        std::cout << "Made frames for averaged channel" << std::endl;
 
+    cout << "Building PNGs" << endl;
     build_png();
-    if(verbose)
-        std::cout << "Built PNGs" << std::endl;
 
+    cout << "Building video" << endl;
     build_video();
-    if(verbose)
-        std::cout << "Built video" << std::endl;
 }
