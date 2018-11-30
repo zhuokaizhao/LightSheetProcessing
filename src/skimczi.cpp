@@ -139,6 +139,7 @@ void setup_skim(CLI::App &app) {
                     int start = curFile.find_last_of(opt->base_name)+1;
                     int length = end - start;
                     std::string sequenceNumString = curFile.substr(start, length);
+                    cout << sequenceNumString << endl;
                     if (is_number(sequenceNumString))
                         allFileSerialNumber.push_back(stoi(sequenceNumString));
                 }
@@ -153,11 +154,10 @@ void setup_skim(CLI::App &app) {
                 cout << allFileSerialNumber[i] << endl;
             }
 
+            cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
+
             if (allValidFiles.size() != allFileSerialNumber.size())
                 cout << "Warning: input .czi files are badly named, errors may exist while loading" << endl << endl; 
-
-            if (opt->verbose)
-                cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
 
             for (int i = 0; i < allFileSerialNumber.size(); i++) 
             {
