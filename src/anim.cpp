@@ -605,7 +605,7 @@ void Anim::build_video()
     
     for(std::string type: {"max", "avg"})
     { 
-        std::string out_file = base_name + type + "_" + to_string(opt.maxFileNum) + ".avi";
+        std::string out_file = base_name + type + "_" + opt.maxFileNum + ".avi";
 
         // when output already exists, skip this iteration
         if (fs::exists(out_file))
@@ -615,7 +615,7 @@ void Anim::build_video()
         }
 
         if(opt.verbose)
-            std::cout << "===== " + type + "_" + to_string(opt.maxFileNum) + "_avi =====================" << std::endl;
+            std::cout << "===== " + type + "_" + opt.maxFileNum + "_avi =====================" << std::endl;
 
         
         cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, s, true);
