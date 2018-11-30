@@ -158,6 +158,7 @@ void setup_skim(CLI::App &app) {
             for (int i = 0; i < allFileSerialNumber.size(); i++) 
             {
                 // update the opt information
+                // note the opt->file should just be the input file name, don't include any path
                 opt->file = opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
 
                 string curFile = opt->input_path + opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
@@ -217,6 +218,8 @@ void setup_skim(CLI::App &app) {
         // Single file mode if the input_path is a single file path
         else
         {
+            opt->file = opt->input_path;
+
             cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
             
             const string curFile = opt->input_path;
@@ -265,9 +268,8 @@ void setup_skim(CLI::App &app) {
                 xmlFileName = opt->output_path + opt->xml_out_name;
             }
 
-            // generate the complete path for output files
-            nhdrFileName = opt->output_path + nhdrFileName;
-            xmlFileName = opt->output_path + xmlFileName;
+            opt->nhdr_out_name = nhdrFileName;
+            opt->xml_out_name = xmlFileName;
 
             // we want to check if current potential output file already exists, if so, skip
             if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -275,11 +277,7 @@ void setup_skim(CLI::App &app) {
                 cout << "Both " << nhdrFileName << " and " << xmlFileName << " exist, no need to process again." << endl << endl;
                 return;
             }
-
-            // this is a valid file
-            opt->file = curFile;
-            opt->nhdr_out_name = nhdrFileName;
-            opt->xml_out_name = xmlFileName;
+        
             try 
             {
                 Skim(*opt).main(curFile);
@@ -318,11 +316,13 @@ Skim::Skim(SkimOptions const &opt)
     else
         cziFileName = opt.file;
 
-    if (opt.verbose)
-    {
-        cout << "Output path is " << outputPath << endl;
-        cout << "Input .czi file path is " << cziFileName << endl;
-    }
+    // if (opt.verbose)
+    // {
+    //     cout << "Output path is " << outputPath << endl;
+    //     cout << "Input .czi file path is " << cziFileName << endl;
+    // }
+    cout << "Output .nhdr file path is: " << nhdrFileName << endl;
+    cout << "Output .xml file path is: " << xmlFileName << endl;
 
     // if output path does not exist, create one
     if (!checkIfDirectory(outputPath))
