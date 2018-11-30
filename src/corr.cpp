@@ -262,9 +262,10 @@ void setup_corr(CLI::App &app)
                                             "Prints out offset coordinates that maximized the "
                                             "cross correlation");
 
-    sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
+    //sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
+    sub->add_option("-i, --input_path", opt->input_path, "Input path that includes images to be processed")->required();
     sub->add_option("-b, --max", opt->max_offset, "Maximum offset (Default: 10).");
-    sub->add_option("-k, --kdk", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)")->expected(2);
+    sub->add_option("-k, --kdk", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)");
     sub->add_option("-o, --output", opt->output_file, "Output filename");
     sub->add_option("-e, --epsilon", opt->epsilon, "Convergence for sub-resolution optimization. (Default: 0.0001)");
     sub->add_option("-v, --verbosity", opt->verbosity, "Verbosity level. (Default: 1)");

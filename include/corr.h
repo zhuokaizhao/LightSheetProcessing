@@ -11,7 +11,10 @@
 #include "CLI11.hpp"
 #include "util.h"
 
-struct corrOptions {
+struct corrOptions 
+{
+    // input_path includes images to be processed
+    std::string input_path;
     std::vector<std::string> input_images;
     int max_offset = 10;
     std::vector<std::string> kernel = {"box", "box"};    // This should contain kernel and derivative

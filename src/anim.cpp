@@ -109,7 +109,11 @@ void setup_anim(CLI::App &app) {
 
             try
             {
+                auto start = chrono::high_resolution_clock::now();
                 Anim(*opt).main();
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                cout << endl << endl << "Processing took " << duration.count() << " seconds" << endl; 
             }
             catch(LSPException &e)
             {
@@ -281,6 +285,13 @@ void Anim::split_type()
             yz_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projYZ.nrrd";
         }
 
+        // when output already exists, skip this iteration
+        if (fs::exists(xy_proj_file) && fs::exists(yz_proj_file))
+        {
+            cout << "Both " << xy_proj_file << " and " << yz_proj_file << " exist, continue to next." << endl;
+            continue;
+        }
+
         Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
                             safe_nrrd_load(mop_t, yz_proj_file)};
 
@@ -385,6 +396,15 @@ void Anim::make_max_frame(std::string direction)
     for(int i = 0; i < opt.tmax; i++)
     {
         std::string common_prefix = opt.anim_path + to_string(i+1) + "-max-" + direction;
+        string ppm_0 = common_prefix + "-0.ppm";
+        string ppm_1 = common_prefix + "-1.ppm";
+
+        // when output already exists, skip this iteration
+        if (fs::exists(ppm_0) && fs::exists(ppm_1))
+        {
+            cout << "Both " << ppm_0 << " and " << ppm_1 << " exist, continue to next." << endl;
+            continue;
+        }
 
         auto mop_t = airMopNew();
 
@@ -434,6 +454,15 @@ void Anim::make_avg_frame(std::string direction)
     for(int i=0; i < opt.tmax; i++)
     {
         std::string common_prefix = opt.anim_path + to_string(i+1) + "-avg-" + direction;
+
+        string ppm_0 = common_prefix + "-0.ppm";
+        string ppm_1 = common_prefix + "-1.ppm";
+        // when output already exists, skip this iteration
+        if (fs::exists(ppm_0) && fs::exists(ppm_1))
+        {
+            cout << "Both " << ppm_0 << " and " << ppm_1 << " exist, continue to next." << endl;
+            continue;
+        }
 
         auto mop_t = airMopNew();
 
@@ -523,12 +552,22 @@ void Anim::build_png()
         //#pragma omp parallel for
         for(int i = 0; i < opt.tmax; i++)
         {
+            std::string base_path = opt.anim_path + to_string(i+1) + "-" + type;
+            std::string out_name = base_path + ".png";
+
+            // when output already exists, skip this iteration
+            if (fs::exists(out_name))
+            {
+                cout << out_name << " exists, continue to next." << endl;
+                continue;
+            }
+            
             auto mop_t = airMopNew();
 
             if(opt.verbose)
                 std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
-            std::string base_path = opt.anim_path + to_string(i+1) + "-" + type;
+            
             Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
             Nrrd *ppm_z_1 = safe_nrrd_load(mop_t, base_path + "-z-1.ppm");
             Nrrd *ppm_x_0 = safe_nrrd_load(mop_t, base_path + "-x-0.ppm");
@@ -546,7 +585,7 @@ void Anim::build_png()
                             nrrdJoin(nout, tmp_nout_array, 2, 1, 0),
                             mop_t, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
 
-            std::string out_name = base_path + ".png";
+            
             nrrd_checker(nrrdSave(out_name.c_str(), nout, nullptr), 
                         mop_t, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
 
@@ -566,10 +605,19 @@ void Anim::build_video()
     
     for(std::string type: {"max", "avg"})
     { 
-        if(opt.verbose)
-            std::cout << "===== " + type + "_mp4 =====================" << std::endl;
+        std::string out_file = base_name + type + "_" + to_string(opt.maxFileNum) + ".avi";
 
-        std::string out_file = base_name + type + ".avi";
+        // when output already exists, skip this iteration
+        if (fs::exists(out_file))
+        {
+            cout << out_file << " exists, continue to next." << endl;
+            continue;
+        }
+
+        if(opt.verbose)
+            std::cout << "===== " + type + "_" + to_string(opt.maxFileNum) + "_avi =====================" << std::endl;
+
+        
         cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, s, true);
         
         if(!vw.isOpened()) 

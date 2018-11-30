@@ -104,7 +104,7 @@ void setup_proj(CLI::App &app) {
                 // when all three exists, skip this file
                 if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
                 {
-                    cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exit, continue to next." << endl;
+                    cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exist, continue to next." << endl;
                     opt->number_of_processed++;
                     cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl << endl;
                     continue;
@@ -174,7 +174,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
 {
     if (!checkIfDirectory(opt.proj_path))
     {
-        cout << opt.proj_path << " does not exits, but has been created" << endl;
+        cout << opt.proj_path << " does not exist, but has been created" << endl;
         boost::filesystem::create_directory(opt.proj_path);
     }
 
