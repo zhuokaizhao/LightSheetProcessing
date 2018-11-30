@@ -157,6 +157,9 @@ void setup_skim(CLI::App &app) {
 
             for (int i = 0; i < allFileSerialNumber.size(); i++) 
             {
+                // update the opt information
+                opt->file = opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
+
                 string curFile = opt->input_path + opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
                 
                 if (opt->verbose)
@@ -199,9 +202,6 @@ void setup_skim(CLI::App &app) {
                     cout << "Both " << nhdrFileName << " and " << xmlFileName << " exist, continue to next." << endl << endl;
                     continue;
                 }
-
-                // update the opt information
-                opt->file = curFile;
                 
                 // run the processing program
                 try 
