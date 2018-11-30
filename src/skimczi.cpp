@@ -166,15 +166,15 @@ void setup_skim(CLI::App &app) {
                     std::cout << "Current procesing file is: " << curFile << endl;
                 
                 // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-                int end = curFile.rfind(".czi");
-                int start = curFile.rfind(opt->base_name.back()) + 1;
-                int length = end - start;
-                std::string sequenceNumString = curFile.substr(start, length);
+                // int end = curFile.rfind(".czi");
+                // int start = curFile.rfind(opt->base_name.back()) + 1;
+                // int length = end - start;
+                // std::string sequenceNumString = curFile.substr(start, length);
 
                 string nhdrFileName, xmlFileName;
                 if (opt->nhdr_out_name.empty()) 
                 {
-                    nhdrFileName = opt->base_name + "_" + sequenceNumString + ".nhdr";
+                    nhdrFileName = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
                 }
                 else
                 {
@@ -182,7 +182,7 @@ void setup_skim(CLI::App &app) {
                 }
                 if (opt->xml_out_name.empty()) 
                 {
-                    xmlFileName = opt->base_name + "_" + sequenceNumString + ".xml";
+                    xmlFileName = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".xml";
                 }
                 else
                 {
@@ -249,20 +249,20 @@ void setup_skim(CLI::App &app) {
             string nhdrFileName, xmlFileName;
             if (opt->nhdr_out_name.empty()) 
             {
-                nhdrFileName = opt->base_name + "_" + sequenceNumString + ".nhdr";
+                nhdrFileName = opt->output_path + opt->base_name + "_" + sequenceNumString + ".nhdr";
             }
             else
             {
-                nhdrFileName = opt->nhdr_out_name;
+                nhdrFileName = opt->output_path + opt->nhdr_out_name;
             }
 
             if (opt->xml_out_name.empty()) 
             {
-                xmlFileName = opt->base_name + "_" + sequenceNumString + ".xml";
+                xmlFileName = opt->output_path + opt->base_name + "_" + sequenceNumString + ".xml";
             }
             else
             {
-                xmlFileName = opt->xml_out_name;
+                xmlFileName = opt->output_path + opt->xml_out_name;
             }
 
             // generate the complete path for output files
