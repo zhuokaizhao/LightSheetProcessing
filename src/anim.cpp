@@ -258,7 +258,7 @@ void Anim::split_type()
 
     // slice and resample projection files
     //#pragma omp parallel for
-    for(int i = 0; i <= opt.tmax; i++) 
+    for(int i = 0; i < opt.tmax; i++) 
     {
         // mot_t is a new airArray
         auto mop_t = airMopNew();
@@ -375,7 +375,7 @@ void Anim::split_type()
 
 void Anim::make_max_frame(std::string direction){
   #pragma omp parallel for
-  for(auto i=0; i<=opt.tmax; ++i){
+  for(auto i=0; i<opt.tmax; ++i){
     std::string common_prefix = opt.anim_path + zero_pad(i, 3) + "-max-" + direction;
 
     auto mop_t = airMopNew();
@@ -422,7 +422,7 @@ void Anim::make_max_frame(std::string direction){
 
 void Anim::make_avg_frame(std::string direction){
   #pragma omp parallel for
-  for(auto i=0; i<=opt.tmax; ++i){
+  for(auto i=0; i<opt.tmax; ++i){
     std::string common_prefix = opt.anim_path + zero_pad(i, 3) + "-avg-" + direction;
 
     auto mop_t = airMopNew();
@@ -518,7 +518,7 @@ void Anim::build_png()
     for(auto type: {"max", "avg"})
     {
         #pragma omp parallel for
-        for(auto i=0; i<=opt.tmax; ++i)
+        for(auto i=0; i<opt.tmax; ++i)
         {
             auto mop_t = airMopNew();
 
@@ -568,7 +568,7 @@ void Anim::build_video(){
     cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), 25, s, true);
     if(!vw.isOpened()) 
       std::cout << "cannot open videoWriter." << std::endl;
-    for(auto i=0; i<=tmax; ++i){
+    for(auto i=0; i<tmax; ++i){
       std::string name = base_name + zero_pad(i, 3) + "-" + type + ".png";
       vw << cv::imread(name);
     }
