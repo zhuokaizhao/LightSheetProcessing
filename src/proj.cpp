@@ -105,6 +105,7 @@ void setup_proj(CLI::App &app) {
                 if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
                 {
                     cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exit, continue to next." << endl;
+                    opt->number_of_processed++;
                     continue;
                 }
                 else
@@ -288,7 +289,7 @@ void Proj::main(){
 
     cout << "Y-Z Projection file has been saved to " << yz << endl;
 
-    opt->number_of_processed++;
+    opt.number_of_processed++;
 
     cout << opt.number_of_processed << " out of " << opt.file_number << " files have been processed" << endl;
 
