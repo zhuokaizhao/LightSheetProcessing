@@ -263,7 +263,8 @@ void Anim::split_type()
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
-        std::string iii = zero_pad(i, 3);
+        //std::string iii = zero_pad(i, 3);
+        string iii = "001"
 
         if(opt.verbose)
             std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================\n";
@@ -409,7 +410,7 @@ void Anim::make_max_frame(std::string direction){
                 mop_t, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
     if(opt.verbose)
-      std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
+      std::cout << "===== " + "001" + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
 
     nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                   nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -494,7 +495,7 @@ void Anim::make_avg_frame(std::string direction){
                 mop_t, "Error quantizing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
     if(opt.verbose)
-      std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
+        std::cout << "===== " + "001" + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
 
     nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                   nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -523,9 +524,9 @@ void Anim::build_png()
             auto mop_t = airMopNew();
 
             if(opt.verbose)
-                std::cout << "===== " + zero_pad(i, 3) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
+                std::cout << "===== " + "001" + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
-            std::string base_path = opt.anim_path + zero_pad(i, 3) + "-" + type;
+            std::string base_path = opt.anim_path + "001" + "-" + type;
             Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
             Nrrd *ppm_z_1 = safe_nrrd_load(mop_t, base_path + "-z-1.ppm");
             Nrrd *ppm_x_0 = safe_nrrd_load(mop_t, base_path + "-x-0.ppm");
