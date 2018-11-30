@@ -121,7 +121,6 @@ void setup_proj(CLI::App &app) {
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
                     cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
-                    opt->number_of_processed++;
                 }
                 catch(LSPException &e)
                 {
@@ -288,6 +287,8 @@ void Proj::main(){
 
 
     cout << "Y-Z Projection file has been saved to " << yz << endl;
+
+    opt->number_of_processed++;
 
     cout << opt.number_of_processed << " out of " << opt.file_number << " files have been processed" << endl;
 
