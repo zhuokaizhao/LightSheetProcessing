@@ -13,6 +13,8 @@
 #include <vector>
 #include <memory>
 
+#include <chrono> 
+
 using namespace std;
 namespace fs = boost::filesystem;
 
@@ -114,8 +116,11 @@ void setup_proj(CLI::App &app) {
                 opt->file_name = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
                 try
                 {
-                    //cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    auto start = chrono::high_resolution_clock::now();
                     Proj(*opt).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
+                    cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
                     opt->number_of_processed++;
                 }
                 catch(LSPException &e)
@@ -149,7 +154,11 @@ void setup_proj(CLI::App &app) {
                 opt->file_name = curFile;         
                 try 
                 {
+                    auto start = chrono::high_resolution_clock::now();
                     Proj(*opt).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
+                    cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
                 } 
                 catch(LSPException &e) 
                 {
