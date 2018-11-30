@@ -186,6 +186,9 @@ void setup_skim(CLI::App &app) {
                     xmlFileName = opt->xml_out_name;
                 }
 
+                opt->nhdr_out_name = nhdrFileName;
+                opt->xml_out_name = xmlFileName;
+
                 // generate the complete path for output files
                 nhdrFileName = opt->output_path + nhdrFileName;
                 xmlFileName = opt->output_path + xmlFileName;
@@ -199,8 +202,6 @@ void setup_skim(CLI::App &app) {
 
                 // update the opt information
                 opt->file = curFile;
-                opt->nhdr_out_name = nhdrFileName;
-                opt->xml_out_name = xmlFileName;
                 
                 // run the processing program
                 try 
