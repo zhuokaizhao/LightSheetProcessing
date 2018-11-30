@@ -138,7 +138,7 @@ void setup_skim(CLI::App &app) {
                     int end = curFile.rfind(".czi");
                     int start = curFile.find_last_of(opt->base_name)+1;
                     int length = end - start;
-                    std::string sequenceNumString = curFile.substr(start, length);
+                    std::string sequenceNumString = curFile.substr(6, length);
                     cout << sequenceNumString << endl;
                     if (is_number(sequenceNumString))
                         allFileSerialNumber.push_back(stoi(sequenceNumString));
