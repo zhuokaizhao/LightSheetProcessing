@@ -18,6 +18,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
+#include <chrono> 
+
 using namespace std;
 namespace fs = boost::filesystem;
 
@@ -141,7 +143,11 @@ void setup_anim(CLI::App &app) {
                 opt->tmax = 0;          
                 try
                 {
+                    auto start = chrono::high_resolution_clock::now();
                     Anim(*opt).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << endl << endl << "Processing took " << duration.count() << " seconds" << endl; 
                 }
                 catch(LSPException &e)
                 {
