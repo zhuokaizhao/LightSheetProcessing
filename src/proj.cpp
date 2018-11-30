@@ -106,7 +106,7 @@ void setup_proj(CLI::App &app) {
                 {
                     cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exit, continue to next." << endl;
                     opt->number_of_processed++;
-                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl << endl;
                     continue;
                 }
 
@@ -119,7 +119,7 @@ void setup_proj(CLI::App &app) {
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
                     opt->number_of_processed++;
-                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl << endl;
                     cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
                 }
                 catch(LSPException &e)
