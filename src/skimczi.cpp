@@ -136,10 +136,10 @@ void setup_skim(CLI::App &app) {
 
                     // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
                     int end = curFile.rfind(".czi");
-                    int start = curFile.rfind(opt->base_name.back()) + 1;
+                    int start = curFile.rfind(opt->base_name.back());
                     int length = end - start;
                     std::string sequenceNumString = curFile.substr(start, length);
-                    cout << sequenceNumString << endl;
+                    
                     if (is_number(sequenceNumString))
                         allFileSerialNumber.push_back(stoi(sequenceNumString));
                 }
