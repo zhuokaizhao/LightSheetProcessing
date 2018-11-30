@@ -33,6 +33,7 @@ void setup_anim(CLI::App &app) {
     sub->add_option("-p, --proj", opt->proj_path, "Path of input projection files. (Default: ./proj/)")->required();
     sub->add_option("-b, --base_name", opt->base_name, "The base name of nrrd files (For example: 181113)")->required();
     sub->add_option("-o, --anim", opt->anim_path, "Path of output anim files. (Default: ./anim/)")->required();
+    sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
     sub->add_option("-d, --dsample", opt->dwn_sample, "Amount by which to down-sample the data. (Default: 1.0)");
     sub->add_option("-x, --scalex", opt->scale_x, "Scaling on the x axis. (Default: 1.0)");
     sub->add_option("-z, --scalez", opt->scale_z, "Scaling on the z axis. (Default: 1.0)");
@@ -52,11 +53,10 @@ void setup_anim(CLI::App &app) {
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
             
             // note that the number starts counting at 1
-            int totalNum = files.size();
             int nhdrNum = 0;
 
             // since files include .nhdr and .xml file in pairs, we want to count individual number
-            for (const string curFile : files) 
+            for (int i = 0; i < files.size();; i++) 
             {
                 // check if input file is a .nhdr file
                 int nhdr_suff = curFile.rfind(".nhdr");
@@ -93,11 +93,16 @@ void setup_anim(CLI::App &app) {
                 cout << "nhdrNum = " << to_string(nhdrNum) << endl;
                 cout << "WARNING: allFileSerialNumber has wrong size" << endl;
             }
-                
 
+            // if the user restricts the number of files to process
+            if (!opt->maxFileNum.empty())
+            {
+                nhdrNum = stoi(opt->maxFileNum);
+            }
+                
             // update file number
             opt->tmax = nhdrNum;
-            cout << endl << "Total nhdr file number is: " << opt->tmax << endl << endl;
+            cout << endl << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
 
             try
             {
