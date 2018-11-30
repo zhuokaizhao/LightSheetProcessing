@@ -142,6 +142,8 @@ void setup_skim(CLI::App &app) {
                     cout << sequenceNumString << endl;
                     if (is_number(sequenceNumString))
                         allFileSerialNumber.push_back(stoi(sequenceNumString));
+                    else
+                        cout << sequenceNumString << " is NOT a number" << endl;
                 }
 
             }
