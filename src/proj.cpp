@@ -120,7 +120,7 @@ void setup_proj(CLI::App &app) {
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     opt->number_of_processed++;
                     cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
-                    cout << "Processing " << opt->file_name << " took " << duration.count() << " seconds" << ends << endl; 
+                    cout << "Processing " << opt->file_name << " took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
