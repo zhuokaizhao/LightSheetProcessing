@@ -179,7 +179,8 @@ void setup_skim(CLI::App &app) {
                 // int length = end - start;
                 // std::string sequenceNumString = curFile.substr(start, length);
 
-                string nhdrFileName, xmlFileName;
+                string nhdrFileName = "";
+                string xmlFileName = "";
                 if (opt->nhdr_out_name.empty()) 
                 {
                     nhdrFileName = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
