@@ -113,7 +113,7 @@ void setup_anim(CLI::App &app) {
                 Anim(*opt).main();
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                cout << endl << endl << "Processing took " << duration.count() << " seconds" << endl; 
+                cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
             }
             catch(LSPException &e)
             {
@@ -151,7 +151,7 @@ void setup_anim(CLI::App &app) {
                     Anim(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    cout << endl << endl << "Processing took " << duration.count() << " seconds" << endl; 
+                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
