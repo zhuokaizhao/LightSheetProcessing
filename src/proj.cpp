@@ -236,11 +236,6 @@ void Proj::main(){
     Nrrd* nproj_xy = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     Nrrd* nproj_xy_t[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-    
-    // if (verbose)
-    // {
-    //     cout << "proj_common is " << proj_common << endl;
-    // }
         
     std::string xy = proj_common + "XY.nrrd";
 
@@ -253,10 +248,8 @@ void Proj::main(){
     nrrd_checker(nrrdSave(xy.c_str(), nproj_xy, nullptr),
                 mop, "Error saving XY projection:\n", "proj.cpp", "Proj::main");
     
-    if (verbose)
-    {
-        cout << "X-Y Projection file has been saved to " << xy << endl;
-    }
+
+    cout << "X-Y Projection file has been saved to " << xy << endl;
 
     //xz proj
     unsigned int permute[4] = {0, 2, 1, 3}; //same permute array for xz and yz coincidently
@@ -273,10 +266,8 @@ void Proj::main(){
     // save
     nrrd_checker(nrrdSave(xz.c_str(), nproj_xz, nullptr),
                 mop, "Error saving XZ projection:\n", "proj.cpp", "Proj::main");
-    if (verbose)
-    {
-        cout << "X-Z Projection file has been saved to " << xz << endl;
-    }
+
+    cout << "X-Z Projection file has been saved to " << xz << endl;
 
     //yz proj
     Nrrd* nproj_yz = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -295,10 +286,8 @@ void Proj::main(){
     nrrd_checker(nrrdSave(yz.c_str(), nproj_yz, nullptr),
                 mop, "Error saving YZ projection:\n", "proj.cpp", "Proj::main");
 
-    if (verbose)
-    {
-        cout << "Y-Z Projection file has been saved to " << yz << endl;
-    }
+
+    cout << "Y-Z Projection file has been saved to " << yz << endl;
 
     cout << opt.number_of_processed << " out of " << opt.file_number << " files have been processed" << endl;
 
