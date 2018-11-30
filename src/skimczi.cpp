@@ -163,15 +163,24 @@ void setup_skim(CLI::App &app) {
             if (allValidFiles.size() != allFileSerialNumber.size())
                 cout << "Warning: input .czi files are badly named, errors may exist while loading" << endl << endl; 
 
-            for (int i = 0; i < allFileSerialNumber.size(); i++) 
-            {
-                // update the opt information
-                // note the opt->file should just be the input file name, don't include any path
-                
+            bool nhdrInitialEmpty = true;
+            bool xmlInitialEmpty = true;
+            if (!opt->nhdr_out_name.empty())
+                nhdrInitialEmpty = false;
 
+            if (!opt->xml_out_name.empty())
+                xmlInitialEmpty = false;
+                
+            for (int i = 0; i < allFileSerialNumber.size(); i++) 
+            {                
                 string nhdrFileName, xmlFileName;
-                opt->nhdr_out_name = "";
-                opt->xml_out_name = "";
+
+                // we need to refresh both for each iteration
+                if (nhdrInitialEmpty)
+                    opt->nhdr_out_name = "";
+                if (xmlInitialEmpty)
+                    opt->xml_out_name = "";
+
                 if (opt->nhdr_out_name.empty()) 
                 {
                     nhdrFileName = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
@@ -217,7 +226,8 @@ void setup_skim(CLI::App &app) {
         // Single file mode if the input_path is a single file path
         else
         {
-            cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
+            cout << opt->input_path << " is not a directory, enter Single file mode" << endl;
+            cout << "Checking if it is a valid .czi file" << endl;
             
             // check if input file is a .czi file
             int suff = opt->input_path.rfind(".czi");
