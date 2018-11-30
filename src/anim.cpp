@@ -271,6 +271,19 @@ void Anim::split_type()
     //#pragma omp parallel for
     for(int i = 0; i < opt.tmax; i++) 
     {
+
+        string max_z = opt.anim_path + to_string(i+1) + "-max-z.nrrd";
+        string max_x = opt.anim_path + to_string(i+1) + "-max-x.nrrd";
+        string avg_z = opt.anim_path + to_string(i+1) + "-avg-z.nrrd";
+        string avg_x = opt.anim_path + to_string(i+1) + "-avg-x.nrrd";
+
+        // when output already exists, skip this iteration
+        if (fs::exists(max_x) && fs::exists(max_z) && fs::exists(avg_z) && fs::exists(avg_x))
+        {
+            cout << "All four -max/avg-z/x.nrrd files exist, continue to next." << endl;
+            continue;
+        }
+
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
@@ -283,13 +296,6 @@ void Anim::split_type()
         {
             xy_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projXY.nrrd";
             yz_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projYZ.nrrd";
-        }
-
-        // when output already exists, skip this iteration
-        if (fs::exists(xy_proj_file) && fs::exists(yz_proj_file))
-        {
-            cout << "Both " << xy_proj_file << " and " << yz_proj_file << " exist, continue to next." << endl;
-            continue;
         }
 
         Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
@@ -372,11 +378,6 @@ void Anim::split_type()
 
             airMopSingleOkay(mop_t, rsmc);
         }
-
-        string max_z = opt.anim_path + to_string(i+1) + "-max-z.nrrd";
-        string max_x = opt.anim_path + to_string(i+1) + "-max-x.nrrd";
-        string avg_z = opt.anim_path + to_string(i+1) + "-avg-z.nrrd";
-        string avg_x = opt.anim_path + to_string(i+1) + "-avg-x.nrrd";
 
         // save the resampled nrrd files
         nrrd_checker(nrrdSave(max_z.c_str(), res_rsm[0][0], nullptr) ||
