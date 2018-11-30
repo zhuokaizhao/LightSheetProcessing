@@ -163,7 +163,8 @@ Anim::Anim(animOptions const &opt): opt(opt), mop(airMopNew())
     }
 }
 
-Anim::~Anim() {
+Anim::~Anim() 
+{
     airMopOkay(mop);
 }
 
@@ -224,7 +225,7 @@ int Anim::set_origins()
     //if all origins are {0, 0, 0}.
     else if(!std::accumulate(origins.begin(), origins.end(), 0, [](int acc, std::vector<int> o){return acc || (o!=std::vector<int>(3, 0));}))
     {
-        cerr << "[ANIM WARNING]: All .nhdr files have origins {0, 0, 0}, will not implement origin relocation." << endl;
+        cerr << "[ANIM Notice]: All .nhdr files have origins {0, 0, 0}, will not implement origin relocation." << endl;
         return 1;
     }
 
@@ -263,11 +264,8 @@ void Anim::split_type()
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
-        //std::string iii = zero_pad(i, 3);
-        string iii = "001";
-
         if(opt.verbose)
-            std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================\n";
+            std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " =====================\n";
 
         //read proj files
         string xy_proj_file, yz_proj_file;
@@ -325,7 +323,7 @@ void Anim::split_type()
         
         // k parameter
         double kparm[3] = {1, 0, 0.5};
-        for(auto i=0; i<2; ++i)
+        for(int i = 0; i < 2; i++)
         {
             auto rsmc = nrrdResampleContextNew();
             airMopAdd(mop_t, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
@@ -358,10 +356,10 @@ void Anim::split_type()
             airMopSingleOkay(mop_t, rsmc);
         }
 
-        std::string max_z = opt.anim_path + zero_pad(i, 3) + "-max-z.nrrd";
-        std::string max_x = opt.anim_path + zero_pad(i, 3) + "-max-x.nrrd";
-        std::string avg_z = opt.anim_path + zero_pad(i, 3) + "-avg-z.nrrd";
-        std::string avg_x = opt.anim_path + zero_pad(i, 3) + "-avg-x.nrrd";
+        string max_z = opt.anim_path + to_string(i+1) + "-max-z.nrrd";
+        string max_x = opt.anim_path + to_string(i+1) + "-max-x.nrrd";
+        string avg_z = opt.anim_path + to_string(i+1) + "-avg-z.nrrd";
+        string avg_x = opt.anim_path + to_string(i+1) + "-avg-x.nrrd";
 
         // save the resampled nrrd files
         nrrd_checker(nrrdSave(max_z.c_str(), res_rsm[0][0], nullptr) ||
@@ -380,7 +378,7 @@ void Anim::make_max_frame(std::string direction)
     //#pragma omp parallel for
     for(int i = 0; i < opt.tmax; i++)
     {
-        std::string common_prefix = opt.anim_path + zero_pad(i, 3) + "-max-" + direction;
+        std::string common_prefix = opt.anim_path + to_string(i+1) + "-max-" + direction;
 
         auto mop_t = airMopNew();
 
@@ -413,7 +411,7 @@ void Anim::make_max_frame(std::string direction)
                     mop_t, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
         if(opt.verbose)
-            std::cout << "===== " + to_string(i) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
+            std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -427,9 +425,9 @@ void Anim::make_max_frame(std::string direction)
 void Anim::make_avg_frame(std::string direction)
 {
     //#pragma omp parallel for
-    for(auto i=0; i<opt.tmax; ++i)
+    for(int i=0; i < opt.tmax; i++)
     {
-        std::string common_prefix = opt.anim_path + zero_pad(i, 3) + "-avg-" + direction;
+        std::string common_prefix = opt.anim_path + to_string(i+1) + "-avg-" + direction;
 
         auto mop_t = airMopNew();
 
@@ -465,13 +463,6 @@ void Anim::make_avg_frame(std::string direction)
         NrrdIter* nit3 = nrrdIterNew();
         NrrdIter* nit4 = nrrdIterNew();
         
-        /* shared_ptr would not work
-        std::shared_ptr<NrrdIter> nit1 (nrrdIterNew());
-        std::shared_ptr<NrrdIter> nit2 (nrrdIterNew());
-        std::shared_ptr<NrrdIter> nit3 (nrrdIterNew());
-        std::shared_ptr<NrrdIter> nit4 (nrrdIterNew());
-        */
-
         nrrdIterSetOwnNrrd(nit1, ch);
         nrrdIterSetValue(nit2, 0.5);
         nrrd_checker(nrrdArithIterBinaryOp(ch, nrrdBinaryOpMultiply, nit1, nit2),
@@ -500,7 +491,7 @@ void Anim::make_avg_frame(std::string direction)
                     mop_t, "Error quantizing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
         if(opt.verbose)
-            std::cout << "===== " + to_string(i) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
+            std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -529,9 +520,9 @@ void Anim::build_png()
             auto mop_t = airMopNew();
 
             if(opt.verbose)
-                std::cout << "===== " + to_string(i) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
+                std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
-            std::string base_path = opt.anim_path + "001" + "-" + type;
+            std::string base_path = opt.anim_path + to_string(i+1) + "-" + type;
             Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
             Nrrd *ppm_z_1 = safe_nrrd_load(mop_t, base_path + "-z-1.ppm");
             Nrrd *ppm_x_0 = safe_nrrd_load(mop_t, base_path + "-x-0.ppm");
@@ -565,7 +556,7 @@ void Anim::build_video()
     int tmax = opt.tmax;
     std::string base_name = opt.anim_path;
 
-    cv::Size s = cv::imread(base_name + "000-max.png").size();
+    cv::Size s = cv::imread(base_name + "1-max.png").size();
     
     for(std::string type: {"max", "avg"})
     { 
@@ -578,9 +569,9 @@ void Anim::build_video()
         if(!vw.isOpened()) 
             std::cout << "cannot open videoWriter." << std::endl;
         
-        for(auto i=0; i<tmax; ++i)
+        for(int i = 0; i < tmax; i++)
         {
-            std::string name = base_name + zero_pad(i, 3) + "-" + type + ".png";
+            std::string name = base_name + to_string(i+1) + "-" + type + ".png";
             vw << cv::imread(name);
         }
         vw.release();
