@@ -264,7 +264,7 @@ void Anim::split_type()
         auto mop_t = airMopNew();
 
         //std::string iii = zero_pad(i, 3);
-        string iii = "001"
+        string iii = "001";
 
         if(opt.verbose)
             std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================\n";
@@ -325,23 +325,24 @@ void Anim::split_type()
         
         // k parameter
         double kparm[3] = {1, 0, 0.5};
-        for(auto i=0; i<2; ++i){
-        auto rsmc = nrrdResampleContextNew();
-        airMopAdd(mop_t, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
+        for(auto i=0; i<2; ++i)
+        {
+            auto rsmc = nrrdResampleContextNew();
+            airMopAdd(mop_t, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
-        nrrd_checker(nrrdResampleInputSet(rsmc, proj_rsm[i]) ||
-                        nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
-                        nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[0].size*resample_rsm[i][0]))) ||
-                        nrrdResampleRangeFullSet(rsmc, 0) ||
-                        nrrdResampleKernelSet(rsmc, 1, nrrdKernelBCCubic, kparm) ||
-                        nrrdResampleSamplesSet(rsmc, 1, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i][1]))) ||
-                        nrrdResampleRangeFullSet(rsmc, 1) ||
-                        nrrdResampleKernelSet(rsmc, 2, NULL, NULL) ||
-                        nrrdResampleKernelSet(rsmc, 3, NULL, NULL) ||
-                        nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
-                        nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
-                        nrrdResampleExecute(rsmc, proj_rsm[i]),
-                        mop_t, "Error resampling nrrd:\n", "anim.cpp", "Anim::split_type");
+            nrrd_checker(nrrdResampleInputSet(rsmc, proj_rsm[i]) ||
+                            nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
+                            nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[0].size*resample_rsm[i][0]))) ||
+                            nrrdResampleRangeFullSet(rsmc, 0) ||
+                            nrrdResampleKernelSet(rsmc, 1, nrrdKernelBCCubic, kparm) ||
+                            nrrdResampleSamplesSet(rsmc, 1, size_t(ceil(proj_rsm[i]->axis[1].size*resample_rsm[i][1]))) ||
+                            nrrdResampleRangeFullSet(rsmc, 1) ||
+                            nrrdResampleKernelSet(rsmc, 2, NULL, NULL) ||
+                            nrrdResampleKernelSet(rsmc, 3, NULL, NULL) ||
+                            nrrdResampleBoundarySet(rsmc, nrrdBoundaryBleed) ||
+                            nrrdResampleRenormalizeSet(rsmc, AIR_TRUE) ||
+                            nrrdResampleExecute(rsmc, proj_rsm[i]),
+                            mop_t, "Error resampling nrrd:\n", "anim.cpp", "Anim::split_type");
 
             //SWAP(AX0 AX1) for yz plane
             if(i==1)
