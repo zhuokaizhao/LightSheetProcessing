@@ -215,7 +215,7 @@ public:
     Skim(SkimOptions const &opt = SkimOptions());
     ~Skim();
 
-    void main(const std::string curFile);
+    void main();
 
 private:
     SkimOptions const &opt;

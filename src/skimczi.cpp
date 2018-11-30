@@ -116,12 +116,13 @@ void setup_skim(CLI::App &app) {
         // first check this input path is a directory or a single file name
         if (checkIfDirectory(opt->input_path))
         {
-            if (opt->verbose)
-                cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
+            
+            cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
             vector<string> allValidFiles;
             vector<int> allFileSerialNumber;
+            
             // count the number of valid .czi files first
             int numFiles = 0;
             for (int i = 0; i < files.size(); i++)
@@ -129,7 +130,7 @@ void setup_skim(CLI::App &app) {
                 // check if input file is a .czi file
                 string curFile = files[i];
                 int suff = curFile.rfind(".czi");
-                if (suff && (suff == curFile.length() -4))
+                if (suff && (suff == curFile.length() - 4))
                 {
                     numFiles++;
                     allValidFiles.push_back(curFile);
@@ -152,10 +153,10 @@ void setup_skim(CLI::App &app) {
             // after finding all the files, sort the allFileSerialNumber
             sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), skimSmallToLarge);
 
-            for (int i = 0; i < allFileSerialNumber.size(); i++)
-            {
-                cout << allFileSerialNumber[i] << endl;
-            }
+            // for (int i = 0; i < allFileSerialNumber.size(); i++)
+            // {
+            //     cout << allFileSerialNumber[i] << endl;
+            // }
 
             cout << numFiles << " .czi files found in input path " << opt->input_path << endl << endl;
 
@@ -167,17 +168,6 @@ void setup_skim(CLI::App &app) {
                 // update the opt information
                 // note the opt->file should just be the input file name, don't include any path
                 opt->file = opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
-
-                string curFile = opt->input_path + opt->base_name + to_string(allFileSerialNumber[i]) + ".czi";
-                
-                if (opt->verbose)
-                    std::cout << "Current procesing file is: " << curFile << endl;
-                
-                // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-                // int end = curFile.rfind(".czi");
-                // int start = curFile.rfind(opt->base_name.back()) + 1;
-                // int length = end - start;
-                // std::string sequenceNumString = curFile.substr(start, length);
 
                 string nhdrFileName = "";
                 string xmlFileName = "";
@@ -215,7 +205,7 @@ void setup_skim(CLI::App &app) {
                 // run the processing program
                 try 
                 {
-                    Skim(*opt).main(curFile);
+                    Skim(*opt).main();
                 } 
                 catch(LSPException &e) 
                 {
@@ -229,8 +219,6 @@ void setup_skim(CLI::App &app) {
             opt->file = opt->input_path;
 
             cout << opt->input_path << " is not a directory, check if it is a valid .czi file" << endl;
-            
-            const string curFile = opt->input_path;
 
             if (opt->verbose)
                 std::cout << "Current file name is: " << curFile << endl;
@@ -253,28 +241,33 @@ void setup_skim(CLI::App &app) {
 
             // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
             int end = curFile.rfind(".czi");
-            int start = curFile.rfind(opt->base_name.back()) + 1;
+            //int start = curFile.rfind(opt->base_name.back()) + 1;
+            int start = opt->base_name.length();
             int length = end - start;
             std::string sequenceNumString = curFile.substr(start, length);
 
             string nhdrFileName, xmlFileName;
             if (opt->nhdr_out_name.empty()) 
             {
-                nhdrFileName = opt->output_path + opt->base_name + "_" + sequenceNumString + ".nhdr";
+                nhdrFileName = opt->base_name + "_" + sequenceNumString + ".nhdr";
             }
             else
             {
-                nhdrFileName = opt->output_path + opt->nhdr_out_name;
+                nhdrFileName = opt->nhdr_out_name;
             }
 
             if (opt->xml_out_name.empty()) 
             {
-                xmlFileName = opt->output_path + opt->base_name + "_" + sequenceNumString + ".xml";
+                xmlFileName = opt->base_name + "_" + sequenceNumString + ".xml";
             }
             else
             {
-                xmlFileName = opt->output_path + opt->xml_out_name;
+                xmlFileName = opt->xml_out_name;
             }
+
+            // generate the complete path for output files
+            nhdrFileName = opt->output_path + nhdrFileName;
+            xmlFileName = opt->output_path + xmlFileName;
 
             opt->nhdr_out_name = nhdrFileName;
             opt->xml_out_name = xmlFileName;
@@ -288,7 +281,7 @@ void setup_skim(CLI::App &app) {
         
             try 
             {
-                Skim(*opt).main(curFile);
+                Skim(*opt).main();
             } 
             catch(LSPException &e) 
             {
@@ -324,11 +317,7 @@ Skim::Skim(SkimOptions const &opt)
     else
         cziFileName = opt.file;
 
-    // if (opt.verbose)
-    // {
-    //     cout << "Output path is " << outputPath << endl;
-    //     cout << "Input .czi file path is " << cziFileName << endl;
-    // }
+    cout << "Current procesing file is: " << cziFileName << endl;
     cout << "Output .nhdr file path is: " << nhdrFileName << endl;
     cout << "Output .xml file path is: " << xmlFileName << endl;
 
@@ -338,36 +327,6 @@ Skim::Skim(SkimOptions const &opt)
         cout << outputPath << " does not exits, but has been created" << endl;
         boost::filesystem::create_directory(outputPath);
     }
-
-    // // get the base name
-    // string baseName = opt.base_name;
-    // if (opt.verbose)
-    //     cout << "Base Name is " << baseName << endl;
-
-    // // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-    // int end = cziFileName.rfind(".czi");
-    // int start = cziFileName.rfind(baseName.back()) + 1;
-    // int length = end - start;
-    // std::string sequenceNumString = cziFileName.substr(start, length);
-
-    // // check if that is a valid number
-    // /*
-    // bool isNumber = is_number(sequenceNumString);
-    // if (!isNumber)
-    //     return;
-
-    // int sequenceNumber = stoi(sequenceNumString);
-    // */
-
-    // // default names for .nhdr and .xml if not predefined
-    // if (nhdrFileName.empty()) 
-    // {
-    //     nhdrFileName = baseName + "_" + sequenceNumString + ".nhdr";
-    // }
-    // if (xmlFileName.empty()) 
-    // {
-    //     xmlFileName = baseName + "_" + sequenceNumString + ".xml";
-    // }
 
     if (opt.verbose) 
     {
@@ -912,10 +871,10 @@ void Skim::generate_proj(){
 
 
 
-void Skim::main(const string curFile)
+void Skim::main()
 {  
     //cout << "Start Skim main" << endl;
-    cout << "Processing input file " << curFile << endl;
+    //cout << "Processing input file " << curFile << endl;
     parse_file();
     cout << "Parsed the input file successfully" << endl;
     generate_nhdr();
