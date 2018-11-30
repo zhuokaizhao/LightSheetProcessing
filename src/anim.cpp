@@ -177,9 +177,9 @@ int Anim::set_origins()
     int found = 0;
 
     // distribute the work load of the for loop within the threads that have been created
-    // tmax is the number of nrrd files, but its count starts at zero
+    // tmax is the number of nrrd files, but its count starts at one
     //#pragma omp parallel for
-    for(int i = 0; i <= opt.tmax; i++)
+    for(int i = 0; i < opt.tmax; i++)
     {
         //cout << "Current for loop with i = " << i << endl;
         // same zero padding as used when saving
@@ -188,30 +188,6 @@ int Anim::set_origins()
 
         nhdrFileName = opt.nhdr_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + ".nhdr";
         ifile.open(nhdrFileName);
-
-
-        // when base_name is not empty, for example, it is 181113
-        // base_name is required, just double check here
-        /*
-        if (!opt.base_name.empty())
-        {
-            // for example, nhdr_path is nhdr/, this would become nhdr/181113_0.nhdr
-            nhdrFileName = opt.nhdr_path + opt.base_name + "_" + to_string(curNum) + ".nhdr";
-            if (opt.verbose)
-                cout << "Input nhdr file is: " << nhdrFileName << endl;
-            ifile.open(nhdrFileName);
-        }
-        */
-        // actually it is impossible, since base_name is now required
-        /*
-        else
-        {
-            nhdrFileName = opt.nhdr_path + zero_pad(i, 3) + ".nhdr";
-            if (opt.verbose)
-                cout << "Input nhdr file is: " << nhdrFileName << endl;
-            ifile.open(nhdrFileName);
-        }
-        */
 
         std::string line;
         while(getline(ifile, line))
@@ -230,7 +206,8 @@ int Anim::set_origins()
                     //#pragma omp atomic
                     found++;
                 }
-                cout << "Found space origin of " << nhdrFileName << endl;
+                if (opt.verbose)
+                    cout << "Found space origin of " << nhdrFileName << endl;
                 break;
             }
         }
@@ -238,16 +215,16 @@ int Anim::set_origins()
     }
 
     //if all nhdr have origin field?
-    if(found < opt.tmax+1)
+    if(found < opt.tmax)
     {
-        cout << "Found " << found << " files instead of " << opt.tmax+1 << endl;
-        //if(std::find(found.begin(), found.end(), 0)!=found.end()){
-        std::cerr << "[ANIM WARNING]: (Part of) nhdr files lack of space origin field, will not implement origin relocation." << std::endl;
+        cout << "Found " << found << " files instead of " << opt.tmax << endl;
+        cerr << "[ANIM WARNING]: (Part of) .nhdr files lack of space origin field, will not implement origin relocation." << endl;
         return 1;
     }
     //if all origins are {0, 0, 0}.
     else if(!std::accumulate(origins.begin(), origins.end(), 0, [](int acc, std::vector<int> o){return acc || (o!=std::vector<int>(3, 0));}))
     {
+        cerr << "[ANIM WARNING]: All .nhdr files have origins {0, 0, 0}, will not implement origin relocation." << endl;
         return 1;
     }
 
@@ -272,7 +249,6 @@ void Anim::split_type()
     // set_origins reads from all nrrd files and extracts the origins
     int no_origin = set_origins();
 
-    // why is resample_xy = scale_x/(scale_z * down_sample)
     // by default dwn_sample = 2, scale_x and scale_z are 1
     double resample_xy = opt.scale_x / opt.scale_z / opt.dwn_sample;
     double resample_z = 1.0 / opt.dwn_sample;
@@ -290,7 +266,7 @@ void Anim::split_type()
         std::string iii = zero_pad(i, 3);
 
         if(opt.verbose)
-        std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================\n";
+            std::cout << "===== " + iii + "/" + std::to_string(opt.tmax) + " =====================\n";
 
         //read proj files
         string xy_proj_file, yz_proj_file;
@@ -298,12 +274,6 @@ void Anim::split_type()
         {
             xy_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projXY.nrrd";
             yz_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projYZ.nrrd";
-        }
-        // this is technically impossible since base_name is required
-        else
-        {
-            xy_proj_file = opt.proj_path + iii + "-projXY.nrrd";
-            yz_proj_file = opt.proj_path + iii + "-projYZ.nrrd";
         }
 
         Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
