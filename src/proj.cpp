@@ -109,10 +109,6 @@ void setup_proj(CLI::App &app) {
                     cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
                     continue;
                 }
-                else
-                {
-                    cout << "No all three proj exist, building" << endl;
-                }
 
                 // note that file name does not include nhdr path
                 opt->file_name = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
@@ -122,6 +118,8 @@ void setup_proj(CLI::App &app) {
                     Proj(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
+                    opt->number_of_processed++;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
                     cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
                 }
                 catch(LSPException &e)
@@ -289,9 +287,5 @@ void Proj::main(){
 
 
     cout << "Y-Z Projection file has been saved to " << yz << endl;
-
-    opt.number_of_processed++;
-
-    cout << opt.number_of_processed << " out of " << opt.file_number << " files have been processed" << endl;
 
 }
