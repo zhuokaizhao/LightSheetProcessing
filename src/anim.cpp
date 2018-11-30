@@ -56,7 +56,7 @@ void setup_anim(CLI::App &app) {
             int nhdrNum = 0;
 
             // since files include .nhdr and .xml file in pairs, we want to count individual number
-            for (int i = 0; i < files.size();; i++) 
+            for (int i = 0; i < files.size(); i++) 
             {
                 // check if input file is a .nhdr file
                 int nhdr_suff = curFile.rfind(".nhdr");

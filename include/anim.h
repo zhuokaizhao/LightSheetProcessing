@@ -18,7 +18,7 @@ struct animOptions {
     std::string proj_path = "proj/";
     std::string anim_path = "anim/";
     // restrict the number of files that we processed
-    int maxFileNum;
+    std::string maxFileNum;
     // base name used for nhdr, proj and potentially anim
     std::string base_name;
     vector<int> allFileSerialNumber;
