@@ -140,7 +140,7 @@ void setup_skim(CLI::App &app) {
                     int start = opt->base_name.length();
                     int length = end - start;
                     std::string sequenceNumString = curFile.substr(start, length);
-                    cout << sequenceNumString << endl;
+                    
                     if (is_number(sequenceNumString))
                         allFileSerialNumber.push_back(stoi(sequenceNumString));
                     else
@@ -197,12 +197,12 @@ void setup_skim(CLI::App &app) {
                     xmlFileName = opt->xml_out_name;
                 }
 
-                opt->nhdr_out_name = nhdrFileName;
-                opt->xml_out_name = xmlFileName;
-
                 // generate the complete path for output files
                 nhdrFileName = opt->output_path + nhdrFileName;
                 xmlFileName = opt->output_path + xmlFileName;
+
+                opt->nhdr_out_name = nhdrFileName;
+                opt->xml_out_name = xmlFileName;
 
                 // we want to check if current potential output file already exists, if so, skip
                 if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
