@@ -42,7 +42,6 @@ void setup_anim(CLI::App &app) {
     { 
         // vector of strings that contains all the valid nhdr names
         vector<string> allNhdrFileNames;
-        vector<int> allFileSerialNumber;
 
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
@@ -75,7 +74,7 @@ void setup_anim(CLI::App &app) {
                     std::string sequenceNumString = curFile.substr(start, length);
                     
                     if (is_number(sequenceNumString))
-                        allFileSerialNumber.push_back(stoi(sequenceNumString));
+                        opt->allFileSerialNumber.push_back(stoi(sequenceNumString));
                     else
                         cout << sequenceNumString << " is NOT a number" << endl;
                 }
@@ -83,13 +82,18 @@ void setup_anim(CLI::App &app) {
             }
 
             // after finding all the files, sort the allFileSerialNumber
-            sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), animSmallToLarge);
+            sort(opt->allFileSerialNumber.begin(), opt->allFileSerialNumber.end(), animSmallToLarge);
 
             cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
             // vector size should equal to nhdrNum
             if (opt->allFileSerialNumber.size() != nhdrNum)
-                cerr << "WARNING: allFileSerialNumber has wrong size" << endl;
+            {
+                cout << "opt->allFileSerialNumber has size: " << opt->allFileSerialNumber.size() << endl;
+                cout << "nhdrNum = " << to_string(nhdrNum) << endl;
+                cout << "WARNING: allFileSerialNumber has wrong size" << endl;
+            }
+                
 
             // update file number
             opt->tmax = nhdrNum;
