@@ -327,14 +327,14 @@ void setup_corr(CLI::App &app)
                         numAllTypeImages++;
                         allValidImageNames.push_back(curImageName);
 
-                        // now we need to understand the sequence number of this file
-                        // normally end = 3 (at least for the above example)
+                        // normally mid = 3 (at least for the above example)
                         int mid = curImageName.rfind("-");
                         int start = 0;
                         int type_length = end - mid;
                         int sequence_length = mid - start;
                         
                         string curType = curImageName.substr(mid, type_length);
+                        cout << "CurType is " << curType << endl;
                         // determine if this curType already in imageNamesByType
                         // if this type has not appeared
                         if (find(allImageTypes.begin(), allImageTypes.end(), curType) != allImageTypes.end())
@@ -365,6 +365,7 @@ void setup_corr(CLI::App &app)
 
                         // store the sequence number 
                         string sequenceNumString = curImageName.substr(start, sequence_length);
+                        cout << "CurNumber is " << sequenceNumString << endl;
                         
                         if (is_number(sequenceNumString))
                         {
@@ -436,7 +437,7 @@ void setup_corr(CLI::App &app)
                             boost::filesystem::create_directory(opt->output_path);
                             cout << "Output path " << opt->output_path << " does not exits, but has been created" << endl;
                         }
-                        
+
                         // then we can run corr_main
                         corr_main(*opt);
                     }
