@@ -10,6 +10,13 @@
 
 #include "corr.h"
 #include "util.h"
+#include "skimczi.h"
+
+#include <boost/filesystem.hpp>
+#include <boost/range/iterator_range.hpp>
+
+#include <chrono> 
+#include <algorithm>
 
 /* bb[0,0] is located at same position as aa[offx, offy] */
 
@@ -18,6 +25,9 @@ Nrrd *ndebug = NULL;
 float *bug;
 unsigned int szbugx;
 */
+
+using namespace std;
+namespace fs = boost::filesystem;
 
 static double crossCorr(const unsigned short *aa, const unsigned short *bb,
                         const unsigned int sza[2], const unsigned int szb[2],
@@ -275,7 +285,117 @@ void setup_corr(CLI::App &app)
     {
         try 
         {
-            corr_main(*opt);
+            // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
+            if (checkIfDirectory(opt->input_path))
+            {
+                cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
+            
+                const vector<string> images = GetDirectoryFiles(opt->input_path);
+                
+                // allValidImageNames stores all the .png image file names
+                vector<string> allValidImageNames;
+                // allImageTypes stores different image types, ex, x-avg.png is avg type, x-max.png is max type
+                vector<string> allImageTypes;
+                // allImageSerialNumber stores the sequence number of an image, ex, 100-avg.png, sequence number is 100
+                vector<int> allImageSerialNumber;
+                
+                // we want to know all the image files in this input_path, which includes all the types
+                int numAllTypeImages = 0;
+                
+                // imagesByType contains the names of images that have the same type, like avg, or max
+                vector<string> allNamesofCurType;
+                vector< pair< string, vector<string> > > imageNamesByType;
+
+                for (int i = 0; i < images.size(); i++)
+                {
+                    // get the current file
+                    string curImageName = images[i];
+                    
+                    // check if input file is a .png file
+                    int end = curImageName.rfind(".png");
+                    
+                    // if this is indeed an image
+                    if (end && (end == curImageName.length() - 4))
+                    {
+                        if (opt->verbosity)
+                            cout << "Current input file " + curImageName + " ends with .png, count this image" << endl;
+                        
+                        numAllTypeImages++;
+                        allValidImageNames.push_back(curImageName);
+
+                        // now we need to understand the sequence number of this file
+                        // normally end = 3 (at least for the above example)
+                        int mid = curImageName.rfind("-");
+                        int start = 0;
+                        int type_length = end - mid;
+                        int sequence_length = mid - start;
+                        
+                        string curType = curImageName.substr(mid, type_length);
+                        // determine if this curType already in imageNamesByType
+                        // if this type has not appeared
+                        if (find(allImageTypes.begin(), allImageTypes.end(), curType) != allImageTypes.end())
+                        {
+                            // push this into the allImageTypes
+                            allImageTypes.push_back(curImageName);
+
+                            // now we initialize a vector to store all the names of this type
+                            allNamesofCurType.push_back(curImageName);
+                            // make the pair
+                            pair < string, vector<string> > curPair = make_pair(curType, allNamesofCurType);
+                            // push the pair into imageNamesByType
+                            imageNamesByType.push_back(curPair);
+                        }
+                        // if this type already exists 
+                        else
+                        {
+                            // iterate all the pairs
+                            for (int i = 0; i < imageNamesByType.size(); i++)
+                            {
+                                // if they match
+                                if (imageNamesByType[i].first == curType)
+                                {
+                                    imageNamesByType[i].second.push_back(curImageName);
+                                }
+                            }
+                        }
+
+                        // store the sequence number 
+                        string sequenceNumString = curImageName.substr(start, sequence_length);
+                        
+                        if (is_number(sequenceNumString))
+                        {
+                            int sequenceNum = stoi(sequenceNumString);
+                            // we might have same sequence number but different types of images
+                            // like 100-max.png and 100-avg.png, both have sequence number 100
+                            if (find(allImageSerialNumber.begin(), allImageSerialNumber.end(), sequenceNum) != allImageSerialNumber.end())
+                            {
+                                allImageSerialNumber.push_back(sequenceNum);
+                            }
+
+                        }
+                        else
+                            cout << sequenceNumString << " is NOT a number" << endl;
+                    }
+                    // if this file is not an image, do nothing
+                    else
+                    {
+
+                    }
+                }
+
+                // sanity check
+                if (allImageTypes.size() != imageNamesByType.size())
+                    cout << endl << "Warnign: Something wrong with the image types processing" << endl;
+
+                // TODO: Process the images by pair can call corr_main
+
+                corr_main(*opt);
+            }
+            else
+            {
+                cout << "Input path is invalid, program exits" << endl;
+            }
+            
         } 
         catch(LSPException &e) 
         {
