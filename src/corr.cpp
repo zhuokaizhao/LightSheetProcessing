@@ -428,6 +428,13 @@ void setup_corr(CLI::App &app)
 
                             // put these output names in opt
                             opt->output_file = opt->output_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + "-corred";
+
+                            // create output directory if not exist
+                            if (!checkIfDirectory(opt->output_path))
+                            {
+                                boost::filesystem::create_directory(opt->output_path);
+                                cout << "Output path " << opt->output_path << " does not exits, but has been created" << endl;
+                            }
                         }
 
                         // then we can run corr_main
