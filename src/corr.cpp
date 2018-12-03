@@ -382,10 +382,7 @@ void setup_corr(CLI::App &app)
                             cout << sequenceNumString << " is NOT a number" << endl;
                     }
                     // if this file is not an image, do nothing
-                    else
-                    {
-
-                    }
+                    else {}
                 }
 
                 // sort the image serial numbers
