@@ -330,10 +330,10 @@ void setup_corr(CLI::App &app)
                         // normally mid = 3 (at least for the above example)
                         int mid = curImageName.rfind("-");
                         int start = 0;
-                        int type_length = end - mid;
+                        int type_length = end - (mid+1);
                         int sequence_length = mid - start;
                         
-                        string curType = curImageName.substr(mid, type_length);
+                        string curType = curImageName.substr(mid+1, type_length);
                         cout << "CurType is " << curType << endl;
                         // determine if this curType already in imageNamesByType
                         // if this type has not appeared
