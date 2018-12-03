@@ -406,7 +406,7 @@ void setup_corr(CLI::App &app)
                 for (int i = 0; i < imageNamesByType.size(); i++)
                 {
                     // each pair has struct pair< string, vector<string> >
-                    pair curPair = imageNamesByType[i];
+                    pair<string, vector<string> > curPair = imageNamesByType[i];
                     for (int j = 0; j < allImageSerialNumber.size(); j++)
                     {
                         // we have image pairs until j = length - 2
