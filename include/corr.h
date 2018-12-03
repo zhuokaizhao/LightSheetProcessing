@@ -15,6 +15,7 @@ struct corrOptions
 {
     // input_path includes images to be processed
     std::string input_path;
+    std::string output_path;
     std::vector<std::string> input_images;
     int max_offset = 10;
     std::vector<std::string> kernel = {"box", "box"};    // This should contain kernel and derivative

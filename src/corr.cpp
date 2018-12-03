@@ -26,6 +26,10 @@ float *bug;
 unsigned int szbugx;
 */
 
+struct myclass {
+  bool operator() (int i,int j) { return (i<j);}
+} corrSmallToLarge;
+
 using namespace std;
 namespace fs = boost::filesystem;
 
@@ -274,9 +278,9 @@ void setup_corr(CLI::App &app)
 
     //sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
     sub->add_option("-i, --input_path", opt->input_path, "Input path that includes images to be processed")->required();
+    sub->add_option("-o, --output", opt->output_path, "Output file path")->required();
     sub->add_option("-b, --max", opt->max_offset, "Maximum offset (Default: 10).");
     sub->add_option("-k, --kdk", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)");
-    sub->add_option("-o, --output", opt->output_file, "Output filename");
     sub->add_option("-e, --epsilon", opt->epsilon, "Convergence for sub-resolution optimization. (Default: 0.0001)");
     sub->add_option("-v, --verbosity", opt->verbosity, "Verbosity level. (Default: 1)");
     sub->add_option("-m, --itermax", opt->max_iters, "Maximum number of iterations. (Default: 100)");
@@ -383,13 +387,53 @@ void setup_corr(CLI::App &app)
                     }
                 }
 
-                // sanity check
+                // sort the image serial numbers
+                sort(allImageSerialNumber.begin(), allImageSerialNumber.end(), corrSmallToLarge);
+                
+                // sanity checks
                 if (allImageTypes.size() != imageNamesByType.size())
                     cout << endl << "Warnign: Something wrong with the image types processing" << endl;
 
-                // TODO: Process the images by pair can call corr_main
 
-                corr_main(*opt);
+                for (int i = 0; i < imageNamesByType.size(); i++)
+                {
+                    if (imageNamesByType[i].second.size() != allImageSerialNumber.size())
+                        cout << endl << "Warnings: Something wrong with the image serial number" << endl;
+                }
+
+                // Process the images by pair can call corr_main
+                // for each TYPE of images, we want to to correlation between i and i+1, i starts with 1
+                for (int i = 0; i < imageNamesByType.size(); i++)
+                {
+                    // each pair has struct pair< string, vector<string> >
+                    pair curPair = imageNamesByType[i];
+                    for (int j = 0; j < allImageSerialNumber.size(); j++)
+                    {
+                        // we have image pairs until j = length - 2
+                        if (j < allImageSerialNumber.size()-1)
+                        {
+                            string input_image_1 = opt->input_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + ".png";
+                            string input_image_2 = opt->input_path + to_string(allImageSerialNumber[j+1]) + "-" + imageNamesByType[i].first + ".png";
+                            // double check that these two names exist in curPair
+                            if (find(curPair.second.begin(), curPair.second.end(), input_image_1) != curPair.second.end()
+                                    && find(curPair.second.begin(), curPair.second.end(), input_image_2) != curPair.second.end())
+                            {
+                                opt->input_images = {input_image_1, input_image_2};
+                            }
+                            else
+                            {
+                                cout << "Warning: generated sorted input image names does not exist" << endl;
+                                return;
+                            }
+
+                            // put these output names in opt
+                            opt->output_file = opt->output_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + "-corred";
+                        }
+
+                        // then we can run corr_main
+                        corr_main(*opt);
+                    }
+                }
             }
             else
             {
