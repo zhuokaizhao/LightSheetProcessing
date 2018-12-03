@@ -334,7 +334,7 @@ void setup_corr(CLI::App &app)
                         int sequence_length = mid - start;
                         
                         string curType = curImageName.substr(mid+1, type_length);
-                        cout << "CurType is " << curType << endl;
+                        // cout << "CurType is " << curType << endl;
                         // determine if this curType already in imageNamesByType
                         // if this type has not appeared
                         if (find(allImageTypes.begin(), allImageTypes.end(), curType) != allImageTypes.end())
@@ -365,7 +365,7 @@ void setup_corr(CLI::App &app)
 
                         // store the sequence number 
                         string sequenceNumString = curImageName.substr(start, sequence_length);
-                        cout << "CurNumber is " << sequenceNumString << endl;
+                        //cout << "CurNumber is " << sequenceNumString << endl;
                         
                         if (is_number(sequenceNumString))
                         {
@@ -390,6 +390,9 @@ void setup_corr(CLI::App &app)
 
                 // sort the image serial numbers
                 sort(allImageSerialNumber.begin(), allImageSerialNumber.end(), corrSmallToLarge);
+
+                for (int i = 0; i < allImageSerialNumber.size(); i++)
+                    cout << allImageSerialNumber[i] << endl;
                 
                 // sanity checks
                 if (allImageTypes.size() != imageNamesByType.size())
