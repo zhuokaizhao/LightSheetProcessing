@@ -634,7 +634,7 @@ void Anim::build_video()
         // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
         //cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), opt.fps, s, true);
         // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
-        cv::VideoWriter vw(out_file.c_str(), cv::CAP_FFMPEG, 0, 10.0, s, true);
+        cv::VideoWriter vw(out_file.c_str(), -1, 10.0, s, true);
         
         if(!vw.isOpened()) 
             std::cout << "cannot open videoWriter." << std::endl;
