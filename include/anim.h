@@ -21,6 +21,8 @@ struct animOptions {
     std::string maxFileNum;
     // base name used for nhdr, proj and potentially anim
     std::string base_name;
+    // fps of the .avi output video
+    int fps = 10;
     vector<int> allFileSerialNumber;
     uint tmax;
     uint dwn_sample = 2;    // How much to down-sample
