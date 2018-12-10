@@ -641,8 +641,12 @@ void Anim::build_video()
         
         for(int i = 0; i < tmax; i++)
         {
-            std::string name = base_name + to_string(i+1) + "-" + type + ".png";
-            vw << cv::imread(name);
+            string frameNum = to_string(i+1);
+            std::string name = base_name + frameNum + "-" + type + ".png";
+            cv::Mat curImage = cv::imread(name);
+            // put blue text on the read images
+            putText(curImage, frameNum, cv::Point2f(20, 20), cv::FONT_HERSHEY_PLAIN, 2, Scalar(0,0,255,255), 1, 8, bool bottomLeftOrigin=true )
+            vw << curImage;
         }
         vw.release();
     }
