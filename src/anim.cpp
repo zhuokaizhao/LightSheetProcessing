@@ -646,7 +646,7 @@ void Anim::build_video()
             cv::Mat curImage = cv::imread(name);
             // put white text indicating frame number on the bottom left cornor of images
             // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-            putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(255,255,255), 4, 2, false);
+            putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
             vw << curImage;
         }
         vw.release();
