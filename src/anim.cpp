@@ -644,9 +644,9 @@ void Anim::build_video()
             string frameNum = to_string(i+1);
             std::string name = base_name + frameNum + "-" + type + ".png";
             cv::Mat curImage = cv::imread(name);
-            // put blue text on the read images
+            // put white text indicating frame number on the bottom left cornor of images
             // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-            putText(curImage, frameNum, cv::Point2f(50, s.height-50), cv::FONT_HERSHEY_SIMPLEX, 5, cv::Scalar(255,255,255), 4, 4, false);
+            putText(curImage, frameNum, cv::Point2f(30, s.height-30), cv::FONT_HERSHEY_SIMPLEX, 5, cv::Scalar(255,255,255), 4, 2, false);
             vw << curImage;
         }
         vw.release();
