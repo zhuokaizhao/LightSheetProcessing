@@ -645,7 +645,8 @@ void Anim::build_video()
             std::string name = base_name + frameNum + "-" + type + ".png";
             cv::Mat curImage = cv::imread(name);
             // put blue text on the read images
-            putText(curImage, frameNum, cv::Point2f(100, 100), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(255,255,255), 1, 8, true);
+            // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
+            putText(curImage, frameNum, cv::Point2f(50, 50), cv::FONT_HERSHEY_SIMPLEX, 5, cv::Scalar(255,255,255), 2, 8, false);
             vw << curImage;
         }
         vw.release();
