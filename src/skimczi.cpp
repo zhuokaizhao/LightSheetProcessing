@@ -172,13 +172,12 @@ void setup_skim(CLI::App &app) {
                 string curFile = files[i];
                 cout << curFile << endl;
                 int suff = curFile.rfind(".czi");
-                cout << suff << endl;
+
                 // the file with "test" included in its name is not a .czi file that we want
                 int isTest = curFile.rfind("test");
-                cout << isTest << endl;
 
                 // if this is indeed a valid .czi file
-                if (suff && /*(suff == curFile.length() - 4) &&*/ !isTest)
+                if ( suff && (suff == curFile.length() - 4) && (isTest == -1) )
                 {
                     numFiles++;
                     // now we need to understand the sequence number of this file, which is the number between parentheses
