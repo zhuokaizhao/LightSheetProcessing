@@ -291,6 +291,9 @@ void setup_skim(CLI::App &app) {
                 }                      
                 else
                 {
+                    cout << start << endl;
+                    cout << end << endl;
+                    cout << length << endl;
                     cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
                 }
             }
