@@ -201,6 +201,7 @@ void setup_skim(CLI::App &app) {
                     else
                     {
                         // first time stamp start with 0
+                        cout << "0 timestamp data is recorded" << endl;
                         allValidFiles.push_back( make_pair(0, curFile) );
                     }
                 }
@@ -263,7 +264,6 @@ void setup_skim(CLI::App &app) {
             // check if input file is a .czi file
             int suff = curFile.rfind(".czi");
 
-            // cout << suff << endl;
             if (!suff || (suff != curFile.length() - 4)) 
             {
                 cout << "Current input file " + curFile + " does not end with .czi, error" << endl;
