@@ -183,12 +183,12 @@ void setup_skim(CLI::App &app) {
                     // now we need to understand the sequence number of this file, which is the number between parentheses
                     int start = curFile.rfind("(");
                     int end = curFile.rfind(")");
-                    int length = end - start;
+                    int length = end - start - 1;
                     
                     // when we found the parentheses
                     if (start && end)
                     {
-                        string sequenceNumString = curFile.substr(start, length);
+                        string sequenceNumString = curFile.substr(start+1, length);
                         cout << sequenceNumString << endl;
                     
                         if (is_number(sequenceNumString))
@@ -274,13 +274,13 @@ void setup_skim(CLI::App &app) {
             // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
             int start = curFile.rfind("(");
             int end = curFile.rfind(")");
-            int length = end - start;
+            int length = end - start - 1;
             // when we found the parentheses
             string sequenceNumString;
             int sequenceNum;
             if (start && end)
             {
-                sequenceNumString = curFile.substr(start, length);
+                sequenceNumString = curFile.substr(start+1, length);
             
                 if (is_number(sequenceNumString))
                 {
