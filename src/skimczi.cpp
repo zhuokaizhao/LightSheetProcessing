@@ -176,7 +176,7 @@ void setup_skim(CLI::App &app) {
                 int isTest = curFile.rfind("test");
 
                 // if this is indeed a valid .czi file
-                if (suff && (suff == curFile.length() - 4) && !isTest)
+                if (suff && /*(suff == curFile.length() - 4) &&*/ !isTest)
                 {
                     numFiles++;
                     // now we need to understand the sequence number of this file, which is the number between parentheses
@@ -188,6 +188,7 @@ void setup_skim(CLI::App &app) {
                     if (start && end)
                     {
                         string sequenceNumString = curFile.substr(start, length);
+                        cout << sequenceNumString << endl;
                     
                         if (is_number(sequenceNumString))
                         {
