@@ -291,9 +291,6 @@ void setup_skim(CLI::App &app) {
                 }                      
                 else
                 {
-                    cout << start << endl;
-                    cout << end << endl;
-                    cout << length << endl;
                     cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
                 }
             }
@@ -910,7 +907,7 @@ void Skim::main()
     generate_nhdr();
     cout << "Generated nhdr header successfully" << endl;
     generate_nrrd();
-    cout << "Generated nrrd file successfully" << endl;
+    cout << "Generated nrrd file successfully" << endl << endl;
     //generate_proj();
     //cout << "Generated proj file successfully" << endl << endl << endl;
 }
