@@ -170,7 +170,6 @@ void setup_skim(CLI::App &app) {
             {
                 // check if input file is a .czi file
                 string curFile = files[i];
-                cout << curFile << endl;
                 int suff = curFile.rfind(".czi");
 
                 // the file with "test" included in its name is not a .czi file that we want
