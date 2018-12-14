@@ -189,8 +189,6 @@ void setup_skim(CLI::App &app) {
                     if (start && end)
                     {
                         string sequenceNumString = curFile.substr(start+1, length);
-                        cout << sequenceNumString << endl;
-                    
                         if (is_number(sequenceNumString))
                         {
                             allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFile) );
@@ -214,6 +212,12 @@ void setup_skim(CLI::App &app) {
 
             // print out some stats
             cout << numFiles << " valid .czi files found in input path " << opt->input_path << endl << endl;
+
+            // sanity check
+            if (numFiles != allValidFiles.size())
+            {
+                cout << "ERROR: Not all valid files have been recorded" << endl;
+            }
                 
             // generate output files by running main
             for (int i = 0; i < allValidFiles.size(); i++) 
