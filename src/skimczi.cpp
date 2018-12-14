@@ -37,6 +37,8 @@
 #include <vector>
 #include <memory>
 
+#include <chrono> 
+
 using namespace std;
 namespace fs = boost::filesystem;
 
@@ -153,6 +155,7 @@ void setup_skim(CLI::App &app) {
 
     sub->set_callback([opt]() 
     {
+        auto start = chrono::high_resolution_clock::now();
         // we need to go through all the files in the given path "input_path" and find all .czi files
         // first check this input path is a directory or a single file name
         if (checkIfDirectory(opt->input_path))
@@ -324,6 +327,10 @@ void setup_skim(CLI::App &app) {
             }
 
         }
+
+        auto stop = chrono::high_resolution_clock::now(); 
+        auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+        cout << "Skim processing time is " << duration.count() << " seconds" << endl << endl; 
         
     });
 }
