@@ -187,7 +187,7 @@ typedef struct{
 } ImageDims;
 
 
-struct SkimOptions {
+struct skimOptions {
     std::string input_path;
     std::string output_path;
     //std::string no;
@@ -212,13 +212,13 @@ bool is_number(const string& s);
 
 class Skim{
 public:
-    Skim(SkimOptions const &opt = SkimOptions());
+    Skim(skimOptions const &opt = skimOptions());
     ~Skim();
 
     void main();
 
 private:
-    SkimOptions const &opt;
+    skimOptions const &opt;
     airArray* mop;
 
     void parse_file();

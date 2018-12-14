@@ -95,7 +95,7 @@ vector<string> GetDirectoryFiles(const std::string& dir)
 }
 
 void setup_skim(CLI::App &app) {
-    auto opt = std::make_shared<SkimOptions>();
+    auto opt = std::make_shared<skimOptions>();
     // App *add_subcommand(std::string name, std::string description = "") 
     auto sub = app.add_subcommand("skim", "Utility for getting information out of CZI files. Currently for "
                                         "generating .nhdr NRRD header files to permit extracting the image "
@@ -116,7 +116,6 @@ void setup_skim(CLI::App &app) {
         // first check this input path is a directory or a single file name
         if (checkIfDirectory(opt->input_path))
         {
-            
             cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
         
             const vector<string> files = GetDirectoryFiles(opt->input_path);
@@ -294,7 +293,7 @@ void setup_skim(CLI::App &app) {
     });
 }
 
-Skim::Skim(SkimOptions const &opt)
+Skim::Skim(skimOptions const &opt)
 : opt(opt), mop(airMopNew()),
     current_f(nullptr),
     proj_max_xy(nullptr),
@@ -363,16 +362,6 @@ Skim::Skim(SkimOptions const &opt)
     // Re-used for all SID segments
     currentSID = (SID*)malloc(sizeof(SID));
     airMopAdd(mop, currentSID, airFree, airMopAlways);
-
-    //cout << "Open result " << cziFile << endl;
-    /*
-    if (errno)
-    {
-        if (opt.verbose)
-            cout << "errno is " << errno << endl;
-        throw LSPException("Error opening " + cziFileName + " : " + strerror(errno) + ".\n", "skimczi.cpp", "Skim::Skim");
-    }
-    */
 }
 
 
@@ -616,7 +605,8 @@ void Skim::generate_nrrd(){
     void *current_raw = nullptr;
     Nrrd *ncurrent = nullptr;
 
-    if (!projBaseFileName.empty()) {
+    if (!projBaseFileName.empty()) 
+    {
         /* Allocate space for current slice in both raw and float,
         and for the projections */
         current_raw = malloc(dims->sizeX * dims->sizeY * dims->pixelSize);
@@ -663,7 +653,8 @@ void Skim::generate_nrrd(){
     // Rewind the file to beginning
     lseek(cziFile, 0, SEEK_SET);
 
-    if (verbose) {
+    if (verbose) 
+    {
         fprintf(stdout, "looking for %d slices ...", dims->sizeZ);
         fflush(stdout);
     }
@@ -882,6 +873,6 @@ void Skim::main()
     cout << "Generated nhdr header successfully" << endl;
     generate_nrrd();
     cout << "Generated nrrd file successfully" << endl;
-    generate_proj();
-    cout << "Generated proj file successfully" << endl << endl << endl;
+    //generate_proj();
+    //cout << "Generated proj file successfully" << endl << endl << endl;
 }

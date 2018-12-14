@@ -22,6 +22,9 @@
 int main(int argc, char** argv) {
     CLI::App app{"Collection of utilities for processing of lightsheet data"};
 
+    // standard process which includes skim, proj and anim
+    start_standard_process(app);
+
     // getting information out of CZI files, generate .nhdr NRRD header files
     setup_skim(app);
     // Create projection files based on nhdr files

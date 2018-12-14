@@ -11,9 +11,9 @@
 
 struct projOptions {
 	int file_number = 0;
-	std::string nhdr_path = "./nhdr";
-    std::string czi_path = "./czi";
-	std::string proj_path = "./proj";
+	std::string nhdr_path;
+    std::string czi_path;
+	std::string proj_path;
     std::string base_name;
     std::string file_name;
     int number_of_processed = 0;

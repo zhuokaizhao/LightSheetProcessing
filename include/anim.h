@@ -14,9 +14,9 @@
 using namespace std;
 
 struct animOptions {
-    std::string nhdr_path = "nhdr/";
-    std::string proj_path = "proj/";
-    std::string anim_path = "anim/";
+    std::string nhdr_path;
+    std::string proj_path;
+    std::string anim_path;
     // restrict the number of files that we processed
     std::string maxFileNum;
     // base name used for nhdr, proj and potentially anim
