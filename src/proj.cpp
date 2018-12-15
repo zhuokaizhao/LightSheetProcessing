@@ -63,7 +63,7 @@ void setup_proj(CLI::App &app) {
                     int end = curFile.rfind(".nhdr");
                     int start = -1;
                     // The sequenceNumString will have zero padding, like 001
-                    for (int i = 0; i < curFile.size(); i++)
+                    for (int i = 0; i < end; i++)
                     {
                         // we get the first position that zero padding ends
                         if (curFile[i] != '0')
