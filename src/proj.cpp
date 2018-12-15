@@ -136,7 +136,7 @@ void setup_proj(CLI::App &app) {
                 }
 
                 // note that file name does not include nhdr path
-                opt->file_name = allValidFiles[i].second + ".nhdr";
+                opt->file_name = allValidFiles[i].second;
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
