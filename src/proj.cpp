@@ -62,6 +62,9 @@ void setup_proj(CLI::App &app) {
                     // now we need to understand the sequence number of this file
                     int end = curFile.rfind(".nhdr");
                     int start = -1;
+                    // current file name without type
+                    string curFileName = curFile.substr(0, end - 1);
+
                     // The sequenceNumString will have zero padding, like 001
                     for (int i = 0; i < end; i++)
                     {
@@ -87,7 +90,7 @@ void setup_proj(CLI::App &app) {
 
                     if (is_number(sequenceNumString))
                     {
-                        allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFile) );
+                        allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
                     }
                     else
                     {

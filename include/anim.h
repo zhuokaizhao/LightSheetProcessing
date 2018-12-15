@@ -20,10 +20,12 @@ struct animOptions {
     // restrict the number of files that we processed
     std::string maxFileNum;
     // base name used for nhdr, proj and potentially anim
-    std::string base_name;
+    //std::string base_name;
     // fps of the .avi output video
     int fps = 10;
-    vector<int> allFileSerialNumber;
+    // vector<int> allFileSerialNumber;
+    // vector of pair that includes the file sequence numbers and file names
+    vector< pair<int, string> > allValidFiles;
     uint tmax;
     uint dwn_sample = 2;    // How much to down-sample
     double scale_x = 1.0;

@@ -191,13 +191,13 @@ struct skimOptions {
     std::string input_path;
     std::string output_path;
     //std::string no;
-    std::string base_name;
+    //std::string base_name;
     // no has been changed to nhdr_out_name
     std::string nhdr_out_name;
     // xo has been changed to xml_out_name
     std::string xml_out_name;
     std::string file;
-    std::string po;
+    //std::string po;
     int verbose = 0;
 };
 
@@ -209,6 +209,8 @@ bool checkIfDirectory(std::string filePath);
 vector<string> GetDirectoryFiles(const std::string& dir);
 // helper function that checks if a string is a number
 bool is_number(const string& s);
+// helper function that generates 
+string GenerateOutName(const int num, const int digit, const string type);
 
 class Skim{
 public:

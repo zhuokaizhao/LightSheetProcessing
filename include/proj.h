@@ -14,7 +14,8 @@ struct projOptions {
 	std::string nhdr_path;
     std::string czi_path;
 	std::string proj_path;
-    std::string base_name;
+    // we no longer need base name
+    //std::string base_name;
     std::string file_name;
     int number_of_processed = 0;
     int verbose = 0;

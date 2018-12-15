@@ -33,9 +33,13 @@ void setup_anim(CLI::App &app) {
 
     sub->add_option("-i, --nhdr", opt->nhdr_path, "Path of input nrrd header files.")->required();
     sub->add_option("-p, --proj", opt->proj_path, "Path of input projection files.")->required();
-    sub->add_option("-b, --base_name", opt->base_name, "The base name of nrrd files (For example: 181113)")->required();
     sub->add_option("-o, --anim", opt->anim_path, "Path of output anim files. (Default: ./anim/)")->required();
+    // we no longer need base name
+    //sub->add_option("-b, --base_name", opt->base_name, "The base name of nrrd files (For example: 181113)")->required();
+    
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
+    
+    // optional options that are related to video quality and etc
     sub->add_option("-f, --fps", opt->fps, "Frame per second (fps) of the generated .avi video. (Default: 10)");
     sub->add_option("-d, --dsample", opt->dwn_sample, "Amount by which to down-sample the data. (Default: 1.0)");
     sub->add_option("-x, --scalex", opt->scale_x, "Scaling on the x axis. (Default: 1.0)");
@@ -44,9 +48,6 @@ void setup_anim(CLI::App &app) {
 
     sub->set_callback([opt]() 
     { 
-        // vector of strings that contains all the valid nhdr names
-        vector<string> allNhdrFileNames;
-
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
         {
@@ -57,45 +58,69 @@ void setup_anim(CLI::App &app) {
             
             // note that the number starts counting at 1
             int nhdrNum = 0;
-
-            // since files include .nhdr and .xml file in pairs, we want to count individual number
+            
             for (int i = 0; i < files.size(); i++) 
             {
                 string curFile = files[i];
                 // check if input file is a .nhdr file
                 int nhdr_suff = curFile.rfind(".nhdr");
-                if (nhdr_suff && (nhdr_suff == curFile.length() - 5))
+                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
                 {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
-                    nhdrNum++;
-                    allNhdrFileNames.push_back(curFile);
-
-                    // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-                    int end = curFile.rfind(".nhdr");
-                    int start = curFile.rfind("_") + 1;
-                    int length = end - start;
-                    std::string sequenceNumString = curFile.substr(start, length);
                     
-                    if (is_number(sequenceNumString))
-                        opt->allFileSerialNumber.push_back(stoi(sequenceNumString));
+                    nhdrNum++;
+                
+                    // now we need to understand the sequence number of this file
+                    int start = -1;
+                    int end = curFile.rfind(".nhdr");
+                    // current file name without type
+                    string curFileName = curFile.substr(0, end - 1);
+                    
+                    // The sequenceNumString will have zero padding, like 001
+                    for (int i = 0; i < end; i++)
+                    {
+                        // we get the first position that zero padding ends
+                        if (curFile[i] != '0')
+                        {
+                            start = i;
+                            break;
+                        }
+                    }
+        
+                    string sequenceNumString;
+                    // for the case that it is just 000 which represents the initial time stamp
+                    if (start == -1)
+                    {
+                        sequenceNumString = "0";
+                    }
                     else
-                        cout << sequenceNumString << " is NOT a number" << endl;
+                    {
+                        int length = end - start;
+                        sequenceNumString = curFile.substr(start, length);
+                    }
+
+                    if (is_number(sequenceNumString))
+                    {
+                        opt->allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                    }
+                    else
+                    {
+                        cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                    }
                 }
 
             }
 
-            // after finding all the files, sort the allFileSerialNumber
-            sort(opt->allFileSerialNumber.begin(), opt->allFileSerialNumber.end(), animSmallToLarge);
+            // after finding all the files, sort the allValidFiles in ascending order
+            sort(opt->allValidFiles.begin(), opt->allValidFiles.end());
 
             cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
-            // vector size should equal to nhdrNum
-            if (opt->allFileSerialNumber.size() != nhdrNum)
+            // sanity check
+            if (nhdrNum != opt->allValidFiles.size())
             {
-                cout << "opt->allFileSerialNumber has size: " << opt->allFileSerialNumber.size() << endl;
-                cout << "nhdrNum = " << to_string(nhdrNum) << endl;
-                cout << "WARNING: allFileSerialNumber has wrong size" << endl;
+                cout << "ERROR: Not all valid files have been recorded" << endl;
             }
 
             // if the user restricts the number of files to process
@@ -127,25 +152,23 @@ void setup_anim(CLI::App &app) {
             cout << opt->nhdr_path << " is not a directory, check if it is a valid .nhdr file" << endl;
             const string curFile = opt->nhdr_path;
 
-            if (opt->verbose)
-                std::cout << "Current file name is: " << curFile << endl;
+            std::cout << "Current file name is: " << curFile << endl;
             
             // check if input file is a .czi file
             int suff = curFile.rfind(".nhdr");
 
-            if (!suff || (suff != curFile.length() - 5)) 
+            if ( (suff != string::npos) || (suff != curFile.length() - 5)) 
             {
-                if (opt->verbose)
-                    cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
+                cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
                 return;
             }
             else
             {
-                if (opt->verbose)
-                    cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
+                cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
 
                 // update file number
-                opt->tmax = 0;          
+                opt->tmax = 0;    
+
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
@@ -167,6 +190,7 @@ void setup_anim(CLI::App &app) {
 
 Anim::Anim(animOptions const &opt): opt(opt), mop(airMopNew()) 
 {
+    // create folder if it does not exist
     if (!checkIfDirectory(opt.anim_path))
     {
         boost::filesystem::create_directory(opt.anim_path);
@@ -198,7 +222,7 @@ int Anim::set_origins()
         std::ifstream ifile;
         string nhdrFileName;
 
-        nhdrFileName = opt.nhdr_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + ".nhdr";
+        nhdrFileName = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
         ifile.open(nhdrFileName);
 
         std::string line;
@@ -273,10 +297,10 @@ void Anim::split_type()
     for(int i = 0; i < opt.tmax; i++) 
     {
 
-        string max_z = opt.anim_path + to_string(i+1) + "-max-z.nrrd";
-        string max_x = opt.anim_path + to_string(i+1) + "-max-x.nrrd";
-        string avg_z = opt.anim_path + to_string(i+1) + "-avg-z.nrrd";
-        string avg_x = opt.anim_path + to_string(i+1) + "-avg-x.nrrd";
+        string max_z = opt.anim_path + opt.allValidFiles[i].second + "-max-z.nrrd";
+        string max_x = opt.anim_path + opt.allValidFiles[i].second + "-max-x.nrrd";
+        string avg_z = opt.anim_path + opt.allValidFiles[i].second + "-avg-z.nrrd";
+        string avg_x = opt.anim_path + opt.allValidFiles[i].second + "-avg-x.nrrd";
 
         // when output already exists, skip this iteration
         if (fs::exists(max_x) && fs::exists(max_z) && fs::exists(avg_z) && fs::exists(avg_x))
@@ -288,23 +312,22 @@ void Anim::split_type()
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
-        if(opt.verbose)
-            std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " =====================\n";
+        std::cout << "===== " + to_string(i) + "/" + std::to_string(opt.tmax) + " =====================\n";
 
         //read proj files
         string xy_proj_file, yz_proj_file;
         if (!opt.base_name.empty())
         {
-            xy_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projXY.nrrd";
-            yz_proj_file = opt.proj_path + opt.base_name + "_" + to_string(opt.allFileSerialNumber[i]) + "-projYZ.nrrd";
+            xy_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projXY.nrrd";
+            yz_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projYZ.nrrd";
         }
 
         Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
-                            safe_nrrd_load(mop_t, yz_proj_file)};
+                             safe_nrrd_load(mop_t, yz_proj_file)};
 
         //reset projs to space coordinate using new origins
         Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
-                        safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+                           safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
         
         // crop the area that we are going to perform resample
         if(!no_origin)
@@ -397,7 +420,7 @@ void Anim::make_max_frame(std::string direction)
     //#pragma omp parallel for
     for(int i = 0; i < opt.tmax; i++)
     {
-        std::string common_prefix = opt.anim_path + to_string(i+1) + "-max-" + direction;
+        std::string common_prefix = opt.anim_path + opt.allValidFiles[i].second + "-max-" + direction;
         string ppm_0 = common_prefix + "-0.ppm";
         string ppm_1 = common_prefix + "-1.ppm";
 
@@ -438,8 +461,7 @@ void Anim::make_max_frame(std::string direction)
                         nrrdQuantize(bit1, ch1, range1, 8),
                     mop_t, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
-        if(opt.verbose)
-            std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
+        std::cout << "===== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -455,7 +477,7 @@ void Anim::make_avg_frame(std::string direction)
     //#pragma omp parallel for
     for(int i=0; i < opt.tmax; i++)
     {
-        std::string common_prefix = opt.anim_path + to_string(i+1) + "-avg-" + direction;
+        std::string common_prefix = opt.anim_path + opt.allValidFiles[i].second + "-avg-" + direction;
 
         string ppm_0 = common_prefix + "-0.ppm";
         string ppm_1 = common_prefix + "-1.ppm";
@@ -527,8 +549,8 @@ void Anim::make_avg_frame(std::string direction)
                     nrrdQuantize(bit1, ch1, range, 8),
                     mop_t, "Error quantizing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
-        if(opt.verbose)
-            std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
+        
+        std::cout << "===== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -554,7 +576,7 @@ void Anim::build_png()
         //#pragma omp parallel for
         for(int i = 0; i < opt.tmax; i++)
         {
-            std::string base_path = opt.anim_path + to_string(i+1) + "-" + type;
+            std::string base_path = opt.anim_path + opt.allValidFiles[i].second + "-" + type;
             std::string out_name = base_path + ".png";
 
             // when output already exists, skip this iteration
@@ -566,8 +588,7 @@ void Anim::build_png()
             
             auto mop_t = airMopNew();
 
-            if(opt.verbose)
-                std::cout << "===== " + to_string(i+1) + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
+            std::cout << "===== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
             
             Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
@@ -601,17 +622,16 @@ void Anim::build_png()
 void Anim::build_video()
 {
     int tmax = opt.tmax;
-    std::string base_name = opt.anim_path;
 
-    cv::Size s = cv::imread(base_name + "1-max.png").size();
+    cv::Size s = cv::imread(opt.anim_path + "1-max.png").size();
     
     for(std::string type: {"max", "avg"})
     {
         string out_file;
         if (opt.maxFileNum != "")
-            out_file = base_name + type + "_" + opt.maxFileNum + ".avi";
+            out_file = opt.anim_path + type + "_" + opt.maxFileNum + ".avi";
         else
-            out_file = base_name + type + ".avi";
+            out_file = opt.anim_path + type + ".avi";
 
 
         // when output already exists, skip this iteration
@@ -624,9 +644,9 @@ void Anim::build_video()
         if(opt.verbose)
         {
             if (opt.maxFileNum != "")
-                cout << "===== " + type + "_" + opt.maxFileNum + "_avi =====================" << std::endl;
+                cout << "===== " + type + "_" + opt.maxFileNum + ".avi =====================" << std::endl;
             else
-                cout << "===== " + type + "_avi =====================" << std::endl;
+                cout << "===== " + type + ".avi =====================" << std::endl;
         }
             
 
@@ -641,8 +661,8 @@ void Anim::build_video()
         
         for(int i = 0; i < tmax; i++)
         {
-            string frameNum = to_string(i+1);
-            std::string name = base_name + frameNum + "-" + type + ".png";
+            string frameNum = opt.allValidFiles[i].second;
+            std::string name = opt.anim_path + frameNum + "-" + type + ".png";
             cv::Mat curImage = cv::imread(name);
             // put white text indicating frame number on the bottom left cornor of images
             // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
