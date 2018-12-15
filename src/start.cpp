@@ -31,8 +31,26 @@ void start_standard_process(CLI::App &app) {
         try
         {
             auto start = chrono::high_resolution_clock::now();
-            //Skim::Skim(*opt).main();
-            //Proj::Proj(*opt).main();
+
+            // run LSP SKIM
+            // construct options for skim
+            auto opt_skim = std::make_shared<skimOptions>();
+            // skim requires input czi file input path and nhdr output path
+            opt_skim->input_path = opt->czi_path;
+            opt_skim->nhdr_out_name = opt->nhdr_path;
+            opt_skim->verbose = opt->verbose;
+            Skim(*opt_skim).main();
+
+            // run LSP PROJ
+            // construct options for LSP
+            auto opt_proj = std::make_shared<projOptions>();
+            // proj requires input czi, nhdr file path and output proj path
+            opt_proj->nhdr_path = opt->nhdr_path;
+            opt_proj->proj_path = opt->proj_path;
+            opt_proj->verbose = opt->verbose;
+            Proj(*opt_proj).main();
+
+            // run LSP ANIM
             //Anim::Anim(*opt).main();
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 

@@ -1,5 +1,6 @@
 //
 // Created by Gordone Kindlmann.
+// Modified by Zhuokai Zhao
 //
 #include <math.h>
 

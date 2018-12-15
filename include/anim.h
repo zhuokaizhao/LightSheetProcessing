@@ -3,6 +3,7 @@
 //! \date 04-24-2018
 //! \brief Build small video based on projection files.
 //! \brief rewrite by Jiawei Jiang at 07-01-2018
+// Modified by Zhuokai Zhao
 
 #ifndef LSP_AMIN_H
 #define LSP_AMIN_H

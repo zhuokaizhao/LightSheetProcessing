@@ -12,9 +12,9 @@
 
 #include "CLI11.hpp"
 
-#include <skimczi.h>
-#include <proj.h>
-#include <anim.h>
+#include "skimczi.h"
+#include "proj.h"
+#include "anim.h"
 
 using namespace std;
 
