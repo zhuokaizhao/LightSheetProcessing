@@ -28,70 +28,95 @@ void setup_proj(CLI::App &app) {
 
     sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Input nhdr file path")->required();
     sub->add_option("-o, --proj_path", opt->proj_path, "Where to output projection files")->required();
-    sub->add_option("-b, --base_name", opt->base_name, "Same base name, which is normally the date of data")->required();
+    // we no longer need base name
+    //sub->add_option("-b, --base_name", opt->base_name, "Same base name, which is normally the date of data")->required();
     sub->add_option("-v, --verbose", opt->verbose, "Turn on (1) or off (0) debug messages, by default turned off");
 
     sub->set_callback([opt]() 
     {
-        // vector of strings that contains all the valid nhdr names
-        vector<string> allNhdrFileNames;
-        vector<int> allFileSerialNumber;
+        // vector of pairs which stores each nhdr file's name and its extracted serial number
+        vector< pair<int, string> > allValidFiles;
 
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
         {
-            cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
+            cout << endl << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
             
             // count the number of files
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
-            
-            // note that the number starts counting at 1
-            int totalNum = files.size();
+
+            // count the number of files
             int nhdrNum = 0;
-            int xmlNum = 0;
 
             // since files include .nhdr and .xml file in pairs, we want to count individual number
             for (const string curFile : files) 
             {
                 // check if input file is a .nhdr file
                 int nhdr_suff = curFile.rfind(".nhdr");
-                if (nhdr_suff && (nhdr_suff == curFile.length() - 5))
+                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
                 {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
-                    nhdrNum++;
-                    allNhdrFileNames.push_back(curFile);
-
-                    // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-                    int end = curFile.rfind(".nhdr");
-                    int start = curFile.rfind("_") + 1;
-                    int length = end - start;
-                    std::string sequenceNumString = curFile.substr(start, length);
                     
-                    if (is_number(sequenceNumString))
-                        allFileSerialNumber.push_back(stoi(sequenceNumString));
+                    nhdrNum++;
+                    // now we need to understand the sequence number of this file
+                    int end = curFile.rfind(".nhdr");
+                    int start = -1;
+                    // The sequenceNumString will have zero padding, like 001
+                    for (int i = 0; i < curFile.size(); i++)
+                    {
+                        // we get the first position that zero padding ends
+                        if (curFile[i] != '0')
+                        {
+                            start = i;
+                            break;
+                        }
+                    }
+        
+                    string sequenceNumString;
+                    // for the case that it is just 000 which represents the initial time stamp
+                    if (start == -1)
+                    {
+                        sequenceNumString = "0";
+                    }
                     else
-                        cout << sequenceNumString << " is NOT a number" << endl;
+                    {
+                        int length = end - start;
+                        sequenceNumString = curFile.substr(start, length);
+                    }
+
+                    if (is_number(sequenceNumString))
+                    {
+                        allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFile) );
+                    }
+                    else
+                    {
+                        cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                    }
+                        
                 }
 
             }
 
-            // after finding all the files, sort the allFileSerialNumber
-            sort(allFileSerialNumber.begin(), allFileSerialNumber.end(), projSmallToLarge);
+            // after finding all the files, sort the allFileSerialNumber in ascending order
+            sort(allValidFiles.begin(), allValidFiles.end());
 
             cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
-            if (allNhdrFileNames.size() != allFileSerialNumber.size())
-                cout << "Warning: input .czi files are badly named, errors may exist while loading" << endl << endl; 
+            // sanity check
+            if (nhdrNum != allValidFiles.size())
+            {
+                cout << "ERROR: Not all valid files have been recorded" << endl;
+            }
 
             // update file number
             opt->file_number = nhdrNum;
             cout << "Starting second loop for processing" << endl << endl;
 
             // another loop to process files
-            for (int i = 0; i < allFileSerialNumber.size(); i++)
+            for (int i = 0; i < allValidFiles.size(); i++)
             {   
-                string proj_common = opt->proj_path + opt->base_name + "_" + to_string(allFileSerialNumber[i]) + "-proj";
+                string proj_common = allValidFiles[i].second + "-proj";
 
                 // we want to know if this proj file exists (processed before), don't overwrite it
                 string proj_name_1 = proj_common + "XY.nrrd";
@@ -111,7 +136,7 @@ void setup_proj(CLI::App &app) {
                 }
 
                 // note that file name does not include nhdr path
-                opt->file_name = opt->base_name + "_" + to_string(allFileSerialNumber[i]) + ".nhdr";
+                opt->file_name = allValidFiles[i].second + ".nhdr";
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
@@ -139,7 +164,7 @@ void setup_proj(CLI::App &app) {
             // check if input file is a .nhdr file
             int suff = curFile.rfind(".nhdr");
 
-            if (!suff || (suff != curFile.length() - 5)) 
+            if ( (suff != string::npos) || (suff != curFile.length() - 5) ) 
             {
                 cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
                 return;
@@ -184,12 +209,12 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         nhdr_name = opt.nhdr_path;
         // in this case we keep the proj file name same as nhdr base name
         int end = nhdr_name.rfind(".nhdr");
-        int start = nhdr_name.rfind("/") + 1;
-        int length = end - start;
-        std::string baseName = nhdr_name.substr(start, length);
+        int start = nhdr_name.rfind("/");
+        int length = end - start - 1;
+        string fileName = nhdr_name.substr(start, length);
         if (opt.verbose)
-            cout << "Base name is " << baseName << endl;
-        proj_common = opt.proj_path + baseName + "-proj";
+            cout << "Nhdr name is " << fileName << endl;
+        proj_common = opt.proj_path + fileName + "-proj";
     }
     else
     {
@@ -198,20 +223,11 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         cout << "Currently processing " << nhdr_name << endl;
 
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
-        int end = nhdr_name.rfind(".nhdr");
-        int start = nhdr_name.rfind("_") + 1;
-        int length = end - start;
+        int end = opt.file_name.rfind(".nhdr");
+        int start = 0;
+        int length = end - start - 1;
         std::string sequenceNumString = nhdr_name.substr(start, length);
-
-        // check if that is a valid number
-        bool isNumber = is_number(sequenceNumString);
-        if (!isNumber)
-        {
-            cout << sequenceNumString << " is NOT a number" << endl;
-            return;
-        }
-            
-        proj_common = opt.proj_path + opt.base_name + "_" + sequenceNumString + "-proj";
+        proj_common = opt.proj_path + sequenceNumString + "-proj";
     }
 }
 
