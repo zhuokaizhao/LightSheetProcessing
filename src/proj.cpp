@@ -228,7 +228,6 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         int start = 0;
         int length = end - start;
         string sequenceNumString = curFile.substr(start, length);
-        cout << sequenceNumString << endl;
         proj_common = opt.proj_path + sequenceNumString + "-proj";
     }
 }
