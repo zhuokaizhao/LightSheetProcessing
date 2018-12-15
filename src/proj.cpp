@@ -225,30 +225,10 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
         string curFile = opt.file_name;
         int end = curFile.rfind(".nhdr");
-        int start = -1;
-        // The sequenceNumString will have zero padding, like 001
-        for (int i = 0; i < end; i++)
-        {
-            // we get the first position that zero padding ends
-            if (curFile[i] != '0')
-            {
-                start = i;
-                break;
-            }
-        }
-
-        string sequenceNumString;
-        // for the case that it is just 000 which represents the initial time stamp
-        if (start == -1)
-        {
-            sequenceNumString = "0";
-        }
-        else
-        {
-            int length = end - start;
-            sequenceNumString = curFile.substr(start, length);
-        }
-        
+        int start = 0;
+        int length = end - start - 1;
+        string sequenceNumString = curFile.substr(start, length);
+        cout << sequenceNumString << endl;
         proj_common = opt.proj_path + sequenceNumString + "-proj";
     }
 }
