@@ -211,7 +211,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         int end = nhdr_name.rfind(".nhdr");
         int start = nhdr_name.rfind("/");
         int length = end - start - 1;
-        string fileName = nhdr_name.substr(start, length);
+        string fileName = nhdr_name.substr(start+1, length);
         if (opt.verbose)
             cout << "Nhdr name is " << fileName << endl;
         proj_common = opt.proj_path + fileName + "-proj";
@@ -226,7 +226,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
         string curFile = opt.file_name;
         int end = curFile.rfind(".nhdr");
         int start = 0;
-        int length = end - start - 1;
+        int length = end - start;
         string sequenceNumString = curFile.substr(start, length);
         cout << sequenceNumString << endl;
         proj_common = opt.proj_path + sequenceNumString + "-proj";
