@@ -316,11 +316,9 @@ void Anim::split_type()
 
         //read proj files
         string xy_proj_file, yz_proj_file;
-        if (!opt.base_name.empty())
-        {
-            xy_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projXY.nrrd";
-            yz_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projYZ.nrrd";
-        }
+        xy_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projXY.nrrd";
+        yz_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projYZ.nrrd";
+        
 
         Nrrd* proj_rsm[2] = {safe_nrrd_load(mop_t, xy_proj_file),
                              safe_nrrd_load(mop_t, yz_proj_file)};
