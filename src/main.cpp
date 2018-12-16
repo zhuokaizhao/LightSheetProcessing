@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     // Apply the corrections calculated by corrimg and corrfind
     setup_corrnhdr(app);
     // Process dataset with standard format
-    setup_pack(app);
+    //setup_pack(app);
 
     CLI11_PARSE(app, argc, argv);
 
