@@ -30,8 +30,6 @@ void setup_proj(CLI::App &app) {
 
     sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Input nhdr file path")->required();
     sub->add_option("-o, --proj_path", opt->proj_path, "Where to output projection files")->required();
-    // we no longer need base name
-    //sub->add_option("-b, --base_name", opt->base_name, "Same base name, which is normally the date of data")->required();
     sub->add_option("-v, --verbose", opt->verbose, "Turn on (1) or off (0) debug messages, by default turned off");
 
     sub->set_callback([opt]() 
@@ -45,10 +43,9 @@ void setup_proj(CLI::App &app) {
             cout << endl << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
             
             // count the number of files
-            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
-
-            // count the number of files
             int nhdrNum = 0;
+            // get all the files from input directory
+            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
 
             // since files include .nhdr and .xml file in pairs, we want to count individual number
             for (const string curFile : files) 
@@ -140,8 +137,8 @@ void setup_proj(CLI::App &app) {
                     continue;
                 }
 
-                // note that file name does not include nhdr path
-                opt->file_name = allValidFiles[i].second;
+                // note that file name from allValidFiles does not include nhdr path
+                opt->file_name = allValidFiles[i].second + ".nhdr";
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
