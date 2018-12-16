@@ -65,7 +65,7 @@ void setup_proj(CLI::App &app) {
                     int end = curFile.rfind(".nhdr");
                     int start = -1;
                     // current file name without type
-                    string curFileName = curFile.substr(0, end - 1);
+                    string curFileName = curFile.substr(0, end);
 
                     // The sequenceNumString will have zero padding, like 001
                     for (int i = 0; i < end; i++)
@@ -169,7 +169,7 @@ void setup_proj(CLI::App &app) {
             // check if input file is a .nhdr file
             int suff = curFile.rfind(".nhdr");
 
-            if ( (suff != string::npos) || (suff != curFile.length() - 5) ) 
+            if ( (suff == string::npos) || (suff != curFile.length() - 5) ) 
             {
                 cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
                 return;
@@ -225,7 +225,7 @@ Proj::Proj(projOptions const &opt): opt(opt), mop(airMopNew())
     {
         nhdr_name = opt.nhdr_path + opt.file_name;
 
-        cout << "Currently processing " << nhdr_name << endl;
+        cout << "Currently processing: " << nhdr_name << endl;
 
         // now we need to understand the sequence number of this file, which is the number after the baseName and before the extension
         string curFile = opt.file_name;
