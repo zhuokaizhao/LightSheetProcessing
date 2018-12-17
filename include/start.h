@@ -41,6 +41,7 @@ struct startOptions {
 
     // from projOptions
     string file_name;
+    int file_number;
     int number_of_processed = 0;
 
     // from animOptions
