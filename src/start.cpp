@@ -115,15 +115,15 @@ void start_standard_process(CLI::App &app)
 
     sub->set_callback([opt]() 
     {
-        auto skim_start = chrono::high_resolution_clock::now();
+        auto start = chrono::high_resolution_clock::now();
         // we need to go through all the files in the given path "input_path" and find all .czi files
         // first check this input path is a directory or a single file name
-        if (checkIfDirectory(opt->input_path))
+        if (checkIfDirectory(opt->czi_path))
         {
-            cout << endl << "Input path " << opt->input_path << " is valid, start processing" << endl;
+            cout << endl << "Input path " << opt->czi_path << " is valid, start processing" << endl;
         
             // get all the files in this path
-            const vector<string> files = GetDirectoryFiles(opt->input_path);
+            const vector<string> files = GetDirectoryFiles(opt->czi_path);
             // vector of pairs which stores each file's name and its extracted serial number
             vector< pair<int, string> > allValidFiles;
             
@@ -174,7 +174,7 @@ void start_standard_process(CLI::App &app)
             sort(allValidFiles.begin(), allValidFiles.end());
 
             // print out some stats
-            cout << numFiles << " valid .czi files found in input path " << opt->input_path << endl << endl;
+            cout << numFiles << " valid .czi files found in input path " << opt->czi_path << endl << endl;
 
             // sanity check
             if (numFiles != allValidFiles.size())
@@ -192,8 +192,8 @@ void start_standard_process(CLI::App &app)
                 opt->xml_out_name = "";
 
                 // generate the complete path for output files
-                nhdrFileName = opt->output_path + GenerateOutName(allValidFiles[i].first, 3, ".nhdr");
-                xmlFileName = opt->output_path+ GenerateOutName(allValidFiles[i].first, 3, ".xml");
+                nhdrFileName = opt->nhdr_path + GenerateOutName(allValidFiles[i].first, 3, ".nhdr");
+                xmlFileName = opt->nhdr_path + GenerateOutName(allValidFiles[i].first, 3, ".xml");
 
                 // we want to check if current potential output file already exists, if so, skip
                 if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -220,7 +220,7 @@ void start_standard_process(CLI::App &app)
         else
         {
             // to be consistent with the above mode, also call it curFile
-            string curFile = opt->input_path;
+            string curFile = opt->czi_path;
             cout << curFile << " is not a directory, enter Single file mode" << endl;
             cout << "Checking if it is a valid .czi file" << endl;
             
@@ -264,8 +264,8 @@ void start_standard_process(CLI::App &app)
 
             string nhdrFileName, xmlFileName;
             // generate the complete path for output files
-            nhdrFileName = opt->output_path + GenerateOutName(sequenceNum, 3, ".nhdr");
-            xmlFileName = opt->output_path+ GenerateOutName(sequenceNum, 3, ".xml");
+            nhdrFileName = opt->nhdr_path + GenerateOutName(sequenceNum, 3, ".nhdr");
+            xmlFileName = opt->nhdr_path+ GenerateOutName(sequenceNum, 3, ".xml");
 
             // we want to check if current potential output file already exists, if so, skip
             if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -288,9 +288,9 @@ void start_standard_process(CLI::App &app)
 
         }
 
-        auto skim_stop = chrono::high_resolution_clock::now(); 
-        auto skim_duration = chrono::duration_cast<chrono::seconds>(skim_stop - skim_start); 
-        cout << "Skim processing time is " << skim_duration.count() << " seconds" << endl << endl; 
+        auto stop = chrono::high_resolution_clock::now(); 
+        auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+        cout << "Skim processing time is " << duration.count() << " seconds" << endl << endl; 
         
     });
 
@@ -411,13 +411,13 @@ void start_standard_process(CLI::App &app)
                 opt->file_name = allValidFiles[i].second + ".nhdr";
                 try
                 {
-                    auto proj_start = chrono::high_resolution_clock::now();
+                    auto start = chrono::high_resolution_clock::now();
                     Proj(*opt).main();
-                    auto prj_stop = chrono::high_resolution_clock::now(); 
-                    auto proj_duration = chrono::duration_cast<chrono::seconds>(prj_stop - proj_start); 
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     opt->number_of_processed++;
                     cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
-                    cout << "Processing " << opt->file_name << " took " << proj_duration.count() << " seconds" << endl << endl; 
+                    cout << "Processing " << opt->file_name << " took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
@@ -450,11 +450,11 @@ void start_standard_process(CLI::App &app)
                 opt->file_name = curFile;         
                 try 
                 {
-                    auto proj_start = chrono::high_resolution_clock::now();
+                    auto start = chrono::high_resolution_clock::now();
                     Proj(*opt).main();
-                    auto proj_stop = chrono::high_resolution_clock::now(); 
-                    auto proj_duration = chrono::duration_cast<chrono::minutes>(proj_stop - proj_start); 
-                    cout << "Processing " << opt->file_name << " took " << proj_duration.count() << " minutes" << endl; 
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
+                    cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
                 } 
                 catch(LSPException &e) 
                 {

@@ -33,6 +33,25 @@ struct startOptions {
     // optional input for anim, to process a specific number of files
     string maxFileNum;
     int verbose = 0;
+
+    // from skimOptions
+    string nhdr_out_name;
+    string xml_out_name;
+    string file;
+
+    // from projOptions
+    string file_name;
+    int number_of_processed = 0;
+    int verbose = 0;
+
+    // from animOptions
+    int fps = 10;
+    vector< pair<int, string> > allValidFiles;
+    uint tmax;
+    uint dwn_sample = 2;
+    double scale_x = 1.0;
+    double scale_z = 1.0;
+    uint verbose = 0;
 };
 
 void start_standard_process(CLI::App &app);
