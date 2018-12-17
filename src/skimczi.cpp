@@ -142,8 +142,8 @@ void setup_skim(CLI::App &app)
                                           "and essential meta data from CZI file.");
 
     //sub->add_option("file", opt->file, "Input CZI file to process")->required();
-    sub->add_option("-i, --input_path", opt->input_path, "Input czi files directory or single file name (single file mode)")->required();
-    sub->add_option("-o, --output_path", opt->output_path, "Output directory where outputs will be saved at")->required();
+    sub->add_option("-i, --czi_path", opt->czi_path, "Input czi files directory or single file name (single file mode)")->required();
+    sub->add_option("-o, --nhdr_path", opt->nhdr_path, "Output directory where outputs will be saved at")->required();
     sub->add_option("-v, --verbose", opt->verbose, "Level of verbose debugging messages");
 
     // we no longer want to have base number involved
@@ -159,12 +159,12 @@ void setup_skim(CLI::App &app)
         auto start = chrono::high_resolution_clock::now();
         // we need to go through all the files in the given path "input_path" and find all .czi files
         // first check this input path is a directory or a single file name
-        if (checkIfDirectory(opt->input_path))
+        if (checkIfDirectory(opt->czi_path))
         {
-            cout << endl << "Input path " << opt->input_path << " is valid, start processing" << endl;
+            cout << endl << "Input path " << opt->czi_path << " is valid, start processing" << endl;
         
             // get all the files in this path
-            const vector<string> files = GetDirectoryFiles(opt->input_path);
+            const vector<string> files = GetDirectoryFiles(opt->czi_path);
             // vector of pairs which stores each file's name and its extracted serial number
             vector< pair<int, string> > allValidFiles;
             
@@ -215,7 +215,7 @@ void setup_skim(CLI::App &app)
             sort(allValidFiles.begin(), allValidFiles.end());
 
             // print out some stats
-            cout << numFiles << " valid .czi files found in input path " << opt->input_path << endl << endl;
+            cout << numFiles << " valid .czi files found in input path " << opt->czi_path << endl << endl;
 
             // sanity check
             if (numFiles != allValidFiles.size())
@@ -233,8 +233,8 @@ void setup_skim(CLI::App &app)
                 opt->xml_out_name = "";
 
                 // generate the complete path for output files
-                nhdrFileName = opt->output_path + GenerateOutName(allValidFiles[i].first, 3, ".nhdr");
-                xmlFileName = opt->output_path+ GenerateOutName(allValidFiles[i].first, 3, ".xml");
+                nhdrFileName = opt->nhdr_path + GenerateOutName(allValidFiles[i].first, 3, ".nhdr");
+                xmlFileName = opt->nhdr_path + GenerateOutName(allValidFiles[i].first, 3, ".xml");
 
                 // we want to check if current potential output file already exists, if so, skip
                 if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -261,7 +261,7 @@ void setup_skim(CLI::App &app)
         else
         {
             // to be consistent with the above mode, also call it curFile
-            string curFile = opt->input_path;
+            string curFile = opt->czi_path;
             cout << curFile << " is not a directory, enter Single file mode" << endl;
             cout << "Checking if it is a valid .czi file" << endl;
             
@@ -305,8 +305,8 @@ void setup_skim(CLI::App &app)
 
             string nhdrFileName, xmlFileName;
             // generate the complete path for output files
-            nhdrFileName = opt->output_path + GenerateOutName(sequenceNum, 3, ".nhdr");
-            xmlFileName = opt->output_path+ GenerateOutName(sequenceNum, 3, ".xml");
+            nhdrFileName = opt->nhdr_path + GenerateOutName(sequenceNum, 3, ".nhdr");
+            xmlFileName = opt->nhdr_path+ GenerateOutName(sequenceNum, 3, ".xml");
 
             // we want to check if current potential output file already exists, if so, skip
             if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -348,15 +348,15 @@ Skim::Skim(skimOptions const &opt)
     nproj_xy(nullptr),
     nproj_xz(nullptr),
     nproj_yz(nullptr),
-    outputPath(opt.output_path),
+    outputPath(opt.nhdr_path),
     cziFileName(opt.file),
     //projBaseFileName(opt.po),
     xmlFileName(opt.xml_out_name),
     nhdrFileName(opt.nhdr_out_name)
 {
     // check if input path is a directory or a single file
-    if (checkIfDirectory(opt.input_path))
-        cziFileName = opt.input_path + opt.file;
+    if (checkIfDirectory(opt.czi_path))
+        cziFileName = opt.czi_path + opt.file;
     else
         cziFileName = opt.file;
 

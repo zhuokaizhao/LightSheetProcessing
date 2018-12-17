@@ -107,23 +107,23 @@ void start_standard_process(CLI::App &app)
 
     // **********************************************  run LSP SKIM  **********************************************
     // construct options for skim
-    auto opt_skim = make_shared<skimOptions>();
+    //auto opt = make_shared<skimOptions>();
     // skim requires input czi file input path and nhdr output path
-    opt_skim->input_path = opt->czi_path;
-    opt_skim->nhdr_out_name = opt->nhdr_path;
-    opt_skim->verbose = opt->verbose;
+    //opt_skim->czi_path = opt->czi_path;
+    //opt_skim->nhdr_path = opt->nhdr_path;
+    //opt_skim->verbose = opt->verbose;
 
-    sub->set_callback([opt_skim]() 
+    sub->set_callback([opt]() 
     {
         auto skim_start = chrono::high_resolution_clock::now();
         // we need to go through all the files in the given path "input_path" and find all .czi files
         // first check this input path is a directory or a single file name
-        if (checkIfDirectory(opt_skim->input_path))
+        if (checkIfDirectory(opt->input_path))
         {
-            cout << endl << "Input path " << opt_skim->input_path << " is valid, start processing" << endl;
+            cout << endl << "Input path " << opt->input_path << " is valid, start processing" << endl;
         
             // get all the files in this path
-            const vector<string> files = GetDirectoryFiles(opt_skim->input_path);
+            const vector<string> files = GetDirectoryFiles(opt->input_path);
             // vector of pairs which stores each file's name and its extracted serial number
             vector< pair<int, string> > allValidFiles;
             
@@ -174,7 +174,7 @@ void start_standard_process(CLI::App &app)
             sort(allValidFiles.begin(), allValidFiles.end());
 
             // print out some stats
-            cout << numFiles << " valid .czi files found in input path " << opt_skim->input_path << endl << endl;
+            cout << numFiles << " valid .czi files found in input path " << opt->input_path << endl << endl;
 
             // sanity check
             if (numFiles != allValidFiles.size())
@@ -188,12 +188,12 @@ void start_standard_process(CLI::App &app)
                 string nhdrFileName, xmlFileName;
 
                 // we need to refresh both for each iteration
-                opt_skim->nhdr_out_name = "";
-                opt_skim->xml_out_name = "";
+                opt->nhdr_out_name = "";
+                opt->xml_out_name = "";
 
                 // generate the complete path for output files
-                nhdrFileName = opt_skim->output_path + GenerateOutName(allValidFiles[i].first, 3, ".nhdr");
-                xmlFileName = opt_skim->output_path+ GenerateOutName(allValidFiles[i].first, 3, ".xml");
+                nhdrFileName = opt->output_path + GenerateOutName(allValidFiles[i].first, 3, ".nhdr");
+                xmlFileName = opt->output_path+ GenerateOutName(allValidFiles[i].first, 3, ".xml");
 
                 // we want to check if current potential output file already exists, if so, skip
                 if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -205,10 +205,10 @@ void start_standard_process(CLI::App &app)
                 // run the processing program
                 try 
                 {
-                    opt_skim->file = allValidFiles[i].second;
-                    opt_skim->nhdr_out_name = nhdrFileName;
-                    opt_skim->xml_out_name = xmlFileName;
-                    Skim(*opt_skim).main();
+                    opt->file = allValidFiles[i].second;
+                    opt->nhdr_out_name = nhdrFileName;
+                    opt->xml_out_name = xmlFileName;
+                    Skim(*opt).main();
                 } 
                 catch(LSPException &e) 
                 {
@@ -220,7 +220,7 @@ void start_standard_process(CLI::App &app)
         else
         {
             // to be consistent with the above mode, also call it curFile
-            string curFile = opt_skim->input_path;
+            string curFile = opt->input_path;
             cout << curFile << " is not a directory, enter Single file mode" << endl;
             cout << "Checking if it is a valid .czi file" << endl;
             
@@ -264,8 +264,8 @@ void start_standard_process(CLI::App &app)
 
             string nhdrFileName, xmlFileName;
             // generate the complete path for output files
-            nhdrFileName = opt_skim->output_path + GenerateOutName(sequenceNum, 3, ".nhdr");
-            xmlFileName = opt_skim->output_path+ GenerateOutName(sequenceNum, 3, ".xml");
+            nhdrFileName = opt->output_path + GenerateOutName(sequenceNum, 3, ".nhdr");
+            xmlFileName = opt->output_path+ GenerateOutName(sequenceNum, 3, ".xml");
 
             // we want to check if current potential output file already exists, if so, skip
             if (fs::exists(nhdrFileName) && fs::exists(xmlFileName))
@@ -276,10 +276,10 @@ void start_standard_process(CLI::App &app)
         
             try 
             {
-                opt_skim->file = curFile;
-                opt_skim->nhdr_out_name = nhdrFileName;
-                opt_skim->xml_out_name = xmlFileName;
-                Skim(*opt_skim).main();
+                opt->file = curFile;
+                opt->nhdr_out_name = nhdrFileName;
+                opt->xml_out_name = xmlFileName;
+                Skim(*opt).main();
             } 
             catch(LSPException &e) 
             {
@@ -296,26 +296,26 @@ void start_standard_process(CLI::App &app)
 
     // **********************************************  run LSP PROJ  **********************************************
     // construct options for LSP
-    auto opt_proj = make_shared<projOptions>();
-    // proj requires input czi, nhdr file path and output proj path
-    opt_proj->nhdr_path = opt->nhdr_path;
-    opt_proj->proj_path = opt->proj_path;
-    opt_proj->verbose = opt->verbose;
+    // auto opt_proj = make_shared<projOptions>();
+    // // proj requires input czi, nhdr file path and output proj path
+    // opt_proj->nhdr_path = opt->nhdr_path;
+    // opt_proj->proj_path = opt->proj_path;
+    // opt_proj->verbose = opt->verbose;
 
-    sub->set_callback([opt_proj]() 
+    sub->set_callback([opt]() 
     {
         // vector of pairs which stores each nhdr file's name and its extracted serial number
         vector< pair<int, string> > allValidFiles;
 
         // first determine if input nhdr_path is valid
-        if (checkIfDirectory(opt_proj->nhdr_path))
+        if (checkIfDirectory(opt->nhdr_path))
         {
-            cout << endl << "nhdr input directory " << opt_proj->nhdr_path << " is valid" << endl;
+            cout << endl << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
             
             // count the number of files
             int nhdrNum = 0;
             // get all the files from input directory
-            const vector<string> files = GetDirectoryFiles(opt_proj->nhdr_path);
+            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
 
             // since files include .nhdr and .xml file in pairs, we want to count individual number
             for (const string curFile : files) 
@@ -324,7 +324,7 @@ void start_standard_process(CLI::App &app)
                 int nhdr_suff = curFile.rfind(".nhdr");
                 if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
                 {
-                    if (opt_proj->verbose)
+                    if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
                     
                     nhdrNum++;
@@ -373,7 +373,7 @@ void start_standard_process(CLI::App &app)
             // after finding all the files, sort the allFileSerialNumber in ascending order
             sort(allValidFiles.begin(), allValidFiles.end());
 
-            cout << nhdrNum << " .nhdr files found in input path " << opt_proj->nhdr_path << endl << endl;
+            cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
             // sanity check
             if (nhdrNum != allValidFiles.size())
@@ -382,7 +382,7 @@ void start_standard_process(CLI::App &app)
             }
 
             // update file number
-            opt_proj->file_number = nhdrNum;
+            opt->file_number = nhdrNum;
             cout << "Starting second loop for processing" << endl << endl;
 
             // another loop to process files
@@ -402,22 +402,22 @@ void start_standard_process(CLI::App &app)
                 if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
                 {
                     cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exist, continue to next." << endl;
-                    opt_proj->number_of_processed++;
-                    cout << opt_proj->number_of_processed << " out of " << opt_proj->file_number << " files have been processed" << endl << endl;
+                    opt->number_of_processed++;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl << endl;
                     continue;
                 }
 
                 // note that file name from allValidFiles does not include nhdr path
-                opt_proj->file_name = allValidFiles[i].second + ".nhdr";
+                opt->file_name = allValidFiles[i].second + ".nhdr";
                 try
                 {
                     auto proj_start = chrono::high_resolution_clock::now();
-                    Proj(*opt_proj).main();
+                    Proj(*opt).main();
                     auto prj_stop = chrono::high_resolution_clock::now(); 
                     auto proj_duration = chrono::duration_cast<chrono::seconds>(prj_stop - proj_start); 
-                    opt_proj->number_of_processed++;
-                    cout << opt_proj->number_of_processed << " out of " << opt_proj->file_number << " files have been processed" << endl;
-                    cout << "Processing " << opt_proj->file_name << " took " << proj_duration.count() << " seconds" << endl << endl; 
+                    opt->number_of_processed++;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    cout << "Processing " << opt->file_name << " took " << proj_duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
@@ -429,9 +429,9 @@ void start_standard_process(CLI::App &app)
         else
         {
             // the program also handles if input file is a single file
-            cout << opt_proj->nhdr_path << " is not a directory, enter Single file mode" << endl;
+            cout << opt->nhdr_path << " is not a directory, enter Single file mode" << endl;
             cout << "Checking if it is a valid .nhdr file" << endl;
-            const string curFile = opt_proj->nhdr_path;
+            const string curFile = opt->nhdr_path;
             
             // check if input file is a .nhdr file
             int suff = curFile.rfind(".nhdr");
@@ -446,15 +446,15 @@ void start_standard_process(CLI::App &app)
                 cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
 
                 // update file number
-                opt_proj->file_number = 1;   
-                opt_proj->file_name = curFile;         
+                opt->file_number = 1;   
+                opt->file_name = curFile;         
                 try 
                 {
                     auto proj_start = chrono::high_resolution_clock::now();
-                    Proj(*opt_proj).main();
+                    Proj(*opt).main();
                     auto proj_stop = chrono::high_resolution_clock::now(); 
                     auto proj_duration = chrono::duration_cast<chrono::minutes>(proj_stop - proj_start); 
-                    cout << "Processing " << opt_proj->file_name << " took " << proj_duration.count() << " minutes" << endl; 
+                    cout << "Processing " << opt->file_name << " took " << proj_duration.count() << " minutes" << endl; 
                 } 
                 catch(LSPException &e) 
                 {

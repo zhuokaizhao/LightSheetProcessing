@@ -188,8 +188,8 @@ typedef struct{
 
 
 struct skimOptions {
-    std::string input_path;
-    std::string output_path;
+    std::string czi_path;
+    std::string nhdr_path;
     //std::string no;
     //std::string base_name;
     // no has been changed to nhdr_out_name
