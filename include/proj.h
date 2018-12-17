@@ -13,7 +13,7 @@
 struct projOptions {
 	int file_number = 0;
 	std::string nhdr_path;
-    std::string czi_path;
+    //std::string czi_path;
 	std::string proj_path;
     // we no longer need base name
     //std::string base_name;
