@@ -102,12 +102,10 @@ void start_standard_process(CLI::App &app)
     // verbose
     sub->add_option("-v, --verbose", opt->verbose, "Progress printed in terminal or not");
 
-    
-    auto total_start = chrono::high_resolution_clock::now();
-
     // **********************************************  run LSP SKIM  **********************************************
     sub->set_callback([opt]() 
     {
+        auto total_start = chrono::high_resolution_clock::now();
         // ************************************************************************************************************
         // ************************************************************************************************************
         // ************************************************************************************************************
@@ -516,6 +514,10 @@ void start_standard_process(CLI::App &app)
 
 
         //Anim::Anim(*opt).main();
+        
+        
+        
+        // total running time for all
         auto total_stop = chrono::high_resolution_clock::now(); 
         auto total_duration = chrono::duration_cast<chrono::seconds>(total_stop - total_start); 
         cout << endl << "Processing took " << total_duration.count() << " seconds" << endl << endl;
