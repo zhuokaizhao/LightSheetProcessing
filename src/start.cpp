@@ -217,7 +217,7 @@ void start_standard_process(CLI::App &app)
                     opt_skim->xml_out_name = opt->xml_out_name;
                     opt_skim->file = opt->file;
                     opt_skim->verbose = opt->verbose;
-                    Skim(*opt).main();
+                    Skim(*opt_skim).main();
                 } 
                 catch(LSPException &e) 
                 {
@@ -288,7 +288,16 @@ void start_standard_process(CLI::App &app)
                 opt->file = curFile;
                 opt->nhdr_out_name = nhdrFileName;
                 opt->xml_out_name = xmlFileName;
-                Skim(*opt).main();
+                
+                // convert startOptions to skimOptions
+                auto opt_skim = std::make_shared<skimOptions>();
+                opt_skim->czi_path = opt->czi_path;
+                opt_skim->nhdr_path = opt->nhdr_path;
+                opt_skim->nhdr_out_name = opt->nhdr_out_name;
+                opt_skim->xml_out_name = opt->xml_out_name;
+                opt_skim->file = opt->file;
+                opt_skim->verbose = opt->verbose;
+                Skim(*opt_skim).main();
             } 
             catch(LSPException &e) 
             {
