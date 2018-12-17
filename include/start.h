@@ -42,7 +42,6 @@ struct startOptions {
     // from projOptions
     string file_name;
     int number_of_processed = 0;
-    int verbose = 0;
 
     // from animOptions
     int fps = 10;
@@ -51,7 +50,6 @@ struct startOptions {
     uint dwn_sample = 2;
     double scale_x = 1.0;
     double scale_z = 1.0;
-    uint verbose = 0;
 };
 
 void start_standard_process(CLI::App &app);
