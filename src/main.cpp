@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
     setup_proj(app);
     // Create animations from projection files
     setup_anim(app);
+    
     // Creates line graph summary of nhdr files
     setup_nhdr_check(app);
     // Remove grid texture from a projection

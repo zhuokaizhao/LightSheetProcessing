@@ -32,6 +32,7 @@
         "typeinfo": "cpp",
         "algorithm": "cpp",
         "cstdint": "cpp",
-        "memory": "cpp"
+        "memory": "cpp",
+        "chrono": "cpp"
     }
 }

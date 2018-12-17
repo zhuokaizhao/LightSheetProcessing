@@ -133,7 +133,8 @@ string GenerateOutName(const int num, const int digit, const string type)
     return outName;
 }
 
-void setup_skim(CLI::App &app) {
+void setup_skim(CLI::App &app) 
+{
     auto opt = std::make_shared<skimOptions>();
     // App *add_subcommand(std::string name, std::string description = "") 
     auto sub = app.add_subcommand("skim", "Utility for getting information out of CZI files. Currently for "
