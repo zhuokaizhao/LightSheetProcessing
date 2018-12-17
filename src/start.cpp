@@ -485,7 +485,7 @@ void start_standard_process(CLI::App &app)
                     opt_proj->verbose = opt->verbose;
 
                     auto start = chrono::high_resolution_clock::now();
-                    Proj(*opt).main();
+                    Proj(*opt_proj).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
                     cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
