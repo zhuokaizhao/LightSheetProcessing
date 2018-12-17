@@ -174,7 +174,7 @@ void start_standard_process(CLI::App &app)
             sort(allValidFiles.begin(), allValidFiles.end());
 
             // print out some stats
-            cout << numFiles << " valid .czi files found in input path " << opt->input_path << endl << endl;
+            cout << numFiles << " valid .czi files found in input path " << opt_skim->input_path << endl << endl;
 
             // sanity check
             if (numFiles != allValidFiles.size())
@@ -466,7 +466,7 @@ void start_standard_process(CLI::App &app)
     });
 
     // **********************************************  run LSP ANIM  **********************************************
-    auto opt_anim = make_shared<projOptions>();
+    auto opt_anim = make_shared<animOptions>();
     // anim requires input nhdr and proj paths, and output anim path
     opt_anim->nhdr_path = opt->nhdr_path;
     opt_anim->proj_path = opt->proj_path;
@@ -474,9 +474,9 @@ void start_standard_process(CLI::App &app)
     opt_anim->verbose = opt->verbose;
 
     //Anim::Anim(*opt).main();
-    auto stop = chrono::high_resolution_clock::now(); 
-    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+    auto total_stop = chrono::high_resolution_clock::now(); 
+    auto total_duration = chrono::duration_cast<chrono::seconds>(total_stop - total_start); 
+    cout << endl << "Processing took " << total_duration.count() << " seconds" << endl << endl; 
 
 
 }
