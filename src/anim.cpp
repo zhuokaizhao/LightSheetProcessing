@@ -292,6 +292,7 @@ void Anim::split_type()
         std::cout << "Resampling Factors: resample_xy = " + std::to_string(resample_xy) + ", resample_z = " + std::to_string(resample_z) << std::endl;
 
     // slice and resample projection files
+    cout << endl << "Splitting nrrd files into z and x" << endl;
     //#pragma omp parallel for
     for(int i = 0; i < opt.tmax; i++) 
     {
@@ -311,7 +312,6 @@ void Anim::split_type()
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
-        cout << endl << "Splitting nrrd files into z and x" << endl;
         std::cout << "===================== " + to_string(i) + "/" + std::to_string(opt.tmax-1) + " =====================\n";
 
         //read proj files
@@ -459,7 +459,7 @@ void Anim::make_max_frame(std::string direction)
                         nrrdQuantize(bit1, ch1, range1, 8),
                     mop_t, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
-        std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
+        std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax-1) + " " + direction + "_max_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -548,7 +548,7 @@ void Anim::make_avg_frame(std::string direction)
                     mop_t, "Error quantizing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
         
-        std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
+        std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax-1) + " " + direction + "_avg_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -586,7 +586,7 @@ void Anim::build_png()
             
             auto mop_t = airMopNew();
 
-            std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
+            std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax-1) + " " + type + "_pngs =====================\n";
 
             
             Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
@@ -621,7 +621,8 @@ void Anim::build_video()
 {
     int tmax = opt.tmax;
 
-    cv::Size s = cv::imread(opt.anim_path + "1-max.png").size();
+    // get the size by reading the first frame image
+    cv::Size s = cv::imread(opt.anim_path + "001-max.png").size();
     
     for(std::string type: {"max", "avg"})
     {
