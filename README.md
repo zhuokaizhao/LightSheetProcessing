@@ -2,21 +2,23 @@
 LightSheetProcessing (LSP) is a software that processes image data captured by a lightsheet microscope. LSP reads a number of or one specific microscope image data file created in the Carl Zeiss CZI format, which saves image stacks, time lapse series and tile images captured from a Carl Zeiss microscope. LSP first organized them into detached-header [NRRD File format](http://teem.sourceforge.net/nrrd/format.html) and later generates PNG images as well as corresponding AVI videos based on the Maximum Intensity Projection (MIP) and Average Intensity Projection (AIP) of the input data.
 
 ## Dependencies
-1. Compiler:
-<br />C++ 11
-2. Standard libraries (Specifically required libraries showed in parentheses):
-<br />Libxml2 [link](http://xmlsoft.org/)
-<br />Boost (boost_system, boost_filesystem) [link](https://www.boost.org/)
-<br />OpenCV3 (opencv_core, opencv_videoio, opencv_imgcodecs, opencv_imgproc) [link] (https://opencv.org/opencv-3-4-1.html)
-<br />FFTW3 [link](http://www.fftw.org/) 
-<br />libpng [link](http://www.libpng.org/pub/png/libpng.html) 
-<br />zlib [link](https://zlib.net/)
+1. **Language**:
+- C++ 11
+2. **Standard libraries** (Specifically required libraries showed in parentheses):
+- Libxml2 [link](http://xmlsoft.org/)
+- Boost (boost_system, boost_filesystem) [link](https://www.boost.org/)
+- OpenCV3 (opencv_core, opencv_videoio, opencv_imgcodecs, opencv_imgproc) [link](https://opencv.org/opencv-3-4-1.html)
+- FFTW3 [link](http://www.fftw.org/) 
+- libpng [link](http://www.libpng.org/pub/png/libpng.html) 
+- zlib [link](https://zlib.net/)
 3. Customized libraries:
-<br />Teem [link](http://teem.sourceforge.net/)
+- Teem [link](http://teem.sourceforge.net/)
     
 ## Compilation
 Under the main directory `LightSheetProcessing/`, run "compile.sh" under `scripts/`
-`sh scripts/compile.sh`		
+```
+sh scripts/compile.sh
+```		
 
 Note: The script is written to be run on Linux system, modification required if running on other platforms. By default it will add the install path `~/LightSheetProcessing/LSP-INSTALL/` to your  `~/.bash_profile` and `~/.profile`
 
