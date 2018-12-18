@@ -2,17 +2,17 @@
 LightSheetProcessing (LSP) is a software that processes image data captured by a lightsheet microscope. LSP reads a number of or one specific microscope image data file created in the Carl Zeiss CZI format, which saves image stacks, time lapse series and tile images captured from a Carl Zeiss microscope. LSP first organized them into detached-header NRRD File format (link comes in here) and later generates PNG images as well as corresponding AVI videos based on the Maximum Intensity Projection (MIP) and Average Intensity Projection (AIP) of the input data.
 
 ## Dependencies
-Compiler:
-    C++ 11
-Standard libraries (Specifically required libraries showed in parentheses):
-    libxml2
-    boost (boost_system, boost_filesystem)
-    OpenCV3 (opencv_core, opencv_videoio, opencv_imgcodecs, opencv_imgproc) 
-    fftw3f 
-    libpng 
-    libz
-Customized libraries:
-    Teem (link)
+1. Compiler:
+<br />C++ 11
+2. Standard libraries (Specifically required libraries showed in parentheses):
+<br />libxml2
+<br />boost (boost_system, boost_filesystem)
+<br />OpenCV3 (opencv_core, opencv_videoio, opencv_imgcodecs, opencv_imgproc) 
+<br />fftw3f 
+<br />libpng 
+<br />libz
+3. Customized libraries:
+<br />[Teem](http://teem.sourceforge.net/)
     
 ## Compilation
 Under the main directory `LightSheetProcessing/`, run "compile.sh" under `scripts/`
