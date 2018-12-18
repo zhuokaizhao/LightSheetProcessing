@@ -307,7 +307,7 @@ void start_standard_process(CLI::App &app)
 
         auto stop = chrono::high_resolution_clock::now(); 
         auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-        cout << "Skim processing time is " << duration.count() << " seconds" << endl << endl; 
+        cout << "Skim processing took " << duration.count() << " seconds" << endl << endl; 
 
         // ************************************************************************************************************
         // ************************************************************************************************************
@@ -442,7 +442,7 @@ void start_standard_process(CLI::App &app)
 
                     opt->number_of_processed++;
                     cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
-                    cout << "Processing " << opt->file_name << " took " << duration.count() << " seconds" << endl << endl; 
+                    cout << "Proj processing " << opt->file_name << " took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
@@ -488,7 +488,7 @@ void start_standard_process(CLI::App &app)
                     Proj(*opt_proj).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
-                    cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
+                    cout << "Proj processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
                 } 
                 catch(LSPException &e) 
                 {
@@ -505,22 +505,177 @@ void start_standard_process(CLI::App &app)
         // ************************************************************************************************************
         // ************************************************************************************************************
         // ************************************************************************************************************
-        auto opt_anim = make_shared<animOptions>();
-        // anim requires input nhdr and proj paths, and output anim path
-        opt_anim->nhdr_path = opt->nhdr_path;
-        opt_anim->proj_path = opt->proj_path;
-        opt_anim->anim_path = opt->anim_path;
-        opt_anim->verbose = opt->verbose;
 
+        // first determine if input nhdr_path is valid
+        if (checkIfDirectory(opt->nhdr_path))
+        {
+            cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
+            
+            // count the number of files
+            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
+            
+            // note that the number starts counting at 1
+            int nhdrNum = 0;
+            
+            for (int i = 0; i < files.size(); i++) 
+            {
+                string curFile = files[i];
+                // check if input file is a .nhdr file
+                int nhdr_suff = curFile.rfind(".nhdr");
+                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
+                {
+                    if (opt->verbose)
+                        cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
+                    
+                    nhdrNum++;
+                
+                    // now we need to understand the sequence number of this file
+                    int start = -1;
+                    int end = curFile.rfind(".nhdr");
+                    // current file name without type
+                    string curFileName = curFile.substr(0, end);
+                    
+                    // The sequenceNumString will have zero padding, like 001
+                    for (int i = 0; i < end; i++)
+                    {
+                        // we get the first position that zero padding ends
+                        if (curFile[i] != '0')
+                        {
+                            start = i;
+                            break;
+                        }
+                    }
+        
+                    string sequenceNumString;
+                    // for the case that it is just 000 which represents the initial time stamp
+                    if (start == -1)
+                    {
+                        sequenceNumString = "0";
+                    }
+                    else
+                    {
+                        int length = end - start;
+                        sequenceNumString = curFile.substr(start, length);
+                    }
 
-        //Anim::Anim(*opt).main();
+                    if (is_number(sequenceNumString))
+                    {
+                        opt->allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                    }
+                    else
+                    {
+                        cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                    }
+                }
+
+            }
+
+            // after finding all the files, sort the allValidFiles in ascending order
+            sort(opt->allValidFiles.begin(), opt->allValidFiles.end());
+
+            cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
+
+            // sanity check
+            if (nhdrNum != opt->allValidFiles.size())
+            {
+                cout << "ERROR: Not all valid files have been recorded" << endl;
+            }
+
+            // if the user restricts the number of files to process
+            if (!opt->maxFileNum.empty())
+            {
+                nhdrNum = stoi(opt->maxFileNum);
+            }
+                
+            // update file number
+            opt->tmax = nhdrNum;
+            cout << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
+
+            try
+            {
+                auto opt_anim = make_shared<animOptions>();
+                // anim requires input nhdr and proj paths, and output anim path
+                opt_anim->nhdr_path = opt->nhdr_path;
+                opt_anim->proj_path = opt->proj_path;
+                opt_anim->anim_path = opt->anim_path;
+                opt_anim->maxFileNum = opt->maxFileNum;
+                opt_anim->fps = opt->fps;
+                opt_anim->allValidFiles = opt->allValidFiles;
+                opt_anim-> tmax = opt->tmax;
+                opt_anim->dwn_sample = opt->dwn_sample;
+                opt_anim->scale_x = opt->scale_x;
+                opt_anim->scale_z = opt->scale_z;
+                opt_anim->verbose = opt->verbose;
+
+                auto start = chrono::high_resolution_clock::now();
+                Anim(*opt).main();
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                cout << endl << "Anim processing took " << duration.count() << " seconds" << endl << endl; 
+            }
+            catch(LSPException &e)
+            {
+                std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            // the program also handles if input file is a single file
+            cout << opt->nhdr_path << " is not a directory, check if it is a valid .nhdr file" << endl;
+            const string curFile = opt->nhdr_path;
+
+            std::cout << "Current file name is: " << curFile << endl;
+            
+            // check if input file is a .czi file
+            int suff = curFile.rfind(".nhdr");
+
+            if ( (suff != string::npos) || (suff != curFile.length() - 5)) 
+            {
+                cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
+                return;
+            }
+            else
+            {
+                cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
+
+                // update file number
+                opt->tmax = 0;    
+
+                try
+                {
+                    auto opt_anim = make_shared<animOptions>();
+                    // anim requires input nhdr and proj paths, and output anim path
+                    opt_anim->nhdr_path = opt->nhdr_path;
+                    opt_anim->proj_path = opt->proj_path;
+                    opt_anim->anim_path = opt->anim_path;
+                    opt_anim->maxFileNum = opt->maxFileNum;
+                    opt_anim->fps = opt->fps;
+                    opt_anim->allValidFiles = opt->allValidFiles;
+                    opt_anim-> tmax = opt->tmax;
+                    opt_anim->dwn_sample = opt->dwn_sample;
+                    opt_anim->scale_x = opt->scale_x;
+                    opt_anim->scale_z = opt->scale_z;
+                    opt_anim->verbose = opt->verbose;
+
+                    auto start = chrono::high_resolution_clock::now();
+                    Anim(*opt).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << endl << "Anim processing took " << duration.count() << " seconds" << endl << endl; 
+                }
+                catch(LSPException &e)
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+            }
+        }
         
         
         
         // total running time for all
         auto total_stop = chrono::high_resolution_clock::now(); 
         auto total_duration = chrono::duration_cast<chrono::seconds>(total_stop - total_start); 
-        cout << endl << "Processing took " << total_duration.count() << " seconds" << endl << endl;
+        cout << endl << "Total processing took " << total_duration.count() << " seconds" << endl << endl;
         
     });
 
