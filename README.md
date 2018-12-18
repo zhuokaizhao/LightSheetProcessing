@@ -1,16 +1,38 @@
-# LSP
-LightSheetProcessing
+# LightSheetProcessing
+LightSheetProcessing (LSP) is a software that processes image data captured by a lightsheet microscope. LSP reads a number of or one specific microscope image data file created in the Carl Zeiss CZI format, which saves image stacks, time lapse series and tile images captured from a Carl Zeiss microscope. LSP first organized them into detached-header NRRD File format (link comes in here) and later generates PNG images as well as corresponding AVI videos based on the Maximum Intensity Projection (MIP) and Average Intensity Projection (AIP) of the input data.
 
+## Dependencies
+Compiler:
+    C++ 11
+Standard libraries (Specifically required libraries showed in parentheses):
+    libxml2
+    boost (boost_system, boost_filesystem)
+    OpenCV3 (opencv_core, opencv_videoio, opencv_imgcodecs, opencv_imgproc) 
+    fftw3f 
+    libpng 
+    libz
+Customized libraries:
+    Teem (link)
+    
 ## Compilation
-    Run "compile.sh" under `scripts/`		
+Under the main directory `LightSheetProcessing/`, run "compile.sh" under `scripts/`
+`sh scripts/compile.sh`		
 
-    P.S. it would modify your '~/.bash_profile' and '~/.profile'
+Note: The script is written to be run on Linux system, modification required if running on other platforms. By default it will add the install path `~/LightSheetProcessing/LSP-INSTALL/` to your  `~/.bash_profile` and `~/.profile`
+
+## Standard input data format
+1. All files should be in the Carl Zeiss CZI format (.czi files).
+2. If you want LSP to process a number of consecutive files, please put all of them under one path (for example, `~/czi/*.czi`). And name them to have the following format, note that the first (0 timestamp) should have no parentheses.
+`data_name.czi, data_name(1).czi, data_name(2).czi, ......`
 
 ## Running
-1. Print `lsp -h` for help.        
-2. For well formatted experiment data, I highly recommand `standard` subcommand. It would automatically run data processing with correct arguments.
-3. A standard dataset is:   
-    a. original data is in 'some_path/czi' folder.  
-    b. data files are named: some_name.czi, some_name(1).czi, some_name(2).czi...    
-    c. this driver will generate work folders under "some_path/" and output files in there. 
+1. Run `lsp -h` for help.    
+2. LSP currently includes four subcommands: `lsp skim`, `lsp proj`, `lsp anim` and `lsp start`. Same to the general command `lsp`, each subcommand could be run to show help instructions when added `-h` flag as well.     
+
+### lsp skim
+LSP Skim provides utilities for getting information out of CZI files and organizes them into detached-header NRRD file format. More specifically, it generates .nhdr NRRD header files to permit extracting the image and essential meta data from CZI file.
+
+### lsp proj
+### lsp anim
+### lsp start
  
