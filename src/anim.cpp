@@ -35,12 +35,9 @@ void setup_anim(CLI::App &app)
     sub->add_option("-i, --nhdr", opt->nhdr_path, "Path of input nrrd header files.")->required();
     sub->add_option("-p, --proj", opt->proj_path, "Path of input projection files.")->required();
     sub->add_option("-o, --anim", opt->anim_path, "Path of output anim files. (Default: ./anim/)")->required();
-    // we no longer need base name
-    //sub->add_option("-b, --base_name", opt->base_name, "The base name of nrrd files (For example: 181113)")->required();
-    
-    sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
     
     // optional options that are related to video quality and etc
+    sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
     sub->add_option("-f, --fps", opt->fps, "Frame per second (fps) of the generated .avi video. (Default: 10)");
     sub->add_option("-d, --dsample", opt->dwn_sample, "Amount by which to down-sample the data. (Default: 1.0)");
     sub->add_option("-x, --scalex", opt->scale_x, "Scaling on the x axis. (Default: 1.0)");
@@ -76,7 +73,7 @@ void setup_anim(CLI::App &app)
                     int start = -1;
                     int end = curFile.rfind(".nhdr");
                     // current file name without type
-                    string curFileName = curFile.substr(0, end - 1);
+                    string curFileName = curFile.substr(0, end);
                     
                     // The sequenceNumString will have zero padding, like 001
                     for (int i = 0; i < end; i++)
@@ -132,7 +129,7 @@ void setup_anim(CLI::App &app)
                 
             // update file number
             opt->tmax = nhdrNum;
-            cout << endl << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
+            cout << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
 
             try
             {
@@ -243,8 +240,8 @@ int Anim::set_origins()
                     //#pragma omp atomic
                     found++;
                 }
-                if (opt.verbose)
-                    cout << "Found space origin of " << nhdrFileName << endl;
+                
+                cout << "Found space origin of " << nhdrFileName << endl;
                 break;
             }
         }
