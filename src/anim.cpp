@@ -204,6 +204,7 @@ Anim::~Anim()
 
 int Anim::set_origins()
 {
+    cout << "Finding origins of each nhdr file" << endl;
     // tmax count starts at 0, therefore the size allocated should be incremented by 1
     origins = std::vector<std::vector<int>>(opt.tmax+1, std::vector<int>(3, 0));
 
@@ -310,7 +311,8 @@ void Anim::split_type()
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
-        std::cout << "===================== " + to_string(i) + "/" + std::to_string(opt.tmax) + " =====================\n";
+        cout << endl << "Splitting nrrd files into z and x" << endl;
+        std::cout << "===================== " + to_string(i) + "/" + std::to_string(opt.tmax-1) + " =====================\n";
 
         //read proj files
         string xy_proj_file, yz_proj_file;
@@ -637,13 +639,10 @@ void Anim::build_video()
             continue;
         }
 
-        if(opt.verbose)
-        {
-            if (opt.maxFileNum != "")
-                cout << "===================== " + type + "_" + opt.maxFileNum + ".avi =====================" << std::endl;
-            else
-                cout << "===================== " + type + ".avi =====================" << std::endl;
-        }
+        if (opt.maxFileNum != "")
+            cout << "===================== " + type + "_" + opt.maxFileNum + ".avi =====================" << std::endl;
+        else
+            cout << "===================== " + type + ".avi =====================" << std::endl;
             
 
         // write the images to video with opencv video writer
@@ -676,20 +675,21 @@ void Anim::main()
     if (verbose)
         cout << endl << "Anim::main() starts" << endl << endl;
 
-    cout << "Splitting nrrd on type dimension" << endl;
     split_type();
 
-    cout << "Making frames for max channel" << endl;
+    cout << endl << "Making frames of max channel in x-direction" << endl;
     make_max_frame("x");
+    cout << endl << "Making frames of max channel in z-direction" << endl;
     make_max_frame("z");
 
-    cout << "Making frames for average channel" << endl;
+    cout << endl << "Making frames of average channel in x-direction" << endl;
     make_avg_frame("x");
+    cout << endl << "Making frames of average channel in z-direction" << endl;
     make_avg_frame("z");
 
-    cout << "Building PNGs" << endl;
+    cout << endl << "Building PNGs for both max and average channels" << endl;
     build_png();
 
-    cout << "Building video" << endl;
+    cout << endl << "Building video for both max and average channels" << endl;
     build_video();
 }
