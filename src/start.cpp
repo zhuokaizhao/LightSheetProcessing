@@ -608,7 +608,7 @@ void start_standard_process(CLI::App &app)
                 opt_anim->verbose = opt->verbose;
 
                 auto start = chrono::high_resolution_clock::now();
-                Anim(*opt).main();
+                Anim(*opt_anim).main();
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                 cout << endl << "Anim processing took " << duration.count() << " seconds" << endl << endl; 
@@ -658,7 +658,7 @@ void start_standard_process(CLI::App &app)
                     opt_anim->verbose = opt->verbose;
 
                     auto start = chrono::high_resolution_clock::now();
-                    Anim(*opt).main();
+                    Anim(*opt_anim).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     cout << endl << "Anim processing took " << duration.count() << " seconds" << endl << endl; 
