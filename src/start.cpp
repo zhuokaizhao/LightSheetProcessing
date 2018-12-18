@@ -402,7 +402,7 @@ void start_standard_process(CLI::App &app)
             // another loop to process files
             for (int i = 0; i < allValidFiles.size(); i++)
             {   
-                string proj_common = allValidFiles[i].second + "-proj";
+                string proj_common = opt->proj_path + allValidFiles[i].second + "-proj";
 
                 // we want to know if this proj file exists (processed before), don't overwrite it
                 string proj_name_1 = proj_common + "XY.nrrd";
