@@ -310,7 +310,7 @@ void Anim::split_type()
         // mot_t is a new airArray
         auto mop_t = airMopNew();
 
-        std::cout << "===== " + to_string(i) + "/" + std::to_string(opt.tmax) + " =====================\n";
+        std::cout << "===================== " + to_string(i) + "/" + std::to_string(opt.tmax) + " =====================\n";
 
         //read proj files
         string xy_proj_file, yz_proj_file;
@@ -457,7 +457,7 @@ void Anim::make_max_frame(std::string direction)
                         nrrdQuantize(bit1, ch1, range1, 8),
                     mop_t, "Error quantizing ch2 nrrd:\n", "anim.cpp", "Anim::make_max_frame");
 
-        std::cout << "===== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
+        std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_max_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -546,7 +546,7 @@ void Anim::make_avg_frame(std::string direction)
                     mop_t, "Error quantizing nrrd:\n", "anim.cpp", "Anim::make_avg_frame");
 
         
-        std::cout << "===== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
+        std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + direction + "_avg_frames =====================\n";
 
         nrrd_checker(nrrdSave((common_prefix + "-0.ppm").c_str() , bit0, nullptr) ||
                     nrrdSave((common_prefix + "-1.ppm").c_str() , bit1, nullptr),
@@ -584,7 +584,7 @@ void Anim::build_png()
             
             auto mop_t = airMopNew();
 
-            std::cout << "===== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
+            std::cout << "===================== " + opt.allValidFiles[i].second + "/" + std::to_string(opt.tmax) + " " + type + "_pngs =====================\n";
 
             
             Nrrd *ppm_z_0 = safe_nrrd_load(mop_t, base_path + "-z-0.ppm");
@@ -640,9 +640,9 @@ void Anim::build_video()
         if(opt.verbose)
         {
             if (opt.maxFileNum != "")
-                cout << "===== " + type + "_" + opt.maxFileNum + ".avi =====================" << std::endl;
+                cout << "===================== " + type + "_" + opt.maxFileNum + ".avi =====================" << std::endl;
             else
-                cout << "===== " + type + ".avi =====================" << std::endl;
+                cout << "===================== " + type + ".avi =====================" << std::endl;
         }
             
 
