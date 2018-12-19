@@ -470,7 +470,8 @@ void setup_corr(CLI::App &app)
                     // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
                     for (int i = 0; i < curTypeImage.size()-1; i++)
                     {
-                        cout << curTypeImage.size() << endl;
+                        cout << curTypeImage[i].second << endl;
+                        cout << "aaa" << endl;
                         opt->input_images[0] = opt->anim_path + curTypeImage[i].second + ".png";
                         opt->input_images[1] = opt->anim_path + curTypeImage[i+1].second + ".png";
                          
