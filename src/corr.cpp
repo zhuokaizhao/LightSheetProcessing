@@ -452,34 +452,29 @@ void setup_corr(CLI::App &app)
                 inputImages.insert({"avg", avgImages}); 
 
                 // Process the images by pair can call corr_main
-                // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
-
-                for (int i = 0; i < imageNamesByType.size(); i++)
+                for (auto& curType : inputImages)
                 {
                     // each pair has struct pair< string, vector<string> >
-                    pair<string, vector<string> > curPair = imageNamesByType[i];
-                    for (int j = 0; j < allImageSerialNumber.size(); j++)
+                    if (curType.first == "max")
                     {
-                        // we have image pairs until j = length - 2
-                        if (j < allImageSerialNumber.size()-1)
-                        {
-                            string input_image_1 = opt->anim_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + ".png";
-                            string input_image_2 = opt->anim_path + to_string(allImageSerialNumber[j+1]) + "-" + imageNamesByType[i].first + ".png";
-                            // double check that these two names exist in curPair
-                            if (find(curPair.second.begin(), curPair.second.end(), input_image_1) != curPair.second.end()
-                                    && find(curPair.second.begin(), curPair.second.end(), input_image_2) != curPair.second.end())
-                            {
-                                opt->input_images = {input_image_1, input_image_2};
-                            }
-                            else
-                            {
-                                cout << "Warning: generated sorted input image names does not exist" << endl;
-                                return;
-                            }
+                        cout << "Processing max images" << endl;
+                    }
+                    else if (curType.first == "avg")
+                    {
+                        cout << "Processing avg images" << endl;
+                    }
 
-                            // put these output names in opt
-                            opt->output_file = opt->output_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + "-corred";
-                        }
+                    // get the vector of pairs of current type
+                    vector< pair<int, string> > curTypeImage = curType.second;
+
+                    // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
+                    for (int i = 0; i < curTypeImage.size()-1; i++)
+                    {
+                        string input_image_1 = opt->anim_path + curTypeImage[i].second + ".png";
+                        string input_image_2 = opt->anim_path + curTypeImage[i+1].second + ".png";
+
+                        // put these output names in opt
+                        opt->output_file = opt->output_path + curTypeImage[i].second + "-" + curType.first + "-corred.png";
 
                         // create output directory if not exist
                         if (!checkIfDirectory(opt->output_path))
