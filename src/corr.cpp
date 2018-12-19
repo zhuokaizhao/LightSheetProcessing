@@ -454,15 +454,14 @@ void setup_corr(CLI::App &app)
                 // Process the images by pair can call corr_main
                 for (auto& curType : inputImages)
                 {
-                    cout << curType.first << endl;
                     // each pair has struct pair< string, vector<string> >
                     if (curType.first == "max")
                     {
-                        cout << "Processing max images" << endl;
+                        cout << "Processing max images" << endl << endl;
                     }
                     else if (curType.first == "avg")
                     {
-                        cout << "Processing avg images" << endl;
+                        cout << "Processing avg images" << endl << endl;
                     }
 
                     // get the vector of pairs of current type
@@ -471,11 +470,17 @@ void setup_corr(CLI::App &app)
                     // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
                     for (int i = 0; i < curTypeImage.size()-1; i++)
                     {
+                        cout << curTypeImage.size() << endl;
                         opt->input_images[0] = opt->anim_path + curTypeImage[i].second + ".png";
                         opt->input_images[1] = opt->anim_path + curTypeImage[i+1].second + ".png";
+                         
+                        cout << opt->input_images[0] << endl;
+                        cout << opt->input_images[1] << endl;
 
                         // put these output names in opt
                         opt->output_file = opt->output_path + curTypeImage[i].second + "-" + curType.first + "-corred.png";
+
+                        cout << opt->output_file << endl;
 
                         // create output directory if not exist
                         if (!checkIfDirectory(opt->output_path))
