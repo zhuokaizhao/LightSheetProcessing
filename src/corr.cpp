@@ -454,6 +454,7 @@ void setup_corr(CLI::App &app)
                 // Process the images by pair can call corr_main
                 for (auto& curType : inputImages)
                 {
+                    cout << curType.first << endl;
                     // each pair has struct pair< string, vector<string> >
                     if (curType.first == "max")
                     {
