@@ -470,8 +470,8 @@ void setup_corr(CLI::App &app)
                     // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
                     for (int i = 0; i < curTypeImage.size()-1; i++)
                     {
-                        string input_image_1 = opt->anim_path + curTypeImage[i].second + ".png";
-                        string input_image_2 = opt->anim_path + curTypeImage[i+1].second + ".png";
+                        opt->input_images[0] = opt->anim_path + curTypeImage[i].second + ".png";
+                        opt->input_images[1] = opt->anim_path + curTypeImage[i+1].second + ".png";
 
                         // put these output names in opt
                         opt->output_file = opt->output_path + curTypeImage[i].second + "-" + curType.first + "-corred.png";
@@ -484,7 +484,12 @@ void setup_corr(CLI::App &app)
                         }
 
                         // then we can run corr_main
+                        cout << "Currently processing between " << opt->input_images[0] << " and " << opt->input_images[1] << endl;
+                        auto start = chrono::high_resolution_clock::now();
                         corr_main(*opt);
+                        auto stop = chrono::high_resolution_clock::now(); 
+                        auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                        cout << "Processing took " << duration.count() << " seconds" << endl; 
                     }
                 }
             }

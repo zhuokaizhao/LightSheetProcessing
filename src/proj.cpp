@@ -184,8 +184,8 @@ void setup_proj(CLI::App &app)
                     auto start = chrono::high_resolution_clock::now();
                     Proj(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
-                    auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
-                    cout << "Processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << "Processing " << opt->file_name << " took " << duration.count() << " seconds" << endl; 
                 } 
                 catch(LSPException &e) 
                 {
