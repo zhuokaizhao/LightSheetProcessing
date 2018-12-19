@@ -19,6 +19,8 @@
 #include <chrono> 
 #include <algorithm>
 
+#include <unordered_map>
+
 /* bb[0,0] is located at same position as aa[offx, offy] */
 
 /*
@@ -278,12 +280,14 @@ void setup_corr(CLI::App &app)
                                             "cross correlation");
 
     //sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
-    sub->add_option("-i, --input_path", opt->input_path, "Input path that includes images to be processed")->required();
-    sub->add_option("-o, --output", opt->output_path, "Output file path")->required();
-    sub->add_option("-b, --max", opt->max_offset, "Maximum offset (Default: 10).");
-    sub->add_option("-k, --kdk", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)");
+    sub->add_option("-i, --anim_path", opt->anim_path, "Input path that includes images to be processed")->required();
+    sub->add_option("-o, --output_path", opt->output_path, "Output file path")->required();
+
+    // optional arguments
+    sub->add_option("-b, --max_offset", opt->max_offset, "Maximum offset (Default: 10).");
+    sub->add_option("-k, --kernel", opt->kernel, "Kernel and derivative for resampleing cc output, or box box to skip this step. (Default: box box)");
     sub->add_option("-e, --epsilon", opt->epsilon, "Convergence for sub-resolution optimization. (Default: 0.0001)");
-    sub->add_option("-v, --verbosity", opt->verbosity, "Verbosity level. (Default: 1)");
+    sub->add_option("-v, --verbose", opt->verbose, "Verbosity level. (Default: 0)");
     sub->add_option("-m, --itermax", opt->max_iters, "Maximum number of iterations. (Default: 100)");
 
     sub->set_callback([opt]() 
@@ -291,120 +295,165 @@ void setup_corr(CLI::App &app)
         try 
         {
             // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
-            if (checkIfDirectory(opt->input_path))
+            if (checkIfDirectory(opt->anim_path))
             {
-                cout << "Input path " << opt->input_path << " is valid, start processing" << endl << endl;
-            
-                const vector<string> images = GetDirectoryFiles(opt->input_path);
-                
-                // allValidImageNames stores all the .png image file names
-                vector<string> allValidImageNames;
-                // allImageTypes stores different image types, ex, x-avg.png is avg type, x-max.png is max type
-                vector<string> allImageTypes;
-                // allImageSerialNumber stores the sequence number of an image, ex, 100-avg.png, sequence number is 100
-                vector<int> allImageSerialNumber;
-                
-                // we want to know all the image files in this input_path, which includes all the types
-                int numAllTypeImages = 0;
-                
-                // imagesByType contains the names of images that have the same type, like avg, or max
-                vector<string> allNamesofCurType;
-                vector< pair< string, vector<string> > > imageNamesByType;
+                cout << "Input path " << opt->anim_path << " is valid, start processing" << endl << endl;
 
+                // map that has key to be type, and each key corresponds to a vector of pair of sequence number and string
+                unordered_map< string, vector< pair<int, string> > > inputImages;
+                // we know that there are two types of images, max and avg
+                vector< pair<int, string> > maxImages, avgImages;
+                
+                // number of images of each type
+                int numMaxImages = 0, numAvgImages = 0;
+
+                // get all images from the input anim path
+                const vector<string> images = GetDirectoryFiles(opt->anim_path);
                 for (int i = 0; i < images.size(); i++)
                 {
                     // get the current file
-                    string curImageName = images[i];
+                    string curImage = images[i];
                     
                     // check if input file is a .png file
-                    int end = curImageName.rfind(".png");
+                    int end = curImage.rfind(".png");
                     
                     // if this is indeed an image
-                    if (end && (end == curImageName.length() - 4))
+                    if (end && (end == curImage.length() - 4))
                     {
-                        if (opt->verbosity)
-                            cout << "Current input file " + curImageName + " ends with .png, count this image" << endl;
+                        if (opt->verbose)
+                            cout << "Current input file " + curImage + " ends with .png, count this image" << endl;
                         
-                        numAllTypeImages++;
-                        allValidImageNames.push_back(curImageName);
-
-                        // normally mid = 3 (at least for the above example)
-                        int mid = curImageName.rfind("-");
-                        int start = 0;
-                        int type_length = end - (mid+1);
-                        int sequence_length = mid - start;
+                        // check if the type of current image is max or avg
+                        int isMax = curImage.rfind("max");
+                        int isAvg = curImage.rfind("avg");
                         
-                        string curType = curImageName.substr(mid+1, type_length);
-                        // cout << "CurType is " << curType << endl;
-                        // determine if this curType already in imageNamesByType
-                        // if this type has not appeared
-                        if (find(allImageTypes.begin(), allImageTypes.end(), curType) != allImageTypes.end())
+                        // if this is a max image
+                        if (isMax != string::npos && isAvg == string::npos)
                         {
-                            // push this into the allImageTypes
-                            allImageTypes.push_back(curImageName);
+                            numMaxImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int nameEnd = curImage.rfind("-max");
+                            string curImageName = curImage.substr(0, nameEnd);
 
-                            // now we initialize a vector to store all the names of this type
-                            allNamesofCurType.push_back(curImageName);
-                            // make the pair
-                            pair < string, vector<string> > curPair = make_pair(curType, allNamesofCurType);
-                            // push the pair into imageNamesByType
-                            imageNamesByType.push_back(curPair);
-                        }
-                        // if this type already exists 
-                        else
-                        {
-                            // iterate all the pairs
-                            for (int i = 0; i < imageNamesByType.size(); i++)
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < nameEnd; i++)
                             {
-                                // if they match
-                                if (imageNamesByType[i].first == curType)
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
                                 {
-                                    imageNamesByType[i].second.push_back(curImageName);
+                                    start = i;
+                                    break;
                                 }
                             }
-                        }
-
-                        // store the sequence number 
-                        string sequenceNumString = curImageName.substr(start, sequence_length);
-                        //cout << "CurNumber is " << sequenceNumString << endl;
-                        
-                        if (is_number(sequenceNumString))
-                        {
-                            int sequenceNum = stoi(sequenceNumString);
-                            // we might have same sequence number but different types of images
-                            // like 100-max.png and 100-avg.png, both have sequence number 100
-                            if (find(allImageSerialNumber.begin(), allImageSerialNumber.end(), sequenceNum) != allImageSerialNumber.end())
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
                             {
-                                allImageSerialNumber.push_back(sequenceNum);
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int length = end - start;
+                                sequenceNumString = curImage.substr(start, length);
                             }
 
+                            if (is_number(sequenceNumString))
+                            {
+                                maxImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
                         }
+                        // if this is an avg image
+                        else if (isMax == string::npos && isAvg != string::npos)
+                        {
+                            numAvgImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int nameEnd = curImage.rfind("-avg");
+                            string curImageName = curImage.substr(0, nameEnd);
+
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < nameEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int length = end - start;
+                                sequenceNumString = curImage.substr(start, length);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                avgImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // something wrong with the input images
                         else
-                            cout << sequenceNumString << " is NOT a number" << endl;
+                        {
+                            cout << "Input images are NOT in the correct namings, program stops" << endl;
+                            return;
+                        }
+
+                        // sanity check - numMaxImages should equal to the size of maxImages
+                        if (numMaxImages != maxImages.size())
+                        {
+                            cout << "ERROR when loading max images due to unexpected naming, program stops" << endl;
+                            return;
+                        }
+                        // sanity check - numMaxImages should equal to the size of maxImages
+                        if (numAvgImages != avgImages.size())
+                        {
+                            cout << "ERROR when loading avg images due to unexpected naming, program stops" << endl;
+                            return;
+                        }
                     }
                     // if this file is not an image, do nothing
-                    else {}
+                    else 
+                    {
+                        
+                    }
                 }
 
-                // sort the image serial numbers
-                sort(allImageSerialNumber.begin(), allImageSerialNumber.end(), corrSmallToLarge);
+                // sort maxImages and avgImages in ascending order based on their sequence numbers
+                sort(maxImages.begin(), maxImages.end());
+                sort(avgImages.begin(), avgImages.end());
 
-                for (int i = 0; i < allImageSerialNumber.size(); i++)
-                    cout << allImageSerialNumber[i] << endl;
-                
-                // sanity checks
-                if (allImageTypes.size() != imageNamesByType.size())
-                    cout << endl << "Warnign: Something wrong with the image types processing" << endl;
+                cout << numMaxImages << " max images found in input path " << opt->anim_path << endl << endl;
+                cout << numAvgImages << " avg images found in input path " << opt->anim_path << endl << endl;
 
-
-                for (int i = 0; i < imageNamesByType.size(); i++)
-                {
-                    if (imageNamesByType[i].second.size() != allImageSerialNumber.size())
-                        cout << endl << "Warnings: Something wrong with the image serial number" << endl;
-                }
+                // put the sorted maxImages and avgImages into the map
+                inputImages.insert({"max", maxImages});
+                inputImages.insert({"avg", avgImages}); 
 
                 // Process the images by pair can call corr_main
-                // for each TYPE of images, we want to to correlation between i and i+1, i starts with 1
+                // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
+
                 for (int i = 0; i < imageNamesByType.size(); i++)
                 {
                     // each pair has struct pair< string, vector<string> >
@@ -414,8 +463,8 @@ void setup_corr(CLI::App &app)
                         // we have image pairs until j = length - 2
                         if (j < allImageSerialNumber.size()-1)
                         {
-                            string input_image_1 = opt->input_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + ".png";
-                            string input_image_2 = opt->input_path + to_string(allImageSerialNumber[j+1]) + "-" + imageNamesByType[i].first + ".png";
+                            string input_image_1 = opt->anim_path + to_string(allImageSerialNumber[j]) + "-" + imageNamesByType[i].first + ".png";
+                            string input_image_2 = opt->anim_path + to_string(allImageSerialNumber[j+1]) + "-" + imageNamesByType[i].first + ".png";
                             // double check that these two names exist in curPair
                             if (find(curPair.second.begin(), curPair.second.end(), input_image_1) != curPair.second.end()
                                     && find(curPair.second.begin(), curPair.second.end(), input_image_2) != curPair.second.end())
@@ -466,7 +515,7 @@ std::vector<double> corr_main(corrOptions const &opt)
     Nrrd *nin[2], *nout;
     int bound = opt.max_offset,
         maxIdx[2]={-1,-1},
-        verbose = opt.verbosity,
+        verbose = opt.verbose,
         iterMax = opt.max_iters;
         NrrdKernelSpec *kk[2];
 
