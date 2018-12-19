@@ -5,5 +5,8 @@
 # we don't need to upload the pdf
 *.pdf
 
+# No VS code stuff
+*.DS_Store
+
 # don't want to change the MakeLists since it would be developing locally and running on server
 #*.txt
