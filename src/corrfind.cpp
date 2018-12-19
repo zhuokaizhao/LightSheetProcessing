@@ -47,7 +47,7 @@ void Corrfind::main() {
   std::ofstream outfile(output_name);
 
   corrOptions corr_op;
-  corr_op.verbosity = 0;
+  corr_op.verbose = 0;
   corr_op.kernel = opt.kernels;
   corr_op.max_offset = opt.bound;
   corr_op.epsilon = opt.epsilon;
