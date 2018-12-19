@@ -357,7 +357,7 @@ void setup_corr(CLI::App &app)
                             }
                             else
                             {
-                                int length = end - start;
+                                int length = nameEnd - start;
                                 sequenceNumString = curImage.substr(start, length);
                             }
 
@@ -400,7 +400,7 @@ void setup_corr(CLI::App &app)
                             }
                             else
                             {
-                                int length = end - start;
+                                int length = nameEnd - start;
                                 sequenceNumString = curImage.substr(start, length);
                             }
 
