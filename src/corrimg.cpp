@@ -116,6 +116,14 @@ void setup_corrimg(CLI::App &app)
                 opt->input_file = opt->proj_path + allValidFiles[i].second + ".nrrd";
                 opt->output_file = opt->image_path + allValidFiles[i].second + ".png";
 
+                // test if the output already exists
+                // when output already exists, skip this iteration
+                if (fs::exists(opt->output_file))
+                {
+                    cout << opt->output_file << " exists, continue to next." << endl;
+                    continue;
+                }
+
                 try 
                 {
                     cout << "Currently processing projection file " << opt->input_file << endl;
@@ -123,7 +131,8 @@ void setup_corrimg(CLI::App &app)
                     Corrimg(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                    cout << "Output " << opt->output_file << " has been saved successfully" << endl;
+                    cout << "Processing took " << duration.count() << " seconds" << endl << endl; 
                 } 
                 catch(LSPException &e) 
                 {
@@ -153,6 +162,14 @@ void setup_corrimg(CLI::App &app)
             {
                 cout << "Current input file " + curFile + " ends with .nrrd, process this file" << endl;  
 
+                // test if the output already exists
+                // when output already exists, skip this iteration
+                if (fs::exists(opt->output_file))
+                {
+                    cout << opt->output_file << " exists, program ends." << endl;
+                    return;
+                }
+
                 try
                 {
                     opt->input_file = opt->proj_path;
@@ -161,7 +178,8 @@ void setup_corrimg(CLI::App &app)
                     Corrimg(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                    cout << "Output " << opt->output_file << " has been saved successfully" << endl;
+                    cout << "Processing took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {

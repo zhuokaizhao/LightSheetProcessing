@@ -37,13 +37,15 @@ int main(int argc, char** argv) {
     setup_nhdr_check(app);
     // Remove grid texture from a projection
     setup_untext(app);
+    
     // Measure 2D image correlation over a 2D array of offsets; 
-    // Prints out offset coordinates that maximized the cross correlation
-    setup_corr(app);
     // Construct image to be used for cross correlation
     setup_corrimg(app);
-    // Computes the shift between file specified by <file_number> and <file_number>-1
+    // Computes the shift between file specified by <file_number> and <file_number>-1, calls setup_corr
     setup_corrfind(app);
+    // Prints out offset coordinates that maximized the cross correlation
+    setup_corr(app);
+    
     // Apply the corrections calculated by corrimg and corrfind
     setup_corrnhdr(app);
     // Process dataset with standard format
