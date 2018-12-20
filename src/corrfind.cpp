@@ -55,6 +55,8 @@ void setup_corrfind(CLI::App &app)
                 }
             }
 
+            cout << "Found " << numImages << " in " << opt->image_path << endl;
+
             // update this number with opt
             opt->file_number = numImages;
 
