@@ -14,7 +14,7 @@
 struct corrOptions 
 {
     // input_path includes images to be processed
-    std::string anim_path;
+    std::string image_path;
     std::string output_path;
     std::vector<std::string> input_images;
     int max_offset = 10;

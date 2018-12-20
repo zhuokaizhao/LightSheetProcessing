@@ -14,7 +14,7 @@ struct corrimgOptions {
     // input NRRD projection files path
     std::string proj_path;
     std::string input_file;
-    std::string resampled_proj_path;
+    std::string image_path;
     std::string output_file;
     std::string kernel = "Gauss:10,4";
     int verbose = 0;

@@ -10,13 +10,18 @@
 #include "CLI11.hpp"
 
 
-struct corrfindOptions {
-    std::string file_dir = "reg/";
-    int file_number;
-    std::string output_name = "-corr1.txt";
+struct corrfindOptions 
+{
+    // input path that includes all images i-{XY, XZ, YZ}.png
+    std::string image_path;
+    // output path that saves the optimal alignment
+    std::string align_path;
+    std::string output_name;
+    int file_number = 0;
     std::vector<std::string> kernels = {"c4hexic", "c4hexicd"};
     unsigned int bound = 10;
     double epsilon = 0.00000000000001;
+    int verbose = 0;
 };
 
 void setup_corrfind(CLI::App &app);

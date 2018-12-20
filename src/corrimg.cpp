@@ -19,10 +19,10 @@ namespace fs = boost::filesystem;
 void setup_corrimg(CLI::App &app) 
 {
     auto opt = std::make_shared<corrimgOptions>();
-    auto sub = app.add_subcommand("corrimg", "Resampled NRRD projection files to be used for cross correlation.");
+    auto sub = app.add_subcommand("corrimg", "Process NRRD projection files and generate corresponding images to be used for cross correlation.");
 
     sub->add_option("-i, --proj_path", opt->proj_path, "Input original NRRD projection files path")->required();
-    sub->add_option("-o, --resampled_proj_path", opt->resampled_proj_path, "Ouput resampled NRRD projection files path")->required();
+    sub->add_option("-o, --image_path", opt->image_path, "Ouput path which contains corresponding output images")->required();
     // input and output file names will be determined later
     //sub->add_option("-i, --input", opt->input_file, "Input projection nrrd.");
     //sub->add_option("-o, --output", opt->output_file, "Output file name.")->required();
@@ -36,10 +36,10 @@ void setup_corrimg(CLI::App &app)
         {
             cout << "proj input directory " << opt->proj_path << " is valid" << endl;
             
-            // count the number of files
+            // obtain all the files
             const vector<string> files = GetDirectoryFiles(opt->proj_path);
             
-            // note that the number starts counting at 0
+            // count the number of files, note that the number starts counting at 0
             int projNum = 0;
 
             // vector of pairs which stores each file's extracted serial number and its name 
@@ -114,7 +114,7 @@ void setup_corrimg(CLI::App &app)
             {
                 // get opt ready for corrimg
                 opt->input_file = opt->proj_path + allValidFiles[i].second + ".nrrd";
-                opt->output_file = opt->resampled_proj_path + allValidFiles[i].second + "-resampled.nrrd";
+                opt->output_file = opt->image_path + allValidFiles[i].second + ".png";
 
                 try 
                 {
@@ -156,7 +156,7 @@ void setup_corrimg(CLI::App &app)
                 try
                 {
                     opt->input_file = opt->proj_path;
-                    opt->output_file = opt->resampled_proj_path + curFile.substr(start+1, length) + "-resampled.nrrd";
+                    opt->output_file = opt->image_path + curFile.substr(start+1, length) + ".png";
                     auto start = chrono::high_resolution_clock::now();
                     Corrimg(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
@@ -176,10 +176,10 @@ void setup_corrimg(CLI::App &app)
 Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(airMopNew()) 
 {
     // create folder if it does not exist
-    if (!checkIfDirectory(opt.resampled_proj_path))
+    if (!checkIfDirectory(opt.image_path))
     {
-        boost::filesystem::create_directory(opt.resampled_proj_path);
-        cout << "Resampled projection output path " << opt.resampled_proj_path << " does not exits, but has been created" << endl;
+        boost::filesystem::create_directory(opt.image_path);
+        cout << "Resampled projection output path " << opt.image_path << " does not exits, but has been created" << endl;
     }
 
     // load input file
@@ -189,7 +189,6 @@ Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(airMopNew())
     nrrd2 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
 }
-
 
 Corrimg::~Corrimg()
 {

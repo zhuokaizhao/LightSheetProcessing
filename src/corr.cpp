@@ -280,7 +280,7 @@ void setup_corr(CLI::App &app)
                                             "cross correlation");
 
     //sub->add_option("-i, --ab", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
-    sub->add_option("-i, --anim_path", opt->anim_path, "Input path that includes images to be processed")->required();
+    sub->add_option("-i, --image_path", opt->image_path, "Input path that includes images to be processed")->required();
     sub->add_option("-o, --output_path", opt->output_path, "Output file path")->required();
 
     // optional arguments
@@ -295,9 +295,9 @@ void setup_corr(CLI::App &app)
         try 
         {
             // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
-            if (checkIfDirectory(opt->anim_path))
+            if (checkIfDirectory(opt->image_path))
             {
-                cout << "Input path " << opt->anim_path << " is valid, start processing" << endl << endl;
+                cout << "Input path " << opt->image_path << " is valid, start processing" << endl << endl;
 
                 // map that has key to be type, and each key corresponds to a vector of pair of sequence number and string
                 unordered_map< string, vector< pair<int, string> > > inputImages;
@@ -308,7 +308,7 @@ void setup_corr(CLI::App &app)
                 int numMaxImages = 0, numAvgImages = 0;
 
                 // get all images from the input anim path
-                const vector<string> images = GetDirectoryFiles(opt->anim_path);
+                const vector<string> images = GetDirectoryFiles(opt->image_path);
                 for (int i = 0; i < images.size(); i++)
                 {
                     // get the current file
@@ -318,7 +318,7 @@ void setup_corr(CLI::App &app)
                     int end = curImage.rfind(".png");
                     
                     // if this is indeed an image
-                    if (end && (end == curImage.length() - 4))
+                    if ( (end != string::npos) && (end == curImage.length() - 4) )
                     {
                         if (opt->verbose)
                             cout << "Current input file " + curImage + " ends with .png, count this image" << endl;
@@ -444,8 +444,8 @@ void setup_corr(CLI::App &app)
                 sort(maxImages.begin(), maxImages.end());
                 sort(avgImages.begin(), avgImages.end());
 
-                cout << numMaxImages << " max images found in input path " << opt->anim_path << endl << endl;
-                cout << numAvgImages << " avg images found in input path " << opt->anim_path << endl << endl;
+                cout << numMaxImages << " max images found in input path " << opt->image_path << endl << endl;
+                cout << numAvgImages << " avg images found in input path " << opt->image_path << endl << endl;
 
                 // put the sorted maxImages and avgImages into the map
                 inputImages.insert({"max", maxImages});
@@ -474,8 +474,8 @@ void setup_corr(CLI::App &app)
                         vector<string> directions = {"x", "z"};
                         for (int j = 0; j < directions.size(); j++)
                         {
-                            opt->input_images.push_back(opt->anim_path + curTypeImage[i].second + "-" + curType.first + "-" + directions[j] + ".nrrd");
-                            opt->input_images.push_back(opt->anim_path + curTypeImage[i+1].second + "-" + curType.first + "-" + directions[j] + ".nrrd");
+                            opt->input_images.push_back(opt->image_path + curTypeImage[i].second + "-" + curType.first + "-" + directions[j] + ".nrrd");
+                            opt->input_images.push_back(opt->image_path + curTypeImage[i+1].second + "-" + curType.first + "-" + directions[j] + ".nrrd");
 
                             // put these output names in opt
                             opt->output_file = opt->output_path + curTypeImage[i].second + "-" + curType.first + "-" + directions[j] + "-corr.nrrd";
