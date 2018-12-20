@@ -54,7 +54,7 @@ void setup_anim(CLI::App &app)
             // count the number of files
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
             
-            // note that the number starts counting at 1
+            // note that the number starts counting at 0
             int nhdrNum = 0;
             
             for (int i = 0; i < files.size(); i++) 
