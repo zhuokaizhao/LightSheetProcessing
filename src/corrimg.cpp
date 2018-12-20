@@ -183,7 +183,7 @@ Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(airMopNew())
     }
 
     // load input file
-    nrrd1 = safe_nrrd_load(mop, opt.proj_path);
+    nrrd1 = safe_nrrd_load(mop, opt.input_file);
 
     // create an empty file
     nrrd2 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
