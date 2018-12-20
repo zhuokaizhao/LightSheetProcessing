@@ -470,31 +470,32 @@ void setup_corr(CLI::App &app)
                     // for each TYPE of images, we want to to correlation between i and i+1, i starts with 0
                     for (int i = 0; i < curTypeImage.size()-1; i++)
                     {
-                        opt->input_images.push_back(opt->anim_path + curTypeImage[i].second + "-" + curType.first + ".png");
-                        opt->input_images.push_back(opt->anim_path + curTypeImage[i+1].second + "-" + curType.first + ".png");
-                         
-                        // cout << opt->input_images[0] << endl;
-                        // cout << opt->input_images[1] << endl;
-
-                        // put these output names in opt
-                        opt->output_file = opt->output_path + curTypeImage[i].second + "-" + curType.first + "-corred.png";
-
-                        cout << opt->output_file << endl;
-
-                        // create output directory if not exist
-                        if (!checkIfDirectory(opt->output_path))
+                        // for each direction (x and z)
+                        vector<string> directions = {"x", "z"};
+                        for (int j = 0; j < directions.size(); j++)
                         {
-                            boost::filesystem::create_directory(opt->output_path);
-                            cout << "Output path " << opt->output_path << " does not exits, but has been created" << endl;
-                        }
+                            opt->input_images.push_back(opt->anim_path + curTypeImage[i].second + "-" + curType.first + "-" + directions[j] + ".nrrd");
+                            opt->input_images.push_back(opt->anim_path + curTypeImage[i+1].second + "-" + curType.first + "-" + directions[j] + ".nrrd");
 
-                        // then we can run corr_main
-                        cout << "Currently processing between " << opt->input_images[0] << " and " << opt->input_images[1] << endl;
-                        auto start = chrono::high_resolution_clock::now();
-                        corr_main(*opt);
-                        auto stop = chrono::high_resolution_clock::now(); 
-                        auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                        cout << "Processing took " << duration.count() << " seconds" << endl; 
+                            // put these output names in opt
+                            opt->output_file = opt->output_path + curTypeImage[i].second + "-" + curType.first + "-" + directions[j] + "-corr.nrrd";
+
+                            // create output directory if not exist
+                            if (!checkIfDirectory(opt->output_path))
+                            {
+                                boost::filesystem::create_directory(opt->output_path);
+                                cout << "Output path " << opt->output_path << " does not exits, but has been created" << endl;
+                            }
+
+                            // then we can run corr_main
+                            cout << "Currently processing between " << opt->input_images[0] << " and " << opt->input_images[1] << endl;
+                            auto start = chrono::high_resolution_clock::now();
+                            corr_main(*opt);
+                            auto stop = chrono::high_resolution_clock::now(); 
+                            auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                            cout << "Processing took " << duration.count() << " seconds" << endl; 
+
+                        }
                     }
                 }
             }
@@ -519,10 +520,10 @@ std::vector<double> corr_main(corrOptions const &opt)
 
     Nrrd *nin[2], *nout;
     int bound = opt.max_offset,
-        maxIdx[2]={-1,-1},
+        maxIdx[2] = {-1,-1},
         verbose = opt.verbose,
         iterMax = opt.max_iters;
-        NrrdKernelSpec *kk[2];
+        NrrdKernelSpec * kk[2];
 
     double eps = opt.epsilon;
 
