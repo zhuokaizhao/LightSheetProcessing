@@ -1,11 +1,20 @@
 //
 // Created by Jake Stover on 5/9/18.
+// Modifed by Zhuokai Zhao
 //
 
 #include <teem/nrrd.h>
 #include "corrimg.h"
 #include "util.h"
 #include "skimczi.h"
+
+#include <boost/filesystem.hpp>
+#include <boost/range/iterator_range.hpp>
+
+#include <chrono> 
+
+using namespace std;
+namespace fs = boost::filesystem;
 
 void setup_corrimg(CLI::App &app) 
 {
@@ -166,6 +175,13 @@ void setup_corrimg(CLI::App &app)
 
 Corrimg::Corrimg(corrimgOptions const &opt): opt(opt), mop(airMopNew()) 
 {
+    // create folder if it does not exist
+    if (!checkIfDirectory(opt.resampled_proj_path))
+    {
+        boost::filesystem::create_directory(opt.resampled_proj_path);
+        cout << "Resampled projection output path " << opt.resampled_proj_path << " does not exits, but has been created" << endl;
+    }
+
     // load input file
     nrrd1 = safe_nrrd_load(mop, opt.proj_path);
 
