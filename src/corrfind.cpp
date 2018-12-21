@@ -289,10 +289,10 @@ void Corrfind::main()
     // Process the images by pair can call corrfind
     for (int i = 0; i < opt.inputImages[0].size(); i++)
     {
+        opt.output_name = opt.image_path + GenerateOutName(i, 3, ".txt");
         // when i == 0, there is no i-1 for correlation
         if (i == 0)
         {
-            opt.output_name = opt.image_path + GenerateOutName(i, 3, ".txt");
             ofstream outfile(opt.output_name);
             outfile << std::vector<double>{0, 0, 0, 0} << std::endl;
         }
@@ -332,9 +332,9 @@ void Corrfind::main()
             }
 
             // we take the average of the top 2 xx/yy/zz as the final result
-            double xx = (allShifts[0] + allShifts[2])/2.0;
-            double yy = (allShifts[1] + allShifts[4])/2.0;
-            double zz = (allShifts[3] + allShifts[5])/2.0;
+            double xx = (allShifts[0][0] + allShifts[0[2])/2.0;
+            double yy = (allShifts[1][1] + allShifts[1][4])/2.0;
+            double zz = (allShifts[2][3] + allShifts[2][5])/2.0;
 
             outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, i)} << std::endl;
         }
@@ -342,6 +342,6 @@ void Corrfind::main()
         // close the output file of current time stamp
         outfile.close();
 
-        
+
     }
 }
