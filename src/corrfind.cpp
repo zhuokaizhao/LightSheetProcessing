@@ -111,7 +111,7 @@ void setup_corrfind(CLI::App &app)
                             if (is_number(sequenceNumString))
                             {
                                 xyImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
-                                cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
+                                //cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
                             }
                             else
                             {
@@ -154,7 +154,7 @@ void setup_corrfind(CLI::App &app)
                             if (is_number(sequenceNumString))
                             {
                                 xzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
-                                cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
+                                //cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
                             }
                             else
                             {
@@ -197,7 +197,7 @@ void setup_corrfind(CLI::App &app)
                             if (is_number(sequenceNumString))
                             {
                                 yzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
-                                cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
+                                //cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
                             }
                             else
                             {
@@ -251,13 +251,21 @@ void setup_corrfind(CLI::App &app)
                 sort(xzImages.begin(), xzImages.end());
                 sort(yzImages.begin(), yzImages.end());
 
-                cout << numXYImages << " -projXY images found in input path " << opt->image_path << endl << endl;
-                cout << numXZImages << " -projXZ images found in input path " << opt->image_path << endl << endl;
-                cout << numYZImages << " -projYZ images found in input path " << opt->image_path << endl << endl;
+                cout << endl << numXYImages << " -projXY images found in input path " << opt->image_path << endl;
+                cout << numXZImages << " -projXZ images found in input path " << opt->image_path << endl;
+                cout << numYZImages << " -projYZ images found in input path " << opt->image_path << endl;
 
                 opt->inputImages.push_back(xyImages);
                 opt->inputImages.push_back(xzImages);
                 opt->inputImages.push_back(yzImages);
+
+                for (int i = 0; i < opt->inputImages[0].size(); i++)
+                {
+                    for (int j = 0; j < opt->inputImages.size(); j++)
+                    {
+                        cout << opt->inputImages[j][i].second << endl;
+                    }
+                }
 
                 // run the Corrfind
                 Corrfind(*opt).main();
@@ -324,7 +332,7 @@ void Corrfind::main()
                 opt_corr.input_images.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
 
                 // then we can run corr_main
-                cout << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
+                cout << endl << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
                 auto start = chrono::high_resolution_clock::now();
 
                 std::vector<double> curShift = corr_main(opt_corr);
