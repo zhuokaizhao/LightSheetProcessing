@@ -291,24 +291,24 @@ void Corrfind::main()
     // Process the images by pair can call corrfind
     for (int i = 0; i < opt.inputImages[0].size(); i++)
     {
+        // each time stamp only has one output txt file
         opt.output_file = opt.image_path + GenerateOutName(i, 3, ".txt");
+        ofstream outfile(opt.output_file);
         // when i == 0, there is no i-1 for correlation
         if (i == 0)
         {
-            ofstream outfile(opt.output_name);
             outfile << std::vector<double>{0, 0, 0, 0} << std::endl;
         }
         else
         {
-            // each time stamp only has one output txt file
             // all the correlation results of current time stamp
             vector< vector<double> > allShifts;
 
             // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
             for (int j = 0; j < opt.inputImages.size(); j++)
             {
-                opt.input_images.push_back(opt.image_path + inputImages[j][i].second + ".png");
-                opt.input_images.push_back(opt.image_path + inputImages[j][i-1].second + ".png");
+                opt.input_images.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
+                opt.input_images.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
 
                 // generate opt for corr
                 corrOptions opt_corr;
