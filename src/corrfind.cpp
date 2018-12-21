@@ -282,17 +282,17 @@ Corrfind::~Corrfind()
 void Corrfind::main() 
 {
     // create output directory if not exist
-    if (!checkIfDirectory(opt.output_path))
+    if (!checkIfDirectory(opt.align_path))
     {
-        boost::filesystem::create_directory(opt.output_path);
-        cout << "Output path " << opt.output_path << " does not exits, but has been created" << endl;
+        boost::filesystem::create_directory(opt.align_path);
+        cout << "Output path " << opt.align_path << " does not exits, but has been created" << endl;
     }
 
     // Process the images by pair can call corrfind
     for (int i = 0; i < opt.inputImages[0].size(); i++)
     {
         // each time stamp only has one output txt file
-        opt.output_file = opt.image_path + GenerateOutName(i, 3, ".txt");
+        opt.output_file = opt.align_path + GenerateOutName(i, 3, ".txt");
         ofstream outfile(opt.output_file);
         // when i == 0, there is no i-1 for correlation
         if (i == 0)
