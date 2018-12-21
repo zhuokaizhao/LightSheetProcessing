@@ -259,13 +259,13 @@ void setup_corrfind(CLI::App &app)
                 opt->inputImages.push_back(xzImages);
                 opt->inputImages.push_back(yzImages);
 
-                for (int i = 0; i < opt->inputImages[0].size(); i++)
-                {
-                    for (int j = 0; j < opt->inputImages.size(); j++)
-                    {
-                        cout << opt->inputImages[j][i].second << endl;
-                    }
-                }
+                // for (int i = 0; i < opt->inputImages[0].size(); i++)
+                // {
+                //     for (int j = 0; j < opt->inputImages.size(); j++)
+                //     {
+                //         cout << opt->inputImages[j][i].second << endl;
+                //     }
+                // }
 
                 // run the Corrfind
                 Corrfind(*opt).main();
@@ -328,8 +328,10 @@ void Corrfind::main()
             // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
             for (int j = 0; j < opt.inputImages.size(); j++)
             {
-                opt_corr.input_images.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
-                opt_corr.input_images.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
+                vector<string> curInputImages;
+                curInputImages.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
+                curInputImages.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
+                opt_corr.input_images = curInputImages;
 
                 // then we can run corr_main
                 cout << endl << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
