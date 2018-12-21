@@ -17,6 +17,7 @@
 #include <chrono> 
 
 using namespace std;
+namespace fs = boost::filesystem;
 
 void setup_corrfind(CLI::App &app) 
 {
@@ -312,6 +313,13 @@ void Corrfind::main()
         opt_corr.kernel = opt.kernel;
         opt_corr.max_offset = opt.bound;
         opt_corr.epsilon = opt.epsilon;
+
+        // we want to check if current potential output file already exists, if so, skip
+        if (fs::exists(opt_corr.output_file))
+        {
+            cout << opt_corr.output_file << " exists, continue to next." << endl << endl;
+            continue;
+        }
 
         // each time stamp only has one output txt file
         ofstream outfile(opt_corr.output_file);
