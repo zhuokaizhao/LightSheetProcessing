@@ -30,7 +30,7 @@ void setup_corrfind(CLI::App &app)
     //sub->add_option("-o, --output", opt->output_name, "Base name to use when saving out the optimal alignemnt of images. (Default: -corr1.txt)");
     
     // optional arguments
-    sub->add_option("-k, --kernels", opt->kernels, "Kernels to pass to lsp corr. (Default: c4hexic c4hexicd)")->expected(2);
+    sub->add_option("-k, --kernels", opt->kernel, "Kernels to pass to lsp corr. (Default: c4hexic c4hexicd)")->expected(2);
     sub->add_option("-b, --bound", opt->bound, "Max offset to be passed to lsp corr. (Default: 10)");
     sub->add_option("-e, --epsilon", opt->epsilon, "Epsilon to be passed to lsp corr. (Default: 0.00000000000001)");
     sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
@@ -282,16 +282,16 @@ Corrfind::~Corrfind()
 void Corrfind::main() 
 {
     // create output directory if not exist
-    if (!checkIfDirectory(opt->output_path))
+    if (!checkIfDirectory(opt.output_path))
     {
-        boost::filesystem::create_directory(opt->output_path);
-        cout << "Output path " << opt->output_path << " does not exits, but has been created" << endl;
+        boost::filesystem::create_directory(opt.output_path);
+        cout << "Output path " << opt.output_path << " does not exits, but has been created" << endl;
     }
 
     // Process the images by pair can call corrfind
     for (int i = 0; i < opt.inputImages[0].size(); i++)
     {
-        opt.output_name = opt.image_path + GenerateOutName(i, 3, ".txt");
+        opt.output_file = opt.image_path + GenerateOutName(i, 3, ".txt");
         // when i == 0, there is no i-1 for correlation
         if (i == 0)
         {
@@ -303,10 +303,9 @@ void Corrfind::main()
             // each time stamp only has one output txt file
             // all the correlation results of current time stamp
             vector< vector<double> > allShifts;
-            opt.output_file = opt.output_path + GenerateOutName(i, 3, ".txt");
 
             // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
-            for (int j = 0; j < inputImages.size(); j++)
+            for (int j = 0; j < opt.inputImages.size(); j++)
             {
                 opt.input_images.push_back(opt.image_path + inputImages[j][i].second + ".png");
                 opt.input_images.push_back(opt.image_path + inputImages[j][i-1].second + ".png");
