@@ -14,6 +14,8 @@
 
 #include "corrfind.h"
 
+#include <chrono> 
+
 using namespace std;
 
 void setup_corrfind(CLI::App &app) 
@@ -332,7 +334,7 @@ void Corrfind::main()
             }
 
             // we take the average of the top 2 xx/yy/zz as the final result
-            double xx = (allShifts[0][0] + allShifts[0[2])/2.0;
+            double xx = (allShifts[0][0] + allShifts[0][2])/2.0;
             double yy = (allShifts[1][1] + allShifts[1][4])/2.0;
             double zz = (allShifts[2][3] + allShifts[2][5])/2.0;
 
