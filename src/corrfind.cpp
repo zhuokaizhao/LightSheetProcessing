@@ -207,40 +207,40 @@ void setup_corrfind(CLI::App &app)
                             cout << "Input images are NOT in the correct namings, program stops" << endl;
                             return;
                         }
-
-                        // sanity check - numXYImages should equal to the size of xyImages
-                        if (numXYImages != xyImages.size())
-                        {
-                            cout << "ERROR when loading xxx-projXY images due to unexpected naming, program stops" << endl;
-                            return;
-                        }
-                        // sanity check - numXZImages should equal to the size of xzImages
-                        if (numXZImages != xzImages.size())
-                        {
-                            cout << "ERROR when loading xxx-projXZ images due to unexpected naming, program stops" << endl;
-                            return;
-                        }
-                        // sanity check - numYZImages should equal to the size of yzImages
-                        if (numYZImages != yzImages.size())
-                        {
-                            cout << "ERROR when loading xxx-projYZ images due to unexpected naming, program stops" << endl;
-                            return;
-                        }
-                        // sanity check - we need to have the same number of XY, XZ and YZ images
-                        if ( (numXYImages != numXZImages) || (numXYImages != numYZImages) || (numXZImages != numYZImages) )
-                        {
-                            cout << "ERROR -projXY, -projXZ, and -projYZ should have the same number of images, program stops" << endl;
-                            cout << "numXYImages = " << numXYImages << endl;
-                            cout << "numXZImages = " << numXZImages << endl;
-                            cout << "numYZImages = " << numYZImages << endl;
-                            return;
-                        }
                     }
                     // if this file is not an image, do nothing
                     else 
                     {
                         
                     }
+                }
+
+                // sanity check - numXYImages should equal to the size of xyImages
+                if (numXYImages != xyImages.size())
+                {
+                    cout << "ERROR when loading xxx-projXY images due to unexpected naming, program stops" << endl;
+                    return;
+                }
+                // sanity check - numXZImages should equal to the size of xzImages
+                if (numXZImages != xzImages.size())
+                {
+                    cout << "ERROR when loading xxx-projXZ images due to unexpected naming, program stops" << endl;
+                    return;
+                }
+                // sanity check - numYZImages should equal to the size of yzImages
+                if (numYZImages != yzImages.size())
+                {
+                    cout << "ERROR when loading xxx-projYZ images due to unexpected naming, program stops" << endl;
+                    return;
+                }
+                // sanity check - we need to have the same number of XY, XZ and YZ images
+                if ( (numXYImages != numXZImages) || (numXYImages != numYZImages) || (numXZImages != numYZImages) )
+                {
+                    cout << "ERROR -projXY, -projXZ, and -projYZ should have the same number of images, program stops" << endl;
+                    cout << "numXYImages = " << numXYImages << endl;
+                    cout << "numXZImages = " << numXZImages << endl;
+                    cout << "numYZImages = " << numYZImages << endl;
+                    return;
                 }
 
                 // sort xyImages, xzImages and yzImages in ascending order based on their sequence numbers
