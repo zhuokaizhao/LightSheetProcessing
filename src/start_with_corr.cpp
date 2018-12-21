@@ -1,4 +1,4 @@
-// The program runs skim, proj and anim in LSP
+// The program runs skim, proj, corrimg, corrfind and anim in LSP
 // Created by Zhuokai Zhao
 // Contact: zhuokai@uchicago.edu
 
@@ -86,8 +86,8 @@ namespace fs = boost::filesystem;
 
 void start_standard_process(CLI::App &app) 
 {
-    auto opt = make_shared<startOptions>();
-    auto sub = app.add_subcommand("start", "Standard process that includes skim, proj and anim. Limited options though.");
+    auto opt = make_shared<startwithcorrOptions>();
+    auto sub = app.add_subcommand("startwithcorr", "Process that extends start with corrrelation computations to prevent drifts. Limited options though.");
 
     // czi path
     sub->add_option("-c, --czi_path", opt->czi_path, "Path for all the czi files")->required();
@@ -208,7 +208,7 @@ void start_standard_process(CLI::App &app)
                     opt->nhdr_out_name = nhdrFileName;
                     opt->xml_out_name = xmlFileName;
 
-                    // convert startOptions to skimOptions
+                    // convert startwithcorrOptions to skimOptions
                     auto opt_skim = std::make_shared<skimOptions>();
                     opt_skim->czi_path = opt->czi_path;
                     opt_skim->nhdr_path = opt->nhdr_path;
@@ -288,7 +288,7 @@ void start_standard_process(CLI::App &app)
                 opt->nhdr_out_name = nhdrFileName;
                 opt->xml_out_name = xmlFileName;
                 
-                // convert startOptions to skimOptions
+                // convert startwithcorrOptions to skimOptions
                 auto opt_skim = std::make_shared<skimOptions>();
                 opt_skim->czi_path = opt->czi_path;
                 opt_skim->nhdr_path = opt->nhdr_path;
@@ -671,12 +671,14 @@ void start_standard_process(CLI::App &app)
         }
         
         
+        
         // total running time for all
         auto total_stop = chrono::high_resolution_clock::now(); 
         auto total_duration = chrono::duration_cast<chrono::seconds>(total_stop - total_start); 
         cout << endl << "Total processing took " << total_duration.count() << " seconds" << endl << endl;
         
     });
+
 }
 
 
