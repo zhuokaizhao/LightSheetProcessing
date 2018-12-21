@@ -16,9 +16,11 @@ struct corrfindOptions
     std::string image_path;
     // output path that saves the optimal alignment
     std::string align_path;
-    std::string output_name;
-    int file_number = 0;
-    std::vector<std::string> kernels = {"c4hexic", "c4hexicd"};
+    std::string output_file;
+    std::vector<std::string> input_images;
+    vector< vector< pair<int, string> > > inputImages;
+    int file_number;
+    std::vector<std::string> kernel = {"c4hexic", "c4hexicd"};
     unsigned int bound = 10;
     double epsilon = 0.00000000000001;
     int verbose = 0;

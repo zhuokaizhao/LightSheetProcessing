@@ -14,6 +14,8 @@
 
 #include "corrfind.h"
 
+using namespace std;
+
 void setup_corrfind(CLI::App &app) 
 {
     auto opt = std::make_shared<corrfindOptions>();
@@ -33,41 +35,234 @@ void setup_corrfind(CLI::App &app)
 
     sub->set_callback([opt]() 
     {
-        // if input is a file path
-        if (checkIfDirectory(opt->image_path))
+        try 
         {
-            cout << "Input path " << opt->image_path << " is valid, start processing" << endl << endl;
-            // count the number of images
-            const vector<string> images = GetDirectoryFiles(opt->image_path);
-            int numImages = 0;
-            for (int i = 0; i < images.size(); i++)
+            // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
+            if (checkIfDirectory(opt->image_path))
             {
-                // get the current file
-                string curImage = images[i];
+                cout << "Input path " << opt->image_path << " is valid, start processing" << endl << endl;
+
+                // map that has key to be type (XY, XZ, YZ), and each key corresponds to a vector of pair of sequence number and string
+                // unordered_map< string, vector< pair<int, string> > > inputImages;
+                // vector< vector< pair<int, string> > > inputImages;
+                // we know that there are two types of images, max and avg
+                vector< pair<int, string> > xyImages, xzImages, yzImages;
                 
-                // check if input file is a .png file
-                int end = curImage.rfind(".png");
-                
-                // if this is indeed an image
-                if ( (end != string::npos) && (end == curImage.length() - 4) )
+                // number of images of each type
+                int numXYImages = 0, numXZImages = 0, numYZImages = 0;
+
+                // get all images from the input anim path
+                const vector<string> images = GetDirectoryFiles(opt->image_path);
+                for (int i = 0; i < images.size(); i++)
                 {
-                    numImages++;
+                    // get the current file
+                    string curImage = images[i];
+                    
+                    // check if input file is a .png file
+                    int end = curImage.rfind(".png");
+                    string curImageName = curImage.substr(0, end);
+                    
+                    // if this is indeed an image
+                    if ( (end != string::npos) && (end == curImage.length() - 4) )
+                    {
+                        if (opt->verbose)
+                            cout << "Current input file " + curImage + " ends with .png, count this image" << endl;
+                        
+                        // check if the type of current image is max or avg
+                        int isXY = curImage.rfind("XY");
+                        int isXZ = curImage.rfind("XZ");
+                        int isYZ = curImage.rfind("YZ");
+                        
+                        // if this is a XY image
+                        if ( (isXY != string::npos) && (isXZ == string::npos) && (isYZ == string::npos) )
+                        {
+                            numXYImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int sequenceEnd = curImage.rfind("-projXY");
+                            
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < sequenceEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int sequenceLength = sequenceEnd - start;
+                                sequenceNumString = curImage.substr(start, sequenceLength);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                xyImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // if this is a XZ image
+                        else if ( (isXY == string::npos) && (isXZ != string::npos) && (isYZ == string::npos) )
+                        {
+                            numXZImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int sequenceEnd = curImage.rfind("-projXZ");
+
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < sequenceEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int sequenceLength = sequenceEnd - start;
+                                sequenceNumString = curImage.substr(start, sequenceLength);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                xzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // if this is a YZ image
+                        else if ( (isXY == string::npos) && (isXZ == string::npos) && (isYZ != string::npos) )
+                        {
+                            numYZImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int sequenceEnd = curImage.rfind("-projYZ");
+
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < sequenceEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int sequenceLength = sequenceEnd - start;
+                                sequenceNumString = curImage.substr(start, sequenceLength);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                yzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // something wrong with the input images' namings
+                        else
+                        {
+                            cout << "Input images are NOT in the correct namings, program stops" << endl;
+                            return;
+                        }
+
+                        // sanity check - numXYImages should equal to the size of xyImages
+                        if (numXYImages != xyImages.size())
+                        {
+                            cout << "ERROR when loading xxx-projXY images due to unexpected naming, program stops" << endl;
+                            return;
+                        }
+                        // sanity check - numXZImages should equal to the size of xzImages
+                        if (numXZImages != xzImages.size())
+                        {
+                            cout << "ERROR when loading xxx-projXZ images due to unexpected naming, program stops" << endl;
+                            return;
+                        }
+                        // sanity check - numYZImages should equal to the size of yzImages
+                        if (numYZImages != yzImages.size())
+                        {
+                            cout << "ERROR when loading xxx-projYZ images due to unexpected naming, program stops" << endl;
+                            return;
+                        }
+                        // sanity check - we need to have the same number of XY, XZ and YZ images
+                        if ( (numXYImages != numXZImages) || (numXYImages != numYZImages) || (numXZImages != numYZImages) )
+                        {
+                            cout << "ERROR -projXY, -projXZ, and -projYZ should have the same number of images, program stops" << endl;
+                            return;
+                        }
+                    }
+                    // if this file is not an image, do nothing
+                    else 
+                    {
+                        
+                    }
                 }
-            }
 
-            cout << "Found " << numImages << " in " << opt->image_path << endl;
+                // sort xyImages, xzImages and yzImages in ascending order based on their sequence numbers
+                sort(xyImages.begin(), xyImages.end());
+                sort(xzImages.begin(), xzImages.end());
+                sort(yzImages.begin(), yzImages.end());
 
-            // update this number with opt
-            opt->file_number = numImages;
+                cout << numXYImages << " -projXY images found in input path " << opt->image_path << endl << endl;
+                cout << numXZImages << " -projXZ images found in input path " << opt->image_path << endl << endl;
+                cout << numYZImages << " -projYZ images found in input path " << opt->image_path << endl << endl;
 
-            try 
-            {
+                opt->inputImages.push_back(xyImages);
+                opt->inputImages.push_back(xzImages);
+                opt->inputImages.push_back(yzImages);
+
+                // run the Corrfind
                 Corrfind(*opt).main();
-            } 
-            catch(LSPException &e) 
-            {
-                std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
             }
+            else
+            {
+                cout << "Input path is invalid, program exits" << endl;
+            }
+            
+        } 
+        catch(LSPException &e) 
+        {
+            std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
         }
     });
 }
@@ -84,35 +279,69 @@ Corrfind::~Corrfind()
 
 void Corrfind::main() 
 {
-    //std::string output_name = opt.image_path + zero_pad(opt.file_number, 3) + opt.output_name;
-    std::ofstream outfile(opt.output_name);
-
-    // if only one file is passed
-    if (opt.file_number == 0 || opt.file_number == 1) 
+    // create output directory if not exist
+    if (!checkIfDirectory(opt->output_path))
     {
-        outfile << std::vector<double>{0, 0, 0, 0} << std::endl;
-    } 
-    else
-    {
-        // generate opt for corr
-        corrOptions opt_corr;
-        opt_corr.image_path = opt.image_path;
-        opt_corr.output_path = opt.align_path;
-        opt_corr.verbose = opt.verbose;
-        opt_corr.kernel = opt.kernels;
-        opt_corr.max_offset = opt.bound;
-        opt_corr.epsilon = opt.epsilon;
-
-        // output
-        std::vector<double> shifts = corr_main(opt_corr);
-
-        // we take the average of the top 2 xx/yy/zz as the final result
-        double xx = (shifts[0] + shifts[2])/2.0;
-        double yy = (shifts[1] + shifts[4])/2.0;
-        double zz = (shifts[3] + shifts[5])/2.0;
-
-        outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, opt.file_number)} << std::endl;
+        boost::filesystem::create_directory(opt->output_path);
+        cout << "Output path " << opt->output_path << " does not exits, but has been created" << endl;
     }
 
-    outfile.close();
+    // Process the images by pair can call corrfind
+    for (int i = 0; i < opt.inputImages[0].size(); i++)
+    {
+        // when i == 0, there is no i-1 for correlation
+        if (i == 0)
+        {
+            opt.output_name = opt.image_path + GenerateOutName(i, 3, ".txt");
+            ofstream outfile(opt.output_name);
+            outfile << std::vector<double>{0, 0, 0, 0} << std::endl;
+        }
+        else
+        {
+            // each time stamp only has one output txt file
+            // all the correlation results of current time stamp
+            vector< vector<double> > allShifts;
+            opt->output_file = opt->output_path + GenerateOutName(i, 3, ".txt");
+
+            // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
+            for (int j = 0; j < inputImages.size(); j++)
+            {
+                opt->input_images.push_back(opt->image_path + inputImages[j][i].second + ".png");
+                opt->input_images.push_back(opt->image_path + inputImages[j][i-1].second + ".png");
+
+                // generate opt for corr
+                corrOptions opt_corr;
+                opt_corr.input_images = opt.input_images;
+                opt_corr.output_file = opt.output_file;
+                opt_corr.verbose = opt.verbose;
+                opt_corr.kernel = opt.kernel;
+                opt_corr.max_offset = opt.bound;
+                opt_corr.epsilon = opt.epsilon;
+
+                // then we can run corr_main
+                cout << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
+                auto start = chrono::high_resolution_clock::now();
+
+                std::vector<double> curShift = corr_main(opt_corr);
+                allShifts.push_back(curShift);
+
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                cout << "Processing took " << duration.count() << " seconds" << endl; 
+                
+            }
+
+            // we take the average of the top 2 xx/yy/zz as the final result
+            double xx = (allShifts[0] + allShifts[2])/2.0;
+            double yy = (allShifts[1] + allShifts[4])/2.0;
+            double zz = (allShifts[3] + allShifts[5])/2.0;
+
+            outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, i)} << std::endl;
+        }
+
+        // close the output file of current time stamp
+        outfile.close();
+
+        
+    }
 }
