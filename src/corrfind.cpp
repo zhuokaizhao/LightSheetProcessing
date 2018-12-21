@@ -62,11 +62,11 @@ void setup_corrfind(CLI::App &app)
                     
                     // check if input file is a .png file
                     int end = curImage.rfind(".png");
-                    string curImageName = curImage.substr(0, end);
                     
                     // if this is indeed an image
                     if ( (end != string::npos) && (end == curImage.length() - 4) )
                     {
+                        string curImageName = curImage.substr(0, end);
                         if (opt->verbose)
                             cout << "Current input file " + curImage + " ends with .png, count this image" << endl;
                         
@@ -111,6 +111,7 @@ void setup_corrfind(CLI::App &app)
                             if (is_number(sequenceNumString))
                             {
                                 xyImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                                cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
                             }
                             else
                             {
@@ -153,6 +154,7 @@ void setup_corrfind(CLI::App &app)
                             if (is_number(sequenceNumString))
                             {
                                 xzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                                cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
                             }
                             else
                             {
@@ -195,6 +197,7 @@ void setup_corrfind(CLI::App &app)
                             if (is_number(sequenceNumString))
                             {
                                 yzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                                cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
                             }
                             else
                             {
