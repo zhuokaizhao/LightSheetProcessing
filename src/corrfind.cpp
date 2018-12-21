@@ -291,9 +291,16 @@ void Corrfind::main()
     // Process the images by pair can call corrfind
     for (int i = 0; i < opt.inputImages[0].size(); i++)
     {
+        // generate opt for corr
+        corrOptions opt_corr;
+        opt_corr.output_file = opt.align_path + GenerateOutName(i, 3, ".txt");
+        opt_corr.verbose = opt.verbose;
+        opt_corr.kernel = opt.kernel;
+        opt_corr.max_offset = opt.bound;
+        opt_corr.epsilon = opt.epsilon;
+
         // each time stamp only has one output txt file
-        opt.output_file = opt.align_path + GenerateOutName(i, 3, ".txt");
-        ofstream outfile(opt.output_file);
+        ofstream outfile(opt_corr.output_file);
         // when i == 0, there is no i-1 for correlation
         if (i == 0)
         {
@@ -307,17 +314,8 @@ void Corrfind::main()
             // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
             for (int j = 0; j < opt.inputImages.size(); j++)
             {
-                opt.input_images.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
-                opt.input_images.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
-
-                // generate opt for corr
-                corrOptions opt_corr;
-                opt_corr.input_images = opt.input_images;
-                opt_corr.output_file = opt.output_file;
-                opt_corr.verbose = opt.verbose;
-                opt_corr.kernel = opt.kernel;
-                opt_corr.max_offset = opt.bound;
-                opt_corr.epsilon = opt.epsilon;
+                opt_corr.input_images.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
+                opt_corr.input_images.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
 
                 // then we can run corr_main
                 cout << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;

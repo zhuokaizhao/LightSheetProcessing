@@ -17,7 +17,7 @@ struct corrOptions
     std::vector<std::string> input_images;
     int max_offset = 10;
     std::vector<std::string> kernel = {"box", "box"};    // This should contain kernel and derivative
-    std::string output_file = "";
+    std::string output_file;
     double epsilon = 0.0001;
     int verbose = 0;
     int max_iters = 100;
