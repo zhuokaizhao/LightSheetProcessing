@@ -303,13 +303,13 @@ void Corrfind::main()
             // each time stamp only has one output txt file
             // all the correlation results of current time stamp
             vector< vector<double> > allShifts;
-            opt->output_file = opt->output_path + GenerateOutName(i, 3, ".txt");
+            opt.output_file = opt.output_path + GenerateOutName(i, 3, ".txt");
 
             // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
             for (int j = 0; j < inputImages.size(); j++)
             {
-                opt->input_images.push_back(opt->image_path + inputImages[j][i].second + ".png");
-                opt->input_images.push_back(opt->image_path + inputImages[j][i-1].second + ".png");
+                opt.input_images.push_back(opt.image_path + inputImages[j][i].second + ".png");
+                opt.input_images.push_back(opt.image_path + inputImages[j][i-1].second + ".png");
 
                 // generate opt for corr
                 corrOptions opt_corr;
