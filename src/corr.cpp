@@ -280,7 +280,7 @@ void setup_corr(CLI::App &app)
                                             "cross correlation");
 
     sub->add_option("-i, --input_images", opt->input_images, "Two input images A and B to correlate.")->expected(2)->required();
-    sub->add_option("-o, --output_file_name", opt->output_name, "Correlation result between two input images")->required();
+    sub->add_option("-o, --output_file_name", opt->output_file, "Correlation result file name between two input images")->required();
 
     // optional arguments
     sub->add_option("-b, --max_offset", opt->max_offset, "Maximum offset (Default: 10).");
