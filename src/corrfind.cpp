@@ -230,6 +230,9 @@ void setup_corrfind(CLI::App &app)
                         if ( (numXYImages != numXZImages) || (numXYImages != numYZImages) || (numXZImages != numYZImages) )
                         {
                             cout << "ERROR -projXY, -projXZ, and -projYZ should have the same number of images, program stops" << endl;
+                            cout << "numXYImages = " << numXYImages << endl;
+                            cout << "numXZImages = " << numXZImages << endl;
+                            cout << "numYZImages = " << numYZImages << endl;
                             return;
                         }
                     }
