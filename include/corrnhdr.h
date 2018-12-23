@@ -10,8 +10,11 @@
 #include "CLI11.hpp"
 
 struct corrnhdrOptions {
-	std::string file_dir = ".";
-    int num;
+	// std::string file_dir = ".";
+    std::string nhdr_path;
+    std::string corr_path;
+    std::string new_nhdr_path;
+    // int num;
 };
 
 void setup_corrnhdr(CLI::App &app);
@@ -30,7 +33,8 @@ private:
 
 	corrnhdrOptions const opt;
 	airArray* mop;
-	std::string file_dir;
+	// std::string file_dir;
+    std::string nhdr_path, corr_path, new_nhdr_path;
 
 	Nrrd *offset_origin, *offset_median, *offset_smooth;
 };
