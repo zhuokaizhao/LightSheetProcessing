@@ -57,7 +57,7 @@ void start_standard_process(CLI::App &app);
 
 class Start {
 public:
-    Start(startOptions const &opt = startOptions());
+    Start(startwithcorrOptions const &opt = startwithcorrOptions());
     ~Start();
 
     void main();
