@@ -165,7 +165,7 @@ void setup_skim(CLI::App &app)
         
             // get all the files in this path
             const vector<string> files = GetDirectoryFiles(opt->czi_path);
-            // vector of pairs which stores each file's name and its extracted serial number
+            // vector of pairs which stores each file's extracted serial number and its name
             vector< pair<int, string> > allValidFiles;
             
             // count the number of valid .czi files first

@@ -41,7 +41,7 @@ void setup_corrnhdr(CLI::App &app)
 }
 
 
-Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr_path(opt.nhdr_path), corr_path(opt.corr_path), new_nhdr_path(opt.new_nhdr_path)
+Corrnhdr::Corrnhdr(corrnhdrOptions &opt): opt(opt), mop(airMopNew()), nhdr_path(opt.nhdr_path), corr_path(opt.corr_path), new_nhdr_path(opt.new_nhdr_path)
 {
     // check if nhdr_path exists
     if(!exists(nhdr_path))
@@ -76,57 +76,143 @@ Corrnhdr::~Corrnhdr()
 
 void Corrnhdr::compute_offsets()
 {
-    std::vector<std::vector<double>> shifts,  //offset from previous frame
-                                    offsets; //offset from first frame
+    //offset from previous frame
+    vector< vector<double> > shifts;
+
+    //offset from first frame
+    vector< vector<double> >offsets; 
 
     offsets.push_back({0, 0, 0});
 
     // read shifts and offsets from input file
-    
-    for (auto i = 0; i <= opt.num; i++) 
+    // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
+    if (checkIfDirectory(opt.corr_path))
     {
-        path file = file_dir + "/reg/" + zero_pad(i, 3) + "-corr1.txt";
-        
-        if (exists(file)) 
-        {
-            std::ifstream inFile;
-            inFile.open(file.string());
+        cout << "Input correlation path " << opt.corr_path << " is valid, start processing" << endl << endl;
 
-            std::vector<double> tmp, tmp2;
-            
-            for (auto j: {0,1,2}) 
+        const vector<string> files = GetDirectoryFiles(opt.corr_path);
+
+        // vector of pairs which stores each txt file's extracted serial number and its name
+        vector< pair<int, string> > allValidFiles;
+
+        // count the number of .txt files
+        int numCorr = 0;
+
+        for (int i = 0; i < files.size(); i++)
+        {
+            // check if input file is a .txt file
+            string curFile = files[i];
+            int end = curFile.rfind(".txt");
+
+            // if this is indeed a valid .txt file
+            if ( (end != string::npos) && (end == curFile.length() - 4) )
             {
-                double x;
-                inFile >> x;
-                tmp.push_back(x);
-                tmp2.push_back(offsets[offsets.size()-1][j] + x);
+                numCorr++;
+
+                // now we need to understand the sequence number of this file
+                int start = -1;
+                
+                // current file name without type
+                string curFileName = curFile.substr(0, end);
+
+                // The sequenceNumString will have zero padding, like 001
+                for (int i = 0; i < end; i++)
+                {
+                    // we get the first position that zero padding ends
+                    if (curFile[i] != '0')
+                    {
+                        start = i;
+                        break;
+                    }
+                }
+    
+                string sequenceNumString;
+                // for the case that it is just 000 which represents the initial time stamp
+                if (start == -1)
+                {
+                    sequenceNumString = "0";
+                }
+                else
+                {
+                    int length = end - start;
+                    sequenceNumString = curFile.substr(start, length);
+                }
+
+                if (is_number(sequenceNumString))
+                {
+                    allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                }
+                else
+                {
+                    cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                }
             }
 
-            shifts.push_back(tmp);
-            offsets.push_back(tmp2);
-
-            inFile.close();
-        } 
-        else 
-        {
-            cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
         }
-    }
-    offsets.erase(offsets.begin());   //Remove first entry of {0,0,0}
 
-    //change 2d vector to 2d array
-    double *data = AIR_CALLOC(3*offsets.size(), double);
-    airMopAdd(mop, data, airFree, airMopAlways);
-    for(auto i=0; i<3*offsets.size(); ++i)
-    {
-        data[i] = offsets[i/3][i%3];
-    }
+        // after finding all the files, sort the allFileSerialNumber in ascending order
+        sort(allValidFiles.begin(), allValidFiles.end());
+
+        cout << numCorr << " .txt correlation results found in input path " << opt.corr_path << endl << endl;
+
+        // sanity check
+        if (numCorr != allValidFiles.size())
+        {
+            cout << "ERROR: Not all valid files have been recorded" << endl;
+        }
+
+        // put this numCorr with opt
+        opt.num = numCorr;
+
+        for (auto i = 0; i < opt.num; i++) 
+        {
+            path file = allValidFiles[i].second + ".txt";
+            
+            // doubel check
+            if (exists(file)) 
+            {
+                std::ifstream inFile;
+                inFile.open(file.string());
+
+                std::vector<double> tmp, tmp2;
+                
+                for (auto j: {0,1,2}) 
+                {
+                    double x;
+                    inFile >> x;
+                    tmp.push_back(x);
+                    tmp2.push_back(offsets[offsets.size()-1][j] + x);
+                }
+
+                shifts.push_back(tmp);
+                offsets.push_back(tmp2);
+
+                inFile.close();
+            } 
+            else 
+            {
+                cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
+            }
+        }
+
+        //Remove first entry of {0,0,0}
+        offsets.erase(offsets.begin());   
+
+        //change 2d vector to 2d array
+        double *data = AIR_CALLOC(3*offsets.size(), double);
+        airMopAdd(mop, data, airFree, airMopAlways);
         
+        for(auto i = 0; i < 3*offsets.size(); i++)
+        {
+            data[i] = offsets[i/3][i%3];
+        }
+            
 
-    //save offsets into nrrd file
-    nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, offsets.size()) ||
-                    nrrdSave((file_dir+"/reg/offsets.nrrd").c_str(), offset_origin, NULL),
-                mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
+        //save offsets into nrrd file
+        nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, offsets.size()) ||
+                    nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
+                    mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
+    }
 }
 
 void Corrnhdr::median_filtering()
@@ -186,7 +272,7 @@ void Corrnhdr::smooth()
                     nrrdResampleSamplesSet(rsmc1, 1, offset_median->axis[1].size) ||
                     nrrdResampleRangeFullSet(rsmc1, 1) ||
                     nrrdResampleExecute(rsmc1, offset_blur),
-                mop, "Error resampling median nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
+                    mop, "Error resampling median nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
     
     // create helper nrrds array to help fix the boundary
     Nrrd *base = safe_nrrd_new(mop, (airMopper)nrrdNix);
@@ -212,7 +298,7 @@ void Corrnhdr::smooth()
                     nrrdResampleSamplesSet(rsmc2, 1, base->axis[1].size) ||
                     nrrdResampleRangeFullSet(rsmc2, 1) ||
                     nrrdResampleExecute(rsmc2, offset_bound),
-                mop, "Error resampling bound nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
+                    mop, "Error resampling bound nrrd:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
 
     //  nrrd_checker(nrrdQuantize(offset_bound2, offset_bound1, NULL, 32) ||
     //                nrrdUnquantize(offset_bound3, offset_bound2, nrrdTypeFloat),
@@ -244,7 +330,7 @@ void Corrnhdr::main()
 
     //read spacing from first nhdr file
     double xs, ys, zs;
-    std::ifstream ifile(file_dir+"/nhdr/000.nhdr");
+    std::ifstream ifile(opt.nhdr_path + "000.nhdr");
     std::string line;
     while(getline(ifile, line))
     {
@@ -265,9 +351,9 @@ void Corrnhdr::main()
     ifile.close();
 
   //output files
-  for (size_t i = 0; i <= opt.num; i++) 
+  for (size_t i = 0; i < opt.num; i++) 
   {
-        path file = file_dir + "/nhdr/" + zero_pad(i, 3) + ".nhdr";
+        path file = opt.nhdr_path + GenerateOutName(i, 3, ",nhdr");
         if (exists(file)) 
         {
             //compute new origin
@@ -281,7 +367,7 @@ void Corrnhdr::main()
                                 + std::to_string(zs*z_scale) + ")";
 
             //build new nhdr
-            std::string o_name = file_dir + "/nhdr-corr/" + zero_pad(i, 3) + ".nhdr";
+            std::string o_name = opt.new_nhdr_path + GenerateOutName(i, 3, ",nhdr");
             std::ifstream ifile(file.string());
             std::ofstream ofile(o_name);
 

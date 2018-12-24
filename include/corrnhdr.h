@@ -14,14 +14,14 @@ struct corrnhdrOptions {
     std::string nhdr_path;
     std::string corr_path;
     std::string new_nhdr_path;
-    // int num;
+    int num;
 };
 
 void setup_corrnhdr(CLI::App &app);
 
 class Corrnhdr{
 public:
-	Corrnhdr(corrnhdrOptions const &opt = corrnhdrOptions());
+	Corrnhdr(corrnhdrOptions &opt = corrnhdrOptions());
 	~Corrnhdr();
 
 	void main();
@@ -31,7 +31,7 @@ private:
 	void median_filtering();
 	void smooth();
 
-	corrnhdrOptions const opt;
+	corrnhdrOptions opt;
 	airArray* mop;
 	// std::string file_dir;
     std::string nhdr_path, corr_path, new_nhdr_path;
