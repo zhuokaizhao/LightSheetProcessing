@@ -84,7 +84,7 @@ using namespace std;
 
 namespace fs = boost::filesystem;
 
-void start_standard_process(CLI::App &app) 
+void start_standard_process_with_corr(CLI::App &app) 
 {
     auto opt = make_shared<startwithcorrOptions>();
     auto sub = app.add_subcommand("startwithcorr", "Process that extends start with corrrelation computations to prevent drifts. Limited options though.");

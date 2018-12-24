@@ -53,7 +53,7 @@ struct startwithcorrOptions {
     double scale_z = 1.0;
 };
 
-void start_standard_process(CLI::App &app);
+void start_standard_process_with_corr(CLI::App &app);
 
 class Start {
 public:
@@ -64,4 +64,4 @@ public:
 
 };
 
-#endif //LSP_START_H
+#endif //LSP_START_WITH_CORR_H
