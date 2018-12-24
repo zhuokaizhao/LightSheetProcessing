@@ -41,7 +41,7 @@ void setup_corrnhdr(CLI::App &app)
 }
 
 
-Corrnhdr::Corrnhdr(corrnhdrOptions &opt): opt(opt), mop(airMopNew()), nhdr_path(opt.nhdr_path), corr_path(opt.corr_path), new_nhdr_path(opt.new_nhdr_path)
+Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr_path(opt.nhdr_path), corr_path(opt.corr_path), new_nhdr_path(opt.new_nhdr_path)
 {
     // check if nhdr_path exists
     if(!exists(nhdr_path))
