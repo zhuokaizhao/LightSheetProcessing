@@ -21,7 +21,7 @@ void setup_corrnhdr(CLI::App &app);
 
 class Corrnhdr{
 public:
-	Corrnhdr(corrnhdrOptions &opt = corrnhdrOptions());
+	Corrnhdr(corrnhdrOptions const &opt = corrnhdrOptions());
 	~Corrnhdr();
 
 	void main();
