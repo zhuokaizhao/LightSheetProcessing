@@ -26,6 +26,7 @@ void setup_corrnhdr(CLI::App &app)
     sub->add_option("-c, --corr_path", opt->corr_path, "Input path for correlation results")->required();
     sub->add_option("-o, --new_nhdr_path", opt->new_nhdr_path, "Output ")->required();
     //sub->add_option("-n, --num_nhdr", opt->num, "The number of the last nhdr file.");
+    sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
 
     sub->set_callback([opt] 
     {
@@ -353,7 +354,7 @@ void Corrnhdr::main()
   //output files
   for (size_t i = 0; i < opt.num; i++) 
   {
-        path file = opt.nhdr_path + GenerateOutName(i, 3, ",nhdr");
+        path file = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
         if (exists(file)) 
         {
             //compute new origin
@@ -367,7 +368,7 @@ void Corrnhdr::main()
                                 + std::to_string(zs*z_scale) + ")";
 
             //build new nhdr
-            std::string o_name = opt.new_nhdr_path + GenerateOutName(i, 3, ",nhdr");
+            std::string o_name = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
             std::ifstream ifile(file.string());
             std::ofstream ofile(o_name);
 

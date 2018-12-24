@@ -15,6 +15,7 @@ struct corrnhdrOptions {
     std::string corr_path;
     std::string new_nhdr_path;
     int num;
+    int verbose = 0;
 };
 
 void setup_corrnhdr(CLI::App &app);
