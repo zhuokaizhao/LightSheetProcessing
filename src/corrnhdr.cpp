@@ -59,7 +59,7 @@ Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr
     if (!checkIfDirectory(opt.new_nhdr_path))
     {
         boost::filesystem::create_directory(opt.new_nhdr_path);
-        cout << "Output path " << opt.new_nhdr_path << " does not exits, but has been created" << endl;
+        cout << "Output path " << opt.new_nhdr_path << " does not exist, but has been created" << endl;
     }
 
     offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
@@ -166,7 +166,7 @@ void Corrnhdr::compute_offsets()
 
         for (auto i = 0; i < opt.num; i++) 
         {
-            path file = allValidFiles[i].second + ".txt";
+            path file = opt.corr_path + allValidFiles[i].second + ".txt";
             
             // doubel check
             if (exists(file)) 
