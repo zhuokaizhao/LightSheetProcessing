@@ -364,10 +364,15 @@ void Corrnhdr::main()
             cout << "y_scale = " << y_scale << endl;
             cout << "z_scale = " << z_scale << endl;
 
+            // std::string origin = "space origin: ("
+            //                     + std::to_string(xs*x_scale) + ", "
+            //                     + std::to_string(ys*y_scale) + ", "
+            //                     + std::to_string(zs*z_scale) + ")";
+
             std::string origin = "space origin: ("
-                                + std::to_string(xs*x_scale) + ", "
-                                + std::to_string(ys*y_scale) + ", "
-                                + std::to_string(zs*z_scale) + ")";
+                                + std::to_string(xs) + ", "
+                                + std::to_string(ys) + ", "
+                                + std::to_string(zs) + ")";
 
             cout << "Origin is " << origin << endl;
 
