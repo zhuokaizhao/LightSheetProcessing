@@ -352,6 +352,7 @@ void Corrnhdr::main()
   for (size_t i = 0; i < opt.num; i++) 
   {
         path file = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
+        cout << endl << "Current file is number " << i << endl;
         if (exists(file)) 
         {
             //compute new origin
@@ -359,10 +360,16 @@ void Corrnhdr::main()
                     y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1),
                     z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
 
+            cout << "x_scale = " << x_scale << endl;
+            cout << "y_scale = " << y_scale << endl;
+            cout << "z_scale = " << z_scale << endl;
+
             std::string origin = "space origin: ("
                                 + std::to_string(xs*x_scale) + ", "
                                 + std::to_string(ys*y_scale) + ", "
                                 + std::to_string(zs*z_scale) + ")";
+
+            cout << "Origin is " << origin << endl;
 
             //build new nhdr
             std::string o_name = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
@@ -374,6 +381,7 @@ void Corrnhdr::main()
             {
                 if(line.find("type:") != std::string::npos)
                 {
+                    // type should be the same, changed from signed short to ushort
                     ofile << "type: ushort" << std::endl;
                 }
                 else if(line.find("space origin:") != std::string::npos)
