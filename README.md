@@ -96,7 +96,7 @@ data_name(2).czi
     - `-v, verbose`, 0 for essential progress outputs only, 1 for all the printouts
   - Output formats:
     - NHDR headers and XML data files:
-      <br /> All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
+      <br /> Both NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
       ```
       000.nhdr, 000.xml;
       001.nhdr, 001.xml;
@@ -159,7 +159,7 @@ data_name(2).czi
         ```
         avg_max_file_number.avi, max_max_file_number.avi
         ```
-      - There will also be some files ending with `.ppm` and `.nrrd` generated, but are simply the outputs generated during processing
+      - There will also be some files ending with `.ppm` and `.nrrd` generated, but are simply the outputs generated in the middle of processing
 
 
 3. LSP currently includes four subcommands: `lsp skim`, `lsp proj`, `lsp anim`, `lsp corrimg`, `lsp corrfind`, and `lsp corrnhdr`. Same to the general command `lsp`, each subcommand could be run to show help instructions when added `-h` flag as well.     
