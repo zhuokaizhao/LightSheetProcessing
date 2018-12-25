@@ -47,13 +47,13 @@ data_name(2).czi
     - `-v, verbose`, 0 for essential progress outputs only, 1 for all the printouts
   - Output formats:
     - NHDR headers and XML data files:
-      - All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
-        ```
-        000.nhdr, 000.xml;
-        001.nhdr, 001.xml;
-        002.nhdr, 002.xml;
-        ...
-        ```
+      <br />  All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
+      ```
+      000.nhdr, 000.xml;
+      001.nhdr, 001.xml;
+      002.nhdr, 002.xml;
+      ...
+      ```
     - NRRD projection files:
       - NRRD projection files in all three planes will be saved into `proj_path`, and will have the following format:
         ```
@@ -96,7 +96,7 @@ data_name(2).czi
     - `-v, verbose`, 0 for essential progress outputs only, 1 for all the printouts
   - Output formats:
     - NHDR headers and XML data files:
-      All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
+      <br /> All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
       ```
       000.nhdr, 000.xml;
       001.nhdr, 001.xml;
