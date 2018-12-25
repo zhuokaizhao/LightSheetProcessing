@@ -47,7 +47,7 @@ data_name(2).czi
     - `-v, verbose`, 0 for essential progress outputs only, 1 for all the printouts
   - Output formats:
     - NHDR headers and XML data files:
-      <br />  All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
+      <br /> All NHDR headers and XML data files will have three-digit names saved into `nhdr_path`, which correspond to their time stamps
       ```
       000.nhdr, 000.xml;
       001.nhdr, 001.xml;
@@ -55,13 +55,13 @@ data_name(2).czi
       ...
       ```
     - NRRD projection files:
-      - NRRD projection files in all three planes will be saved into `proj_path`, and will have the following format:
-        ```
-        000-projXY.nrrd, 000-projXZ.nrrd, 000-projYZ.nrrd;
-        001-projXY.nrrd, 001-projXZ.nrrd, 001-projYZ.nrrd;
-        002-projXY.nrrd, 002-projXZ.nrrd, 002-projYZ.nrrd;
-        ...
-        ```
+      <br /> NRRD projection files in all three planes will be saved into `proj_path`, and will have the following format:
+      ```
+      000-projXY.nrrd, 000-projXZ.nrrd, 000-projYZ.nrrd;
+      001-projXY.nrrd, 001-projXZ.nrrd, 001-projYZ.nrrd;
+      002-projXY.nrrd, 002-projXZ.nrrd, 002-projYZ.nrrd;
+      ...
+      ```
     - PNG images and AVI videos:
       - All images will be saved into `anim_path`, and will have the following format, for both `average` and `max` channel:
         ```
