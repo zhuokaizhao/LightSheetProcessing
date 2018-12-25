@@ -104,45 +104,45 @@ data_name(2).czi
       ...
       ```
     - NRRD projection files:
-      - NRRD projection files in all three planes will be saved into `proj_path`, and will have the following format:
-        ```
-        000-projXY.nrrd, 000-projXZ.nrrd, 000-projYZ.nrrd;
-        001-projXY.nrrd, 001-projXZ.nrrd, 001-projYZ.nrrd;
-        002-projXY.nrrd, 002-projXZ.nrrd, 002-projYZ.nrrd;
-        ...
-        ```
+      <br /> NRRD projection files in all three planes will be saved into `proj_path`, and will have the following format:
+      ```
+      000-projXY.nrrd, 000-projXZ.nrrd, 000-projYZ.nrrd;
+      001-projXY.nrrd, 001-projXZ.nrrd, 001-projYZ.nrrd;
+      002-projXY.nrrd, 002-projXZ.nrrd, 002-projYZ.nrrd;
+      ...
+      ```
     - PNG images used for computing correlations:
-      - All images will be saved into `image_path`, and will have the following format:
-        ```
-        000-projXY.png, 000-projXZ.png, 000-projYZ.png;
-        001-projXY.png, 001-projXZ.png, 001-projYZ.png;
-        002-projXY.png, 002-projXZ.png, 002-projYZ.png;
-        ...
-        ```
+      <br /> All images will be saved into `image_path`, and will have the following format:
+      ```
+      000-projXY.png, 000-projXZ.png, 000-projYZ.png;
+      001-projXY.png, 001-projXZ.png, 001-projYZ.png;
+      002-projXY.png, 002-projXZ.png, 002-projYZ.png;
+      ...
+      ```
     - Correlation results:
-      - TXT correlation results will be saved into `align_path`, and will have the following format:
-        ```
-        000.txt;
-        001.txt;
-        002.txt;
-        ...
-        ```
+      <br /> TXT correlation results will be saved into `align_path`, and will have the following format:
+      ```
+      000.txt;
+      001.txt;
+      002.txt;
+      ...
+      ```
     - New NHDR headers after drift correction:
-      - Compared to the old NHDR headers, the new NHDR headers will have modified space origin as the results of drift correlation. Same as the old NHDR headers' naming format, they will have three-digit names saved into `new_nhdr_path`, which correspond to their time stamps
-        ```
-        000.nhdr;
-        001.nhdr;
-        002.nhdr;
-        ...
-        ```
+      <br /> Compared to the old NHDR headers, the new NHDR headers will have modified space origin as the results of drift correlation. Same as the old NHDR headers' naming format, they will have three-digit names saved into `new_nhdr_path`, which correspond to their time stamps
+      ```
+      000.nhdr;
+      001.nhdr;
+      002.nhdr;
+      ...
+      ```
     - New NRRD projection files after drift correction:
-      - Same as the old NRRD projection files' naming format, all three planes will be saved into `new_proj_path`, and will have the following format:
-        ```
-        000-projXY.nrrd, 000-projXZ.nrrd, 000-projYZ.nrrd;
-        001-projXY.nrrd, 001-projXZ.nrrd, 001-projYZ.nrrd;
-        002-projXY.nrrd, 002-projXZ.nrrd, 002-projYZ.nrrd;
-        ...
-        ```
+      <br /> Same as the old NRRD projection files' naming format, all three planes will be saved into `new_proj_path`, and will have the following format:
+      ```
+      000-projXY.nrrd, 000-projXZ.nrrd, 000-projYZ.nrrd;
+      001-projXY.nrrd, 001-projXZ.nrrd, 001-projYZ.nrrd;
+      002-projXY.nrrd, 002-projXZ.nrrd, 002-projYZ.nrrd;
+      ...
+      ```
     - PNG images and AVI videos:
       - All images will be saved into `anim_path`, and will have the following format, for both `average` and `max` channel:
         ```
