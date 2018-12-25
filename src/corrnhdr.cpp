@@ -20,12 +20,9 @@ void setup_corrnhdr(CLI::App &app)
     auto opt = std::make_shared<corrnhdrOptions>();
     auto sub = app.add_subcommand("corrnhdr", "Apply the corrections calculated by corrimg and corrfind.");
 
-    //sub->add_option("-d, --file_dir", opt->file_dir, "Where 'nhdr/', nhdr-corr/' and 'reg/' are. Defualt path is working path. (Default: .)");
     sub->add_option("-n, --nhdr_path", opt->nhdr_path, "Input path for all the nhdr files")->required();
-    // corr_path is the old reg
     sub->add_option("-c, --corr_path", opt->corr_path, "Input path for correlation results")->required();
     sub->add_option("-o, --new_nhdr_path", opt->new_nhdr_path, "Output ")->required();
-    //sub->add_option("-n, --num_nhdr", opt->num, "The number of the last nhdr file.");
     sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
 
     sub->set_callback([opt] 
@@ -376,11 +373,17 @@ void Corrnhdr::main()
             while(getline(ifile, line))
             {
                 if(line.find("type:") != std::string::npos)
-                ofile << "type: signed short" << std::endl;
+                {
+                    ofile << "type: ushort" << std::endl;
+                }
                 else if(line.find("space origin:") != std::string::npos)
-                ofile << origin << std::endl;
+                {
+                    ofile << origin << std::endl;
+                }
                 else
-                ofile << line << std::endl;
+                {
+                    ofile << line << std::endl;
+                }
             }
         }
         else
