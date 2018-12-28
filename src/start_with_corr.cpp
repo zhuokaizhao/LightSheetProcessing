@@ -966,7 +966,7 @@ void start_standard_process_with_corr(CLI::App &app)
             // construct options for LSP
             auto opt_corrnhdr = make_shared<corrnhdrOptions>();
             opt_corrnhdr->nhdr_path = opt->nhdr_path;
-            opt_corrnhdr->corr_path = opt->corr_path;
+            opt_corrnhdr->corr_path = opt->align_path;
             opt_corrnhdr->new_nhdr_path = opt->new_nhdr_path;
             Corrnhdr(*opt_corrnhdr).main();
         } 
@@ -983,7 +983,7 @@ void start_standard_process_with_corr(CLI::App &app)
         // ************************************************************************************************************
         // ************************************************************************************************************
         cout << "********** Running Proj with the new headers **********" << endl;
-        opt_proj->number_of_processed = 0;
+        opt->number_of_processed = 0;
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->new_nhdr_path))
         {
