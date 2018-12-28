@@ -80,6 +80,10 @@
 
 #include <chrono>
 
+#include "corrimg.h"
+#include "corrfind.h"
+#include "corrnhdr.h"
+
 using namespace std;
 
 namespace fs = boost::filesystem;
@@ -949,6 +953,215 @@ void start_standard_process_with_corr(CLI::App &app)
             std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
         }
 
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ********************************************  run LSP CORRNHDR  ********************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        cout << "********** Running Corrnhdr **********" << endl;
+        try
+        {
+            // construct options for LSP
+            auto opt_corrnhdr = make_shared<corrnhdrOptions>();
+            opt_corrnhdr->nhdr_path = opt->nhdr_path;
+            opt_corrnhdr->corr_path = opt->corr_path;
+            opt_corrnhdr->new_nhdr_path = opt->new_nhdr_path;
+            Corrnhdr(*opt_corrnhdr).main();
+        } 
+        catch (LSPException &e) 
+        {
+            std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+        }
+
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // **********************************************  run LSP PROJ  **********************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        cout << "********** Running Proj with the new headers **********" << endl;
+        opt_proj->number_of_processed = 0;
+        // first determine if input nhdr_path is valid
+        if (checkIfDirectory(opt->new_nhdr_path))
+        {
+            // vector of pairs which stores each nhdr file's name and its extracted serial number
+            vector< pair<int, string> > allValidFiles;
+
+            cout << endl << "nhdr input directory " << opt->new_nhdr_path << " is valid" << endl;
+            
+            // count the number of files
+            int nhdrNum = 0;
+            // get all the files from input directory
+            const vector<string> files = GetDirectoryFiles(opt->new_nhdr_path);
+
+            // since files include .nhdr and .xml file in pairs, we want to count individual number
+            for (const string curFile : files) 
+            {
+                // check if input file is a .nhdr file
+                int nhdr_suff = curFile.rfind(".nhdr");
+                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
+                {
+                    if (opt->verbose)
+                        cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
+                    
+                    nhdrNum++;
+                    // now we need to understand the sequence number of this file
+                    int end = curFile.rfind(".nhdr");
+                    int start = -1;
+                    // current file name without type
+                    string curFileName = curFile.substr(0, end);
+
+                    // The sequenceNumString will have zero padding, like 001
+                    for (int i = 0; i < end; i++)
+                    {
+                        // we get the first position that zero padding ends
+                        if (curFile[i] != '0')
+                        {
+                            start = i;
+                            break;
+                        }
+                    }
+        
+                    string sequenceNumString;
+                    // for the case that it is just 000 which represents the initial time stamp
+                    if (start == -1)
+                    {
+                        sequenceNumString = "0";
+                    }
+                    else
+                    {
+                        int length = end - start;
+                        sequenceNumString = curFile.substr(start, length);
+                    }
+
+                    if (is_number(sequenceNumString))
+                    {
+                        allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                    }
+                    else
+                    {
+                        cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                    }
+                        
+                }
+
+            }
+
+            // after finding all the files, sort the allFileSerialNumber in ascending order
+            sort(allValidFiles.begin(), allValidFiles.end());
+
+            cout << nhdrNum << " .nhdr files found in input path " << opt->new_nhdr_path << endl << endl;
+
+            // sanity check
+            if (nhdrNum != allValidFiles.size())
+            {
+                cout << "ERROR: Not all valid files have been recorded" << endl;
+            }
+
+            // update file number
+            opt->file_number = nhdrNum;
+            cout << "Starting second loop for processing" << endl << endl;
+
+            // another loop to process files
+            for (int i = 0; i < allValidFiles.size(); i++)
+            {   
+                string proj_common = opt->new_proj_path + allValidFiles[i].second + "-proj";
+
+                // we want to know if this proj file exists (processed before), don't overwrite it
+                string proj_name_1 = proj_common + "XY.nrrd";
+                string proj_name_2 = proj_common + "XZ.nrrd";
+                string proj_name_3 = proj_common + "YZ.nrrd";
+                fs::path projPath_1(proj_name_1);
+                fs::path projPath_2(proj_name_2);
+                fs::path projPath_3(proj_name_3);
+
+                // when all three exists, skip this file
+                if (fs::exists(projPath_1) && fs::exists(projPath_2) && fs::exists(proj_name_3))
+                {
+                    cout << "All " << proj_name_1 << ", " << proj_name_2 << ", " << proj_name_3 << " exist, continue to next." << endl;
+                    opt->number_of_processed++;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl << endl;
+                    continue;
+                }
+
+                // note that file name from allValidFiles does not include nhdr path
+                opt->file_name = allValidFiles[i].second + ".nhdr";
+                try
+                {
+                    // construct options for LSP
+                    auto opt_proj = make_shared<projOptions>();
+                    // proj requires input czi, nhdr file path and output proj path
+                    opt_proj->nhdr_path = opt->new_nhdr_path;
+                    opt_proj->proj_path = opt->new_proj_path;
+                    opt_proj->file_name = opt->file_name;
+                    opt_proj->file_number = opt->file_number;
+                    opt_proj->number_of_processed = opt->number_of_processed;
+                    opt_proj->verbose = opt->verbose;
+
+                    auto start = chrono::high_resolution_clock::now();
+                    Proj(*opt_proj).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+
+                    opt->number_of_processed++;
+                    cout << opt->number_of_processed << " out of " << opt->file_number << " files have been processed" << endl;
+                    cout << "New Proj processing " << opt->file_name << " took " << duration.count() << " seconds" << endl << endl; 
+                }
+                catch(LSPException &e)
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+            }
+        }
+        // single file case
+        else
+        {
+            // the program also handles if input file is a single file
+            cout << opt->new_nhdr_path << " is not a directory, enter Single file mode" << endl;
+            cout << "Checking if it is a valid .nhdr file" << endl;
+            const string curFile = opt->new_nhdr_path;
+            
+            // check if input file is a .nhdr file
+            int suff = curFile.rfind(".nhdr");
+
+            if ( (suff == string::npos) || (suff != curFile.length() - 5) ) 
+            {
+                cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
+                return;
+            }
+            else
+            {
+                cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
+
+                // update file number
+                opt->file_number = 1;   
+                opt->file_name = curFile;         
+                try 
+                {
+                    // construct options for LSP
+                    auto opt_proj = make_shared<projOptions>();
+                    // proj requires input czi, nhdr file path and output proj path
+                    opt_proj->nhdr_path = opt->new_nhdr_path;
+                    opt_proj->proj_path = opt->new_proj_path;
+                    opt_proj->file_name = opt->file_name;
+                    opt_proj->file_number = opt->file_number;
+                    opt_proj->verbose = opt->verbose;
+
+                    auto start = chrono::high_resolution_clock::now();
+                    Proj(*opt_proj).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::minutes>(stop - start); 
+                    cout << "New Proj processing " << opt->file_name << " took " << duration.count() << " minutes" << endl; 
+                } 
+                catch(LSPException &e) 
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+            }
+        }
 
         // ************************************************************************************************************
         // ************************************************************************************************************
@@ -959,12 +1172,12 @@ void start_standard_process_with_corr(CLI::App &app)
         // ************************************************************************************************************
         cout << "********** Running Anim **********" << endl;
         // first determine if input nhdr_path is valid
-        if (checkIfDirectory(opt->nhdr_path))
+        if (checkIfDirectory(opt->new_nhdr_path))
         {
-            cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
+            cout << "nhdr input directory " << opt->new_nhdr_path << " is valid" << endl;
             
             // count the number of files
-            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
+            const vector<string> files = GetDirectoryFiles(opt->new_nhdr_path);
             
             // note that the number starts counting at 1
             int nhdrNum = 0;
@@ -1047,8 +1260,8 @@ void start_standard_process_with_corr(CLI::App &app)
             {
                 auto opt_anim = make_shared<animOptions>();
                 // anim requires input nhdr and proj paths, and output anim path
-                opt_anim->nhdr_path = opt->nhdr_path;
-                opt_anim->proj_path = opt->proj_path;
+                opt_anim->nhdr_path = opt->new_nhdr_path;
+                opt_anim->proj_path = opt->new_proj_path;
                 opt_anim->anim_path = opt->anim_path;
                 opt_anim->maxFileNum = opt->maxFileNum;
                 opt_anim->fps = opt->fps;
@@ -1073,8 +1286,8 @@ void start_standard_process_with_corr(CLI::App &app)
         else
         {
             // the program also handles if input file is a single file
-            cout << opt->nhdr_path << " is not a directory, check if it is a valid .nhdr file" << endl;
-            const string curFile = opt->nhdr_path;
+            cout << opt->new_nhdr_path << " is not a directory, check if it is a valid .nhdr file" << endl;
+            const string curFile = opt->new_nhdr_path;
 
             std::cout << "Current file name is: " << curFile << endl;
             
@@ -1097,8 +1310,8 @@ void start_standard_process_with_corr(CLI::App &app)
                 {
                     auto opt_anim = make_shared<animOptions>();
                     // anim requires input nhdr and proj paths, and output anim path
-                    opt_anim->nhdr_path = opt->nhdr_path;
-                    opt_anim->proj_path = opt->proj_path;
+                    opt_anim->nhdr_path = opt->new_nhdr_path;
+                    opt_anim->proj_path = opt->new_proj_path;
                     opt_anim->anim_path = opt->anim_path;
                     opt_anim->maxFileNum = opt->maxFileNum;
                     opt_anim->fps = opt->fps;
