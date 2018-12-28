@@ -18,6 +18,7 @@
 #include "corrnhdr.h"
 //#include "pack.h"
 #include "start.h"
+#include "start_with_corr.h"
 
 
 int main(int argc, char** argv) {
@@ -25,6 +26,9 @@ int main(int argc, char** argv) {
 
     // standard process which includes skim, proj and anim
     start_standard_process(app);
+
+    // standard process which further includes drift correction algorithm
+    start_standard_process_with_corr(app); 
 
     // getting information out of CZI files, generate .nhdr NRRD header files
     setup_skim(app);

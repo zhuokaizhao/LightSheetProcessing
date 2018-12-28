@@ -102,7 +102,6 @@ void start_standard_process(CLI::App &app)
     // verbose
     sub->add_option("-v, --verbose", opt->verbose, "Progress printed in terminal or not");
 
-    // **********************************************  run LSP SKIM  **********************************************
     sub->set_callback([opt]() 
     {
         auto total_start = chrono::high_resolution_clock::now();

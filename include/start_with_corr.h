@@ -27,6 +27,14 @@ struct startwithcorrOptions {
     string nhdr_path;
     // proj output(for proj) and input(for anim) path
     string proj_path;
+    // images that are generated from each projection file
+    string image_path;
+    // correlation results between each image
+    string align_path;
+    // new NHDR headers generated from old NHDR headers and correlation results
+    string new_nhdr_path;
+    // new projection files generated from new NHDR headers
+    string new_proj_path;
     // anim output path
     string anim_path;
 
@@ -43,6 +51,18 @@ struct startwithcorrOptions {
     string file_name;
     int file_number;
     int number_of_processed = 0;
+
+    // from corrimgOptions
+    string input_file;
+    string output_file;
+    string kernel_corrimg = "Gauss:10,4";
+
+    // from corrfindOptions
+    vector<string> input_images;
+    vector< vector< pair<int, string> > > inputImages;
+    vector<string> kernel_corrfind = {"c4hexic", "c4hexicd"};
+    unsigned int bound = 10;
+    double epsilon = 0.00000000000001;
 
     // from animOptions
     int fps = 10;

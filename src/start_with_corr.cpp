@@ -95,6 +95,14 @@ void start_standard_process_with_corr(CLI::App &app)
     sub->add_option("-n, --nhdr_path", opt->nhdr_path, "Path for nhdr header files")->required();
     // proj path
     sub->add_option("-p, --proj_path", opt->proj_path, "Path for projection files")->required();
+    // image path from each proj file
+    sub->add_option("-m, image_path", opt->image_path, "Path for all the images generated from each projection")->required();
+    // correlation alignments results
+    sub->add_option("-r, align_path", opt->align_path, "Path for all the TXT correlation results")->required();
+    // new NHDR path
+    sub->add_option("-h, new_nhdr_path", opt->new_nhdr_path, "Path for all the new NHDR headers")->required();
+    // new projection path
+    sub->add_option("-j, new_proj_path", opt->new_proj_path, "Path for all the new NRRD projection files from new headers")->required();
     // anim path
     sub->add_option("-a, --anim_path", opt->anim_path, "Path for anim results which includes images and videos")->required();
     // optional input if we just want to process a specific number of files
@@ -102,7 +110,6 @@ void start_standard_process_with_corr(CLI::App &app)
     // verbose
     sub->add_option("-v, --verbose", opt->verbose, "Progress printed in terminal or not");
 
-    // **********************************************  run LSP SKIM  **********************************************
     sub->set_callback([opt]() 
     {
         auto total_start = chrono::high_resolution_clock::now();
@@ -316,7 +323,6 @@ void start_standard_process_with_corr(CLI::App &app)
         // ************************************************************************************************************
         // ************************************************************************************************************
         // ************************************************************************************************************
-
         cout << "********** Running Proj **********" << endl;
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
@@ -497,6 +503,452 @@ void start_standard_process_with_corr(CLI::App &app)
             }
         }
 
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // *********************************************  run LSP CORRIMG  ********************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        cout << "********** Running Corrimg **********" << endl;
+        // first determine if input proj_path is valid
+        if (checkIfDirectory(opt->proj_path))
+        {
+            cout << "proj input directory " << opt->proj_path << " is valid" << endl;
+            
+            // obtain all the files
+            const vector<string> files = GetDirectoryFiles(opt->proj_path);
+            
+            // count the number of files, note that the number starts counting at 0
+            int projNum = 0;
+
+            // vector of pairs which stores each file's extracted serial number and its name 
+            vector< pair<int, string> > allValidFiles;
+            
+            for (int i = 0; i < files.size(); i++) 
+            {
+                string curFile = files[i];
+                // check if input file is a .nrrd file
+                int proj_suff = curFile.rfind(".nrrd");
+                if ( (proj_suff != string::npos) && (proj_suff == curFile.length() - 5))
+                {
+                    if (opt->verbose)
+                        cout << "Current input file " + curFile + " ends with .nrrd, count this file" << endl;
+                    
+                    projNum++;
+                
+                    // now we need to understand the sequence number of this file
+                    int start = -1;
+                    int end = curFile.rfind("-proj");
+                    
+                    // current file name without type
+                    string curFileName = curFile.substr(0, proj_suff);
+                    
+                    // The sequenceNumString will have zero padding, like 001
+                    for (int i = 0; i < end; i++)
+                    {
+                        // we get the first position that zero padding ends
+                        if (curFile[i] != '0')
+                        {
+                            start = i;
+                            break;
+                        }
+                    }
+        
+                    string sequenceNumString;
+                    // for the case that it is just 000 which represents the initial time stamp
+                    if (start == -1)
+                    {
+                        sequenceNumString = "0";
+                    }
+                    else
+                    {
+                        int length = end - start;
+                        sequenceNumString = curFile.substr(start, length);
+                    }
+
+                    if (is_number(sequenceNumString))
+                    {
+                        allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                    }
+                    else
+                    {
+                        cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                    }
+                }
+
+            }
+
+            // after finding all the files, sort the allValidFiles in ascending order
+            sort(allValidFiles.begin(), allValidFiles.end());
+
+            cout << projNum/3 << " NRRD projection files (for each XY, XZ, YZ direction) found in input path " << opt->proj_path << endl << endl;
+
+            // sanity check
+            if (projNum != allValidFiles.size())
+            {
+                cout << "ERROR: Not all valid files have been recorded" << endl;
+            }
+
+            for (int i = 0; i < allValidFiles.size(); i++)
+            {
+                // get opt ready for corrimg
+                opt->input_file = opt->proj_path + allValidFiles[i].second + ".nrrd";
+                opt->output_file = opt->image_path + allValidFiles[i].second + ".png";
+
+                // test if the output already exists
+                // when output already exists, skip this iteration
+                if (fs::exists(opt->output_file))
+                {
+                    cout << opt->output_file << " exists, continue to next." << endl;
+                    continue;
+                }
+
+                try 
+                {
+                    // construct options for LSP
+                    auto opt_corrimg = make_shared<corrimgOptions>();
+                    opt_corrimg->proj_path = opt->proj_path;
+                    opt_corrimg->input_file = opt->input_file;
+                    opt_corrimg->image_path = opt->image_path;
+                    opt_corrimg->output_file = opt->output_file;
+                    opt_corrimg->kernel = opt->kernel_corrimg;
+                    opt_corrimg->verbose = opt->verbose;
+                    
+                    cout << "Currently processing projection file " << opt_corrimg->input_file << endl;
+                    auto start = chrono::high_resolution_clock::now();
+                    Corrimg(*opt_corrimg).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << "Output " << opt_corrimg->output_file << " has been saved successfully" << endl;
+                    cout << "Corrimg took " << duration.count() << " seconds" << endl << endl; 
+                } 
+                catch(LSPException &e) 
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+            }
+        }
+        else
+        {
+            // the program also handles if input file is a single file
+            cout << opt->proj_path << " is not a directory, check if it is a valid .nrrd file" << endl;
+            const string curFile = opt->proj_path;
+
+            std::cout << "Current file name is: " << curFile << endl;
+            
+            // check if input file is a .czi file
+            int suff = curFile.rfind(".nrrd");
+            int start = curFile.rfind("/");
+            int length = suff - start - 1;
+
+            if ( (suff != string::npos) || (suff != curFile.length() - 5)) 
+            {
+                cout << "Current input file " + curFile + " does not end with .nrrd, error" << endl;
+                return;
+            }
+            else
+            {
+                cout << "Current input file " + curFile + " ends with .nrrd, process this file" << endl;  
+
+                // test if the output already exists
+                // when output already exists, skip this iteration
+                if (fs::exists(opt->output_file))
+                {
+                    cout << opt->output_file << " exists, program ends." << endl;
+                    return;
+                }
+
+                try
+                {
+                    opt->input_file = opt->proj_path;
+                    opt->output_file = opt->image_path + curFile.substr(start+1, length) + ".png";
+
+                    // construct options for LSP
+                    auto opt_corrimg = make_shared<corrimgOptions>();
+                    opt_corrimg->proj_path = opt->proj_path;
+                    opt_corrimg->input_file = opt->input_file;
+                    opt_corrimg->image_path = opt->image_path;
+                    opt_corrimg->output_file = opt->output_file;
+                    opt_corrimg->kernel = opt->kernel_corrimg;
+                    opt_corrimg->verbose = opt->verbose;
+
+                    auto start = chrono::high_resolution_clock::now();
+                    Corrimg(*opt_corrimg).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << "Output " << opt_corrimg->output_file << " has been saved successfully" << endl;
+                    cout << "Corrimg took " << duration.count() << " seconds" << endl << endl; 
+                }
+                catch(LSPException &e)
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+            }
+        }
+
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ********************************************  run LSP CORRFIND  ********************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        // ************************************************************************************************************
+        cout << "********** Running Corrfind **********" << endl;
+        try 
+        {
+            // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
+            if (checkIfDirectory(opt->image_path))
+            {
+                cout << "Input path " << opt->image_path << " is valid, start processing" << endl << endl;
+
+                // map that has key to be type (XY, XZ, YZ), and each key corresponds to a vector of pair of sequence number and string
+                // unordered_map< string, vector< pair<int, string> > > inputImages;
+                // vector< vector< pair<int, string> > > inputImages;
+                // we know that there are two types of images, max and avg
+                vector< pair<int, string> > xyImages, xzImages, yzImages;
+                
+                // number of images of each type
+                int numXYImages = 0, numXZImages = 0, numYZImages = 0;
+
+                // get all images from the input anim path
+                const vector<string> images = GetDirectoryFiles(opt->image_path);
+                for (int i = 0; i < images.size(); i++)
+                {
+                    // get the current file
+                    string curImage = images[i];
+                    
+                    // check if input file is a .png file
+                    int end = curImage.rfind(".png");
+                    
+                    // if this is indeed an image
+                    if ( (end != string::npos) && (end == curImage.length() - 4) )
+                    {
+                        string curImageName = curImage.substr(0, end);
+                        if (opt->verbose)
+                            cout << "Current input file " + curImage + " ends with .png, count this image" << endl;
+                        
+                        // check if the type of current image is max or avg
+                        int isXY = curImage.rfind("XY");
+                        int isXZ = curImage.rfind("XZ");
+                        int isYZ = curImage.rfind("YZ");
+                        
+                        // if this is a XY image
+                        if ( (isXY != string::npos) && (isXZ == string::npos) && (isYZ == string::npos) )
+                        {
+                            numXYImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int sequenceEnd = curImage.rfind("-projXY");
+                            
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < sequenceEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int sequenceLength = sequenceEnd - start;
+                                sequenceNumString = curImage.substr(start, sequenceLength);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                xyImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                                //cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // if this is a XZ image
+                        else if ( (isXY == string::npos) && (isXZ != string::npos) && (isYZ == string::npos) )
+                        {
+                            numXZImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int sequenceEnd = curImage.rfind("-projXZ");
+
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < sequenceEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int sequenceLength = sequenceEnd - start;
+                                sequenceNumString = curImage.substr(start, sequenceLength);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                xzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                                //cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // if this is a YZ image
+                        else if ( (isXY == string::npos) && (isXZ == string::npos) && (isYZ != string::npos) )
+                        {
+                            numYZImages++;
+                            // now we need to understand the sequence number of this file
+                            int start = -1;
+                            
+                            // current image name without type
+                            int sequenceEnd = curImage.rfind("-projYZ");
+
+                            // The sequenceNumString will have zero padding, like 001
+                            for (int i = 0; i < sequenceEnd; i++)
+                            {
+                                // we get the first position that zero padding ends
+                                if (curImage[i] != '0')
+                                {
+                                    start = i;
+                                    break;
+                                }
+                            }
+                
+                            string sequenceNumString;
+                            // for the case that it is just 000 which represents the initial time stamp
+                            if (start == -1)
+                            {
+                                sequenceNumString = "0";
+                            }
+                            else
+                            {
+                                int sequenceLength = sequenceEnd - start;
+                                sequenceNumString = curImage.substr(start, sequenceLength);
+                            }
+
+                            if (is_number(sequenceNumString))
+                            {
+                                yzImages.push_back( make_pair(stoi(sequenceNumString), curImageName) );
+                                //cout << sequenceNumString << ", " << curImageName << " has been added" << endl;
+                            }
+                            else
+                            {
+                                cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                            }
+                        }
+                        // something wrong with the input images' namings
+                        else
+                        {
+                            cout << "Input images are NOT in the correct namings, program stops" << endl;
+                            return;
+                        }
+                    }
+                    // if this file is not an image, do nothing
+                    else 
+                    {
+                        
+                    }
+                }
+
+                // sanity check - numXYImages should equal to the size of xyImages
+                if (numXYImages != xyImages.size())
+                {
+                    cout << "ERROR when loading xxx-projXY images due to unexpected naming, program stops" << endl;
+                    return;
+                }
+                // sanity check - numXZImages should equal to the size of xzImages
+                if (numXZImages != xzImages.size())
+                {
+                    cout << "ERROR when loading xxx-projXZ images due to unexpected naming, program stops" << endl;
+                    return;
+                }
+                // sanity check - numYZImages should equal to the size of yzImages
+                if (numYZImages != yzImages.size())
+                {
+                    cout << "ERROR when loading xxx-projYZ images due to unexpected naming, program stops" << endl;
+                    return;
+                }
+                // sanity check - we need to have the same number of XY, XZ and YZ images
+                if ( (numXYImages != numXZImages) || (numXYImages != numYZImages) || (numXZImages != numYZImages) )
+                {
+                    cout << "ERROR -projXY, -projXZ, and -projYZ should have the same number of images, program stops" << endl;
+                    cout << "numXYImages = " << numXYImages << endl;
+                    cout << "numXZImages = " << numXZImages << endl;
+                    cout << "numYZImages = " << numYZImages << endl;
+                    return;
+                }
+
+                // sort xyImages, xzImages and yzImages in ascending order based on their sequence numbers
+                sort(xyImages.begin(), xyImages.end());
+                sort(xzImages.begin(), xzImages.end());
+                sort(yzImages.begin(), yzImages.end());
+
+                cout << endl << numXYImages << " -projXY images found in input path " << opt->image_path << endl;
+                cout << numXZImages << " -projXZ images found in input path " << opt->image_path << endl;
+                cout << numYZImages << " -projYZ images found in input path " << opt->image_path << endl;
+
+                opt->inputImages.push_back(xyImages);
+                opt->inputImages.push_back(xzImages);
+                opt->inputImages.push_back(yzImages);
+
+                // for (int i = 0; i < opt->inputImages[0].size(); i++)
+                // {
+                //     for (int j = 0; j < opt->inputImages.size(); j++)
+                //     {
+                //         cout << opt->inputImages[j][i].second << endl;
+                //     }
+                // }
+
+                // run the Corrfind
+                // construct options for LSP
+                auto opt_corrfind = make_shared<corrfindOptions>();
+                opt_corrfind->image_path = opt->image_path;
+                opt_corrfind->align_path = opt->align_path;
+                opt_corrfind->output_file = opt->output_file;
+                opt_corrfind->input_images = opt->input_images;
+                opt_corrfind->inputImages = opt->inputImages;
+                opt_corrfind->file_number = opt->file_number;
+                opt_corrfind->kernel = opt->kernel_corrfind;
+                opt_corrfind->verbose = opt->verbose;
+                Corrfind(*opt_corrfind).main();
+            }
+            else
+            {
+                cout << "Input path is invalid, program exits" << endl;
+            }
+            
+        } 
+        catch(LSPException &e) 
+        {
+            std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+        }
+
 
         // ************************************************************************************************************
         // ************************************************************************************************************
@@ -505,7 +957,7 @@ void start_standard_process_with_corr(CLI::App &app)
         // ************************************************************************************************************
         // ************************************************************************************************************
         // ************************************************************************************************************
-
+        cout << "********** Running Anim **********" << endl;
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
         {
