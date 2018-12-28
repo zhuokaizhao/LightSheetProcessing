@@ -104,7 +104,7 @@ void start_standard_process_with_corr(CLI::App &app)
     // correlation alignments results
     sub->add_option("-r, align_path", opt->align_path, "Path for all the TXT correlation results")->required();
     // new NHDR path
-    sub->add_option("-h, new_nhdr_path", opt->new_nhdr_path, "Path for all the new NHDR headers")->required();
+    sub->add_option("-d, new_nhdr_path", opt->new_nhdr_path, "Path for all the new NHDR headers")->required();
     // new projection path
     sub->add_option("-j, new_proj_path", opt->new_proj_path, "Path for all the new NRRD projection files from new headers")->required();
     // anim path
