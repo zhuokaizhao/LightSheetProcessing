@@ -75,10 +75,10 @@ struct startwithcorrOptions {
 
 void start_standard_process_with_corr(CLI::App &app);
 
-class Start {
+class StartwithCorr {
 public:
-    Start(startwithcorrOptions const &opt = startwithcorrOptions());
-    ~Start();
+    StartwithCorr(startwithcorrOptions const &opt = startwithcorrOptions());
+    ~StartwithCorr();
 
     void main();
 
