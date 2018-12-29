@@ -13,7 +13,7 @@
 #include "corrnhdr.h"
 
 using namespace std;
-using namespace boost::filesystem;
+namespace fs = boost::filesystem;
 
 void setup_corrnhdr(CLI::App &app) 
 {
@@ -42,7 +42,7 @@ void setup_corrnhdr(CLI::App &app)
 Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr_path(opt.nhdr_path), corr_path(opt.corr_path), new_nhdr_path(opt.new_nhdr_path)
 {
     // check if nhdr_path exists
-    if(!exists(nhdr_path))
+    if(!fs::exists(nhdr_path))
     {
         throw LSPException("Error finding 'nhdr_path' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
     }
@@ -164,10 +164,10 @@ void Corrnhdr::compute_offsets()
 
         for (auto i = 0; i < opt.num; i++) 
         {
-            path file = opt.corr_path + allValidFiles[i].second + ".txt";
+            fs::path file = opt.corr_path + allValidFiles[i].second + ".txt";
             
             // doubel check
-            if (exists(file)) 
+            if (fs::exists(file)) 
             {
                 std::ifstream inFile;
                 inFile.open(file.string());
@@ -322,37 +322,47 @@ void Corrnhdr::smooth()
 
 void Corrnhdr::main() 
 {
-    compute_offsets();
-    median_filtering();
-    smooth();
-
-    //read spacing from first nhdr file
-    double xs, ys, zs;
-    std::ifstream ifile(opt.nhdr_path + "000.nhdr");
-    std::string line;
-    while(getline(ifile, line))
+    // change this to be loop for each input NHDR header and Corr result
+    for (int i = 0; i < opt.num; i++)
     {
-        if(line.find("directions:") != std::string::npos)
+        // output file for the current loop
+        fs::path outfile = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
+        cout << endl << "Currently generating new NHDR header named " << outfile << endl;
+        // we want to check if current potential output file already exists, if so, skip
+        if (fs::exists(outfile))
         {
-            std::regex reg("\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
-            std::smatch res;
-
-            if(std::regex_search(line, res, reg))
-            {
-                xs = std::stof(res[1]);
-                ys = std::stof(res[2]);
-                zs = std::stof(res[3]);
-            }
-            break;
+            cout << outfile << " exists, continue to next." << endl << endl;
+            continue;
         }
-    }
-    ifile.close();
 
-  //output files
-  for (size_t i = 0; i < opt.num; i++) 
-  {
-        path file = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
-        cout << endl << "Current file is number " << i << endl;
+        // compute the offset of this current file
+        compute_offsets();
+        median_filtering();
+        smooth();
+
+        //read spacing from each nhdr file
+        double xs, ys, zs;
+        std::ifstream ifile(opt.nhdr_path + GenerateOutName(i, 3, "nhdr"));
+        std::string line;
+        while(getline(ifile, line))
+        {
+            if(line.find("directions:") != std::string::npos)
+            {
+                std::regex reg("\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
+                std::smatch res;
+
+                if(std::regex_search(line, res, reg))
+                {
+                    xs = std::stof(res[1]);
+                    ys = std::stof(res[2]);
+                    zs = std::stof(res[3]);
+                }
+                break;
+            }
+        }
+        ifile.close();
+
+        //output files
         if (exists(file)) 
         {
             //compute new origin
@@ -403,5 +413,6 @@ void Corrnhdr::main()
         {   
             std::cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
         }
+
     }
 }
