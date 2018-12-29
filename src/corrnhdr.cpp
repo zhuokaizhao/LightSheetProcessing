@@ -363,7 +363,7 @@ void Corrnhdr::main()
         ifile.close();
 
         //output files
-        if (exists(file)) 
+        if (fs::exists(outfile)) 
         {
             //compute new origin
             double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3),
@@ -388,7 +388,7 @@ void Corrnhdr::main()
 
             //build new nhdr
             std::string o_name = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
-            std::ifstream ifile(file.string());
+            std::ifstream ifile(outfile.string());
             std::ofstream ofile(o_name);
 
             std::string line;
@@ -411,7 +411,7 @@ void Corrnhdr::main()
         }
         else
         {   
-            std::cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
+            std::cout << "[corrnhdr] WARN: " << outfile.string() << " does not exist." << std::endl;
         }
 
     }
