@@ -29,7 +29,90 @@ void setup_corrnhdr(CLI::App &app)
     {
         try
         {
-            Corrnhdr(*opt).main();
+            // read shifts and offsets from input file
+            // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
+            if (checkIfDirectory(opt->corr_path) && checkIfDirectory(opt->nhdr_path))
+            {
+                cout << "Input correlation path " << opt->corr_path << " is valid, start processing" << endl << endl;
+
+                const vector<string> files = GetDirectoryFiles(opt->corr_path);
+
+                // vector of pairs which stores each txt file's extracted serial number and its name
+                vector< pair<int, string> > allValidFiles;
+
+                // count the number of .txt files
+                int numCorr = 0;
+
+                for (int i = 0; i < files.size(); i++)
+                {
+                    // check if input file is a .txt file
+                    string curFile = files[i];
+                    int end = curFile.rfind(".txt");
+
+                    // if this is indeed a valid .txt file
+                    if ( (end != string::npos) && (end == curFile.length() - 4) )
+                    {
+                        numCorr++;
+
+                        // now we need to understand the sequence number of this file
+                        int start = -1;
+                        
+                        // current file name without type
+                        string curFileName = curFile.substr(0, end);
+
+                        // The sequenceNumString will have zero padding, like 001
+                        for (int i = 0; i < end; i++)
+                        {
+                            // we get the first position that zero padding ends
+                            if (curFile[i] != '0')
+                            {
+                                start = i;
+                                break;
+                            }
+                        }
+            
+                        string sequenceNumString;
+                        // for the case that it is just 000 which represents the initial time stamp
+                        if (start == -1)
+                        {
+                            sequenceNumString = "0";
+                        }
+                        else
+                        {
+                            int length = end - start;
+                            sequenceNumString = curFile.substr(start, length);
+                        }
+
+                        if (is_number(sequenceNumString))
+                        {
+                            allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                        }
+                        else
+                        {
+                            cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                        }
+                    }
+
+                }
+
+                // after finding all the files, sort the allFileSerialNumber in ascending order
+                sort(allValidFiles.begin(), allValidFiles.end());
+
+                cout << numCorr << " .txt correlation results found in input path " << opt->corr_path << endl << endl;
+
+                // sanity check
+                if (numCorr != allValidFiles.size())
+                {
+                    cout << "ERROR: Not all valid files have been recorded" << endl;
+                }
+
+                // organize information into opt
+                opt->allValidFiles = allValidFiles;
+                opt->num = numCorr;
+
+                // run the corrnhdr main
+                Corrnhdr(*opt).main();
+            }
         } 
         catch (LSPException &e) 
         {
@@ -48,7 +131,7 @@ Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr
     }
         
     // check if corr_path exists
-    if(!exists(corr_path))
+    if(!fs::exists(corr_path))
     {
         throw LSPException("Error finding 'corr_path' subdirectory.", "corrnhdr.cpp", "Corrnhdr::Corrnhdr");
     }
@@ -72,145 +155,53 @@ Corrnhdr::~Corrnhdr()
 }
 
 
-void Corrnhdr::compute_offsets()
+void Corrnhdr::compute_offsets(int i)
 {
-    //offset from previous frame
-    vector< vector<double> > shifts;
+    // current offset from previous frame
+    vector<double> curShift;
 
-    //offset from first frame
-    vector< vector<double> >offsets; 
+    // current offset from first frame
+    vector<double> curOffset; 
 
-    offsets.push_back({0, 0, 0});
-
-    // read shifts and offsets from input file
-    // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
-    if (checkIfDirectory(opt.corr_path))
-    {
-        cout << "Input correlation path " << opt.corr_path << " is valid, start processing" << endl << endl;
-
-        const vector<string> files = GetDirectoryFiles(opt.corr_path);
-
-        // vector of pairs which stores each txt file's extracted serial number and its name
-        vector< pair<int, string> > allValidFiles;
-
-        // count the number of .txt files
-        int numCorr = 0;
-
-        for (int i = 0; i < files.size(); i++)
-        {
-            // check if input file is a .txt file
-            string curFile = files[i];
-            int end = curFile.rfind(".txt");
-
-            // if this is indeed a valid .txt file
-            if ( (end != string::npos) && (end == curFile.length() - 4) )
-            {
-                numCorr++;
-
-                // now we need to understand the sequence number of this file
-                int start = -1;
-                
-                // current file name without type
-                string curFileName = curFile.substr(0, end);
-
-                // The sequenceNumString will have zero padding, like 001
-                for (int i = 0; i < end; i++)
-                {
-                    // we get the first position that zero padding ends
-                    if (curFile[i] != '0')
-                    {
-                        start = i;
-                        break;
-                    }
-                }
+    // path for the current input TXT correlation result
+    fs::path corrfile = opt.corr_path + opt.allValidFiles[i].second + ".txt";
     
-                string sequenceNumString;
-                // for the case that it is just 000 which represents the initial time stamp
-                if (start == -1)
-                {
-                    sequenceNumString = "0";
-                }
-                else
-                {
-                    int length = end - start;
-                    sequenceNumString = curFile.substr(start, length);
-                }
-
-                if (is_number(sequenceNumString))
-                {
-                    allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
-                }
-                else
-                {
-                    cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
-                }
-            }
-
-        }
-
-        // after finding all the files, sort the allFileSerialNumber in ascending order
-        sort(allValidFiles.begin(), allValidFiles.end());
-
-        cout << numCorr << " .txt correlation results found in input path " << opt.corr_path << endl << endl;
-
-        // sanity check
-        if (numCorr != allValidFiles.size())
-        {
-            cout << "ERROR: Not all valid files have been recorded" << endl;
-        }
-
-        // put this numCorr with opt
-        opt.num = numCorr;
-
-        for (auto i = 0; i < opt.num; i++) 
-        {
-            fs::path file = opt.corr_path + allValidFiles[i].second + ".txt";
-            
-            // doubel check
-            if (fs::exists(file)) 
-            {
-                std::ifstream inFile;
-                inFile.open(file.string());
-
-                std::vector<double> tmp, tmp2;
-                
-                for (auto j: {0,1,2}) 
-                {
-                    double x;
-                    inFile >> x;
-                    tmp.push_back(x);
-                    tmp2.push_back(offsets[offsets.size()-1][j] + x);
-                }
-
-                shifts.push_back(tmp);
-                offsets.push_back(tmp2);
-
-                inFile.close();
-            } 
-            else 
-            {
-                cout << "[corrnhdr] WARN: " << file.string() << " does not exist." << std::endl;
-            }
-        }
-
-        //Remove first entry of {0,0,0}
-        offsets.erase(offsets.begin());   
-
-        //change 2d vector to 2d array
-        double *data = AIR_CALLOC(3*offsets.size(), double);
-        airMopAdd(mop, data, airFree, airMopAlways);
+    // doubel check
+    if (fs::exists(corrfile)) 
+    {
+        std::ifstream inFile;
+        inFile.open(corrfile.string());
         
-        for(auto i = 0; i < 3*offsets.size(); i++)
+        for (auto j: {0,1,2}) 
         {
-            data[i] = offsets[i/3][i%3];
-        }
+            double x;
+            inFile >> x;
+            // generate curShift
+            curShift.push_back(x);
+            // curOffsets = offsets of previous + curShift
+            // when we first start, we don't have anything stored, then we need to add 0
+            if (opt.allOffsets.empty())
+            {
+                curOffset.push_back(0 + x);
+            }
+            // when not empty, we add
+            else
+            {
+                curOffset.push_back(opt.allOffsets[opt.allOffsets.size()-1][j] + x);
+            }
             
+        }
 
-        //save offsets into nrrd file
-        nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, offsets.size()) ||
-                    nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
-                    mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
+        opt.allShifts.push_back(curShift);
+        opt.allOffsets.push_back(curOffset);
+
+        inFile.close();
+    } 
+    else 
+    {
+        cout << "[corrnhdr] WARN: Required input TXT correlation result " << corrfile.string() << " does not exist." << std::endl;
     }
+
 }
 
 void Corrnhdr::median_filtering()
@@ -336,7 +327,8 @@ void Corrnhdr::main()
         }
 
         // compute the offset of this current file
-        compute_offsets();
+        compute_offsets(i);  
+
         median_filtering();
         smooth();
 
@@ -415,4 +407,19 @@ void Corrnhdr::main()
         }
 
     }
+
+    // //change 2d vector to 2d array
+    // double *data = AIR_CALLOC(3*opt.allOffsets.size(), double);
+    // airMopAdd(mop, data, airFree, airMopAlways);
+    
+    // for(auto i = 0; i < 3*opt.allOffsets.size(); i++)
+    // {
+    //     data[i] = opt.allOffsets[i/3][i%3];
+    // }
+    
+
+    // //save offsets into nrrd file
+    // nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, opt.allOffsets.size()) ||
+    //             nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
+    //             mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 }

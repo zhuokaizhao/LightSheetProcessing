@@ -14,6 +14,13 @@ struct corrnhdrOptions {
     std::string nhdr_path;
     std::string corr_path;
     std::string new_nhdr_path;
+    // variable that stores all the input files
+    vector< pair<int, string> > allValidFiles;
+    // all shifts from previous frame
+    vector< vector<double> > allShifts;
+    // all offsets from the first frame
+    vector< vector<double> > allOffsets;
+    // total number of files
     int num;
     int verbose = 0;
 };
@@ -28,7 +35,7 @@ public:
 	void main();
 
 private:
-	void compute_offsets();
+	void compute_offsets(int i);
 	void median_filtering();
 	void smooth();
 
