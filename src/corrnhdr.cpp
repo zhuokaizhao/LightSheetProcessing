@@ -244,6 +244,7 @@ void Corrnhdr::median_filtering()
 
 }
 
+// Used Gaussian filter to blur the image so that the impact of small features is reduced
 void Corrnhdr::smooth()
 {
     Nrrd *offset_blur = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -319,6 +320,7 @@ void Corrnhdr::main()
         // output file for the current loop
         fs::path outfile = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
         cout << endl << "Currently generating new NHDR header named " << outfile << endl;
+        
         // we want to check if current potential output file already exists, if so, skip
         if (fs::exists(outfile))
         {
@@ -326,7 +328,8 @@ void Corrnhdr::main()
             continue;
         }
 
-        // compute the offset of this current file
+        // compute the offset with respect to the first frame of this current file
+        vector<double> 
         compute_offsets(i);  
 
         median_filtering();
@@ -336,10 +339,13 @@ void Corrnhdr::main()
         double xs, ys, zs;
         std::ifstream ifile(opt.nhdr_path + GenerateOutName(i, 3, "nhdr"));
         std::string line;
+
         while(getline(ifile, line))
         {
+            // we need to find directions
             if(line.find("directions:") != std::string::npos)
             {
+                // patterns to be matched with the directions
                 std::regex reg("\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
                 std::smatch res;
 
@@ -358,23 +364,23 @@ void Corrnhdr::main()
         if (fs::exists(outfile)) 
         {
             //compute new origin
-            double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3),
-                    y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1),
-                    z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
+            double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3);
+            double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
+            double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
 
             cout << "x_scale = " << x_scale << endl;
             cout << "y_scale = " << y_scale << endl;
             cout << "z_scale = " << z_scale << endl;
 
-            // std::string origin = "space origin: ("
-            //                     + std::to_string(xs*x_scale) + ", "
-            //                     + std::to_string(ys*y_scale) + ", "
-            //                     + std::to_string(zs*z_scale) + ")";
-
             std::string origin = "space origin: ("
-                                + std::to_string(xs) + ", "
-                                + std::to_string(ys) + ", "
-                                + std::to_string(zs) + ")";
+                                + std::to_string(xs*x_scale) + ", "
+                                + std::to_string(ys*y_scale) + ", "
+                                + std::to_string(zs*z_scale) + ")";
+
+            // std::string origin = "space origin: ("
+            //                     + std::to_string(xs) + ", "
+            //                     + std::to_string(ys) + ", "
+            //                     + std::to_string(zs) + ")";
 
             cout << "Origin is " << origin << endl;
 
