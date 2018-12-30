@@ -323,7 +323,7 @@ void Corrnhdr::main()
     for (int i = 0; i < opt.num; i++)
     {
         // output file for the current loop
-        fs::path outfile = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
+        fs::path outfile = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
         cout << endl << "Currently generating new NHDR header named " << outfile << endl;
         
         // we want to check if current potential output file already exists, if so, skip
