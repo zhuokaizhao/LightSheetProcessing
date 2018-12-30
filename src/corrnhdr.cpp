@@ -173,10 +173,13 @@ vector<double> Corrnhdr::compute_offsets(int i)
         std::ifstream inFile;
         inFile.open(corrfile.string());
         
-        for (auto j: {0,1,2}) 
+        // read the first three numbers
+        for (int j = 0; j < 3; j++) 
         {
+            // save the number from inFile
             double x;
             inFile >> x;
+            
             // generate curShift
             curShift.push_back(x);
             
@@ -336,6 +339,12 @@ void Corrnhdr::main()
         // compute the offset with respect to the first frame of this current file
         vector<double> curOffset;
         curOffset = compute_offsets(i);  
+
+
+        // print the current offsets
+        cout << endl << "Current offset is " << curOffset << endl;
+        cout << "Current offset is: [" << opt.allOffsets[i][0] << ", " << opt.allOffsets[i][1] << ", " << opt.allOffsets[i][2] << endl;
+
 
         median_filtering();
         smooth();
