@@ -155,7 +155,8 @@ Corrnhdr::~Corrnhdr()
 }
 
 
-void Corrnhdr::compute_offsets(int i)
+// function that computes the offset of the current input
+vector<double> Corrnhdr::compute_offsets(int i)
 {
     // current offset from previous frame
     vector<double> curShift;
@@ -178,6 +179,7 @@ void Corrnhdr::compute_offsets(int i)
             inFile >> x;
             // generate curShift
             curShift.push_back(x);
+            
             // curOffsets = offsets of previous + curShift
             // when we first start, we don't have anything stored, then we need to add 0
             if (opt.allOffsets.empty())
@@ -202,6 +204,8 @@ void Corrnhdr::compute_offsets(int i)
         cout << "[corrnhdr] WARN: Required input TXT correlation result " << corrfile.string() << " does not exist." << std::endl;
     }
 
+    return curOffset;
+
 }
 
 void Corrnhdr::median_filtering()
@@ -213,7 +217,7 @@ void Corrnhdr::median_filtering()
     auto mnout = AIR_CALLOC(nsize, Nrrd*);
     airMopAdd(mop, mnout, airFree, airMopAlways);
 
-    for (int ni=0; ni<nsize; ni++) 
+    for (int ni = 0; ni < nsize; ni++) 
     {
         nrrd_checker(nrrdSlice(ntmp, offset_origin, 0, ni),
                     mop, "Error slicing nrrd:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
@@ -225,6 +229,7 @@ void Corrnhdr::median_filtering()
         
     }
     
+    // join them back
     nrrd_checker(nrrdJoin(offset_median, (const Nrrd*const*)mnout, nsize, 0, AIR_TRUE), 
                 mop, "Error joining median slices:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
     
@@ -329,31 +334,33 @@ void Corrnhdr::main()
         }
 
         // compute the offset with respect to the first frame of this current file
-        vector<double> 
-        compute_offsets(i);  
+        vector<double> curOffset;
+        curOffset = compute_offsets(i);  
 
         median_filtering();
         smooth();
 
-        //read spacing from each nhdr file
+        //read space directions from each original nhdr file
         double xs, ys, zs;
         std::ifstream ifile(opt.nhdr_path + GenerateOutName(i, 3, "nhdr"));
         std::string line;
 
         while(getline(ifile, line))
         {
-            // we need to find directions
+            // the direction of each axis of the array relative to the space, defined by "space directions"
+            // For each of the axes of the array, this vector gives the difference in position associated with incrementing
+            // (by one) the corresponding coordinate in the array
             if(line.find("directions:") != std::string::npos)
             {
                 // patterns to be matched with the directions
                 std::regex reg("\\((.*?), 0, 0\\).*\\(0, (.*?), 0\\).*\\(0, 0, (.*?)\\)");
-                std::smatch res;
+                std::smatch match;
 
-                if(std::regex_search(line, res, reg))
+                if(std::regex_search(line, match, reg))
                 {
-                    xs = std::stof(res[1]);
-                    ys = std::stof(res[2]);
-                    zs = std::stof(res[3]);
+                    xs = std::stof(match[1]);
+                    ys = std::stof(match[2]);
+                    zs = std::stof(match[3]);
                 }
                 break;
             }
@@ -364,7 +371,7 @@ void Corrnhdr::main()
         if (fs::exists(outfile)) 
         {
             //compute new origin
-            double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3);
+            double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
             double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
             double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
 

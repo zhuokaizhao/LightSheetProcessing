@@ -35,7 +35,7 @@ public:
 	void main();
 
 private:
-	void compute_offsets(int i);
+	vector<double> compute_offsets(int i);
 	void median_filtering();
 	void smooth();
 
