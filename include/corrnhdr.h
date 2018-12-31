@@ -17,9 +17,9 @@ struct corrnhdrOptions {
     // variable that stores all the input files
     vector< pair<int, string> > allValidFiles;
     // all shifts from previous frame
-    vector< vector<double> > allShifts;
+    //vector< vector<double> > allShifts;
     // all offsets from the first frame
-    vector< vector<double> > allOffsets;
+    //vector< vector<double> > allOffsets;
     // total number of files
     int num;
     int verbose = 0;
@@ -35,7 +35,7 @@ public:
 	void main();
 
 private:
-	vector<double> compute_offsets(int i);
+	void compute_offsets();
 	void median_filtering();
 	void smooth();
 

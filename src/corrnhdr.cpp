@@ -156,58 +156,76 @@ Corrnhdr::~Corrnhdr()
 
 
 // function that computes the offset of the current input
-vector<double> Corrnhdr::compute_offsets(int i)
+void Corrnhdr::compute_offsets()
 {
-    // current offset from previous frame
-    vector<double> curShift;
-
-    // current offset from first frame
-    vector<double> curOffset; 
+    // all offsets from previous frame
+    vector< vector<double> > allShifts;
+    // all offsets from the first frame
+    vector< vector<double> > allOffsets;
 
     // path for the current input TXT correlation result
-    fs::path corrfile = opt.corr_path + opt.allValidFiles[i].second + ".txt";
-    
-    // doubel check
-    if (fs::exists(corrfile)) 
+    for (int i = 0; i < opt.num; i++)
     {
-        std::ifstream inFile;
-        inFile.open(corrfile.string());
-        
-        // read the first three numbers
-        for (int j = 0; j < 3; j++) 
+        fs::path corrfile = opt.corr_path + GenerateOutName(i, 3, ".txt");
+        // doubel check
+        if (fs::exists(corrfile)) 
         {
-            // save the number from inFile
-            double x;
-            inFile >> x;
+            std::ifstream inFile;
+            inFile.open(corrfile.string());
+
+            // current offset from previous frame
+            vector<double> curShift;
+
+            // current offset from first frame
+            vector<double> curOffset; 
             
-            // generate curShift
-            curShift.push_back(x);
-            
-            // curOffsets = offsets of previous + curShift
-            // when we first start, we don't have anything stored, then we need to add 0
-            if (opt.allOffsets.empty())
+            // read the first three numbers
+            for (int j = 0; j < 3; j++) 
             {
-                curOffset.push_back(0 + x);
+                // save the number from inFile
+                double x;
+                inFile >> x;
+                
+                // generate curShift
+                curShift.push_back(x);
+                
+                // curOffsets = offsets of previous + curShift
+                // when we first start, we don't have anything stored, then we need to add 0
+                if (allOffsets.empty())
+                {
+                    curOffset.push_back(0 + x);
+                }
+                // when not empty, we add
+                else
+                {
+                    curOffset.push_back(allOffsets[allOffsets.size()-1][j] + x);
+                }
             }
-            // when not empty, we add
-            else
-            {
-                curOffset.push_back(opt.allOffsets[opt.allOffsets.size()-1][j] + x);
-            }
-            
+
+            allShifts.push_back(curShift);
+            allOffsets.push_back(curOffset);
+            inFile.close();
         }
-
-        opt.allShifts.push_back(curShift);
-        opt.allOffsets.push_back(curOffset);
-
-        inFile.close();
+        else 
+        {
+            cout << "[corrnhdr] WARN: Required input TXT correlation result " << corrfile.string() << " does not exist." << std::endl;
+        }
     } 
-    else 
+    
+    //change 2d vector to 2d array
+    double *data = AIR_CALLOC(3*opt.allOffsets.size(), double);
+    airMopAdd(mop, data, airFree, airMopAlways);
+    
+    for(auto i = 0; i < 3*allOffsets.size(); i++)
     {
-        cout << "[corrnhdr] WARN: Required input TXT correlation result " << corrfile.string() << " does not exist." << std::endl;
+        data[i] = allOffsets[i/3][i%3];
     }
+    
 
-    return curOffset;
+    //save offsets into nrrd file
+    nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, allOffsets.size()) ||
+                nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
+                mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 
 }
 
@@ -322,32 +340,15 @@ void Corrnhdr::smooth()
 
 void Corrnhdr::main() 
 {
-    // change this to be loop for each input NHDR header and Corr result
+    compute_offsets();  
+    median_filtering();
+    smooth();
+
     for (int i = 0; i < opt.num; i++)
     {
         // output file for the current loop
         fs::path outfile = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
         cout << endl << "Currently generating new NHDR header named " << outfile << endl;
-        
-        // we want to check if current potential output file already exists, if so, skip
-        if (fs::exists(outfile))
-        {
-            cout << outfile << " exists, continue to next." << endl << endl;
-            continue;
-        }
-
-        // compute the offset with respect to the first frame of this current file
-        vector<double> curOffset;
-        curOffset = compute_offsets(i);  
-
-
-        // print the current offsets
-        cout << endl << "Current offset is " << curOffset << endl;
-        cout << "Current offset is: [" << opt.allOffsets[i][0] << ", " << opt.allOffsets[i][1] << ", " << opt.allOffsets[i][2] << endl;
-
-
-        median_filtering();
-        smooth();
 
         //read space directions from each original nhdr file
         double xs, ys, zs;
@@ -375,6 +376,13 @@ void Corrnhdr::main()
             }
         }
         ifile.close();
+
+        // we want to check if current potential output file already exists, if so, skip
+        if (fs::exists(outfile))
+        {
+            cout << outfile << " exists, continue to next." << endl << endl;
+            continue;
+        }
 
         //output files
         if (fs::exists(outfile)) 
@@ -429,19 +437,4 @@ void Corrnhdr::main()
         }
 
     }
-
-    // //change 2d vector to 2d array
-    // double *data = AIR_CALLOC(3*opt.allOffsets.size(), double);
-    // airMopAdd(mop, data, airFree, airMopAlways);
-    
-    // for(auto i = 0; i < 3*opt.allOffsets.size(); i++)
-    // {
-    //     data[i] = opt.allOffsets[i/3][i%3];
-    // }
-    
-
-    // //save offsets into nrrd file
-    // nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, opt.allOffsets.size()) ||
-    //             nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
-    //             mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 }
