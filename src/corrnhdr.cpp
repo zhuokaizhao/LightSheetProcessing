@@ -213,7 +213,7 @@ void Corrnhdr::compute_offsets()
     } 
     
     //change 2d vector to 2d array
-    double *data = AIR_CALLOC(3*opt.allOffsets.size(), double);
+    double *data = AIR_CALLOC(3*allOffsets.size(), double);
     airMopAdd(mop, data, airFree, airMopAlways);
     
     for(auto i = 0; i < 3*allOffsets.size(); i++)
