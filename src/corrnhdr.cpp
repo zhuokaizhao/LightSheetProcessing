@@ -254,8 +254,10 @@ void Corrnhdr::median_filtering()
     nrrd_checker(nrrdJoin(offset_median, (const Nrrd*const*)mnout, nsize, 0, AIR_TRUE), 
                 mop, "Error joining median slices:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
     
-    // copy axis info
+    // copy axis info into offset_median
     nrrdAxisInfoCopy(offset_median, offset_origin, NULL, NRRD_AXIS_INFO_NONE);
+
+    // copy basic info into offset_median
     nrrd_checker(nrrdBasicInfoCopy(offset_median, offset_origin,
                             NRRD_BASIC_INFO_DATA_BIT
                             | NRRD_BASIC_INFO_TYPE_BIT
