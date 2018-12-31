@@ -347,15 +347,16 @@ void Corrnhdr::main()
     for (int i = 0; i < opt.num; i++)
     {
         // output file for the current loop
-        fs::path outfile = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
-        cout << endl << "Currently generating new NHDR header named " << outfile << endl;
+        fs::path infilePath = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
+        fs::path outfilePath = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
+        cout << endl << "Currently generating new NHDR header named " << outfilePath << endl;
 
         //read space directions from each original nhdr file
         double xs, ys, zs;
-        std::ifstream ifile(opt.nhdr_path + GenerateOutName(i, 3, "nhdr"));
+        std::ifstream infile(infilePath.string());
         std::string line;
 
-        while(getline(ifile, line))
+        while(getline(infile, line))
         {
             // the direction of each axis of the array relative to the space, defined by "space directions"
             // For each of the axes of the array, this vector gives the difference in position associated with incrementing
@@ -375,17 +376,17 @@ void Corrnhdr::main()
                 break;
             }
         }
-        ifile.close();
+        infile.close();
 
         // we want to check if current potential output file already exists, if so, skip
-        if (fs::exists(outfile))
+        if (fs::exists(outfilePath))
         {
-            cout << outfile << " exists, continue to next." << endl << endl;
+            cout << outfilePath << " exists, continue to next." << endl << endl;
             continue;
         }
 
         //output files
-        if (fs::exists(outfile)) 
+        if (fs::exists(infilePath.string())) 
         {
             //compute new origin
             double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
@@ -409,9 +410,8 @@ void Corrnhdr::main()
             cout << "Origin is " << origin << endl;
 
             //build new nhdr
-            std::string o_name = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
-            std::ifstream ifile(outfile.string());
-            std::ofstream ofile(o_name);
+            std::ifstream ifile(infilePath.string());
+            std::ofstream ofile(outfilePath.string());
 
             std::string line;
             while(getline(ifile, line))
@@ -433,7 +433,7 @@ void Corrnhdr::main()
         }
         else
         {   
-            std::cout << "[corrnhdr] WARN: " << outfile.string() << " does not exist." << std::endl;
+            std::cout << "[corrnhdr] WARN: " << infilePath.string() << " does not exist." << std::endl;
         }
 
     }
