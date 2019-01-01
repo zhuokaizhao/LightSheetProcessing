@@ -435,11 +435,6 @@ void Corrnhdr::main()
                                 + std::to_string(ys*y_scale) + ", "
                                 + std::to_string(zs*z_scale) + ")";
 
-            // std::string origin = "space origin: ("
-            //                     + std::to_string(xs) + ", "
-            //                     + std::to_string(ys) + ", "
-            //                     + std::to_string(zs) + ")";
-
             cout << "Origin is " << origin << endl;
 
             //build new nhdr
