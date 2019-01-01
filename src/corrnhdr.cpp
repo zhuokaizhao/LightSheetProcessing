@@ -146,7 +146,9 @@ Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr
     // nrrdNix: Delete the nrrd struct, but not the data 
     // all the offsets with respect to the first frame (origin)
     offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
+    
     // Free both the data and the struct 
+    // all the offsets with respect to the median frame (computed)
     offset_median = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     offset_smooth = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 }
@@ -169,7 +171,7 @@ void Corrnhdr::compute_offsets()
     // path for the current input TXT correlation result
     for (int i = 0; i < opt.num; i++)
     {
-        fs::path corrfile = opt.corr_path + GenerateOutName(i, 3, ".txt");
+        fs::path corrfile = opt.corr_path + opt.allValidFiles[i].second + ".txt";
         // doubel check
         if (fs::exists(corrfile)) 
         {
@@ -226,44 +228,48 @@ void Corrnhdr::compute_offsets()
     
 
     // save these offsets data to offset_origin (means with respect to the first frame)
+    // Nrrd *nrrd, void *data, int type, unsigned int dim, size_t sx, sy, .., axis(dim-1), int size
     nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, allOffsets.size()) ||
                 nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
                 mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
 
 }
 
+// generate offset_median
 void Corrnhdr::median_filtering()
 {
     // slice nrrd by x axis and median yz shifts and join them back
     Nrrd *ntmp = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
+    // nsize is 3
     auto nsize = AIR_UINT(offset_origin->axis[0].size);
-    cout << "nsize is " << nsize << endl;
     auto mnout = AIR_CALLOC(nsize, Nrrd*);
-    cout << "mnout is " << mnout << endl;
     airMopAdd(mop, mnout, airFree, airMopAlways);
 
     for (int ni = 0; ni < nsize; ni++) 
     {
-        // slice an array along some axis at some position
+        // slice an array along axis 0 at current position
+        // Nrrd *nout, const Nrrd *nin, unsigned int axis, size_t pos
         nrrd_checker(nrrdSlice(ntmp, offset_origin, 0, ni),
                     mop, "Error slicing nrrd:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
 
         airMopAdd(mop, mnout[ni] = nrrdNew(), (airMopper)nrrdNuke, airMopAlways);
 
+        // perform simple histogram-based median filtering in 1-D, 2-D or 3-D 
+        // Nrrd *nout, const Nrrd *nin, int pad, int mode, unsigned int radius, float wght, unsigned int bins
         nrrd_checker(nrrdCheapMedian(mnout[ni], ntmp, 1, 0, 2, 1.0, 256),
                     mop, "Error computing median:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
         
     }
     
-    // join them back
+    // join them back, generate offset_median
     nrrd_checker(nrrdJoin(offset_median, (const Nrrd*const*)mnout, nsize, 0, AIR_TRUE), 
                 mop, "Error joining median slices:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
     
-    // copy axis info into offset_median
+    // copy axis info into offset_median, same as the offset_origin
     nrrdAxisInfoCopy(offset_median, offset_origin, NULL, NRRD_AXIS_INFO_NONE);
 
-    // copy basic info into offset_median
+    // copy basic info into offset_median, same as the offset_origin
     nrrd_checker(nrrdBasicInfoCopy(offset_median, offset_origin,
                             NRRD_BASIC_INFO_DATA_BIT
                             | NRRD_BASIC_INFO_TYPE_BIT
@@ -286,7 +292,7 @@ void Corrnhdr::smooth()
     auto rsmc1 = nrrdResampleContextNew();
     airMopAdd(mop, rsmc1, (airMopper)nrrdResampleContextNix, airMopAlways);
 
-    //gaussian-blur
+    // gaussian-blur on the offset_median
     double kparm[2] = {2, 3};
     nrrd_checker(nrrdResampleInputSet(rsmc1, offset_median) ||
                     nrrdResampleKernelSet(rsmc1, 0, NULL, NULL) ||
@@ -302,15 +308,21 @@ void Corrnhdr::smooth()
     Nrrd *base = safe_nrrd_new(mop, (airMopper)nrrdNix);
     Nrrd *offset_bound = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
-    //base = {1110000...0000111}
+    // base = {1110000...0000111}
     std::vector<float> data(3, 1);
+    // insert(position, first, last)
+    // Copies of the elements in the range [first,last) are inserted at position
     data.insert(data.end(), 3*offset_blur->axis[1].size-6, 0);
     data.insert(data.end(), 3, 1);
+    
+    // Nrrd *nrrd, void *data, int type, unsigned int dim, size_t sx, sy, .., axis(dim-1), int size
     nrrd_checker(nrrdWrap_va(base, data.data(), nrrdTypeFloat, 2, 3, offset_blur->axis[1].size),
                 mop, "Error wrapping data vector:\n", "corrnhdr.cpp", "Corrnhdr::smooth");
+    
+    // copy the axis infor
     nrrdAxisInfoCopy(base, offset_blur, NULL, NRRD_AXIS_INFO_ALL);
 
-    //bound = gaussian(base)
+    // bound = gaussian(base)
     auto rsmc2 = nrrdResampleContextNew();
     airMopAdd(mop, rsmc2, (airMopper)nrrdResampleContextNix, airMopAlways);
     kparm[0] = 1.5;
@@ -348,8 +360,11 @@ void Corrnhdr::smooth()
 
 void Corrnhdr::main() 
 {
+    // compute offsets with respect to the first frame, generate offset_origin
     compute_offsets();  
+    // using offset_origin, compute offsets with respect to the median, generate offset_median
     median_filtering();
+    // using offset_median, apply Gaussian blur and generate offset_smooth
     smooth();
 
     for (int i = 0; i < opt.num; i++)
@@ -397,9 +412,13 @@ void Corrnhdr::main()
         if (fs::exists(infilePath.string())) 
         {
             //compute new origin
-            double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
-            double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
-            double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
+            // double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
+            // double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
+            // double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
+
+            double x_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+0);
+            double y_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+1);
+            double z_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+2);
 
             cout << "x_scale = " << x_scale << endl;
             cout << "y_scale = " << y_scale << endl;
