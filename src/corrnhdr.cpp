@@ -370,8 +370,8 @@ void Corrnhdr::main()
     for (int i = 0; i < opt.num; i++)
     {
         // output file for the current loop
-        fs::path infilePath = opt.nhdr_path + GenerateOutName(i, 3, ".nhdr");
-        fs::path outfilePath = opt.new_nhdr_path + GenerateOutName(i, 3, ".nhdr");
+        fs::path infilePath = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
+        fs::path outfilePath = opt.new_nhdr_path + opt.allValidFiles[i].second + ".nhdr";
         cout << endl << "Currently generating new NHDR header named " << outfilePath << endl;
 
         //read space directions from each original nhdr file
@@ -411,14 +411,20 @@ void Corrnhdr::main()
         //output files
         if (fs::exists(infilePath.string())) 
         {
-            //compute new origin
+            // compute new origin scale with offset_origin
+            double x_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+0);
+            double y_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+1);
+            double z_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+2);
+
+            // compute new origin scale with offset_median
+            // double x_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+0);
+            // double y_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+1);
+            // double z_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+2);
+            
+            // compute new origin scale with offset_smooth
             // double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
             // double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
             // double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
-
-            double x_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+0);
-            double y_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+1);
-            double z_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+2);
 
             cout << "x_scale = " << x_scale << endl;
             cout << "y_scale = " << y_scale << endl;
