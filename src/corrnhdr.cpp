@@ -143,7 +143,10 @@ Corrnhdr::Corrnhdr(corrnhdrOptions const &opt): opt(opt), mop(airMopNew()), nhdr
         cout << "Output path " << opt.new_nhdr_path << " does not exist, but has been created" << endl;
     }
 
+    // nrrdNix: Delete the nrrd struct, but not the data 
+    // all the offsets with respect to the first frame (origin)
     offset_origin = safe_nrrd_new(mop, (airMopper)nrrdNix);
+    // Free both the data and the struct 
     offset_median = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     offset_smooth = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 }
@@ -212,7 +215,7 @@ void Corrnhdr::compute_offsets()
         }
     } 
     
-    //change 2d vector to 2d array
+    //change 2d vector to 1d array
     double *data = AIR_CALLOC(3*allOffsets.size(), double);
     airMopAdd(mop, data, airFree, airMopAlways);
     
@@ -222,7 +225,7 @@ void Corrnhdr::compute_offsets()
     }
     
 
-    //save offsets into nrrd file
+    // save these offsets data to offset_origin (means with respect to the first frame)
     nrrd_checker(nrrdWrap_va(offset_origin, data, nrrdTypeDouble, 2, 3, allOffsets.size()) ||
                 nrrdSave((opt.corr_path+"offsets.nrrd").c_str(), offset_origin, NULL),
                 mop, "Error creating offset nrrd:\n", "corrnhdr.cpp", "Corrnhdr::compute_offsets");
@@ -235,11 +238,14 @@ void Corrnhdr::median_filtering()
     Nrrd *ntmp = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
     auto nsize = AIR_UINT(offset_origin->axis[0].size);
+    cout << "nsize is " << nsize << endl;
     auto mnout = AIR_CALLOC(nsize, Nrrd*);
+    cout << "mnout is " << mnout << endl;
     airMopAdd(mop, mnout, airFree, airMopAlways);
 
     for (int ni = 0; ni < nsize; ni++) 
     {
+        // slice an array along some axis at some position
         nrrd_checker(nrrdSlice(ntmp, offset_origin, 0, ni),
                     mop, "Error slicing nrrd:\n", "corrnhdr.cpp", "Corrnhdr::median_filtering");
 
