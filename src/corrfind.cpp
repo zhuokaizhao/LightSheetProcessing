@@ -371,8 +371,8 @@ void Corrfind::main()
             cout << "yy = " << yy << endl;
             cout << "zz = " << zz << endl;
 
-            //outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, i)} << std::endl;
-            outfile << std::vector<double>{xx, yy, zz, (double)(i)} << std::endl;
+            outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, i)} << std::endl;
+            //outfile << std::vector<double>{xx, yy, zz, (double)(i)} << std::endl;
         }
 
         // close the output file of current time stamp
