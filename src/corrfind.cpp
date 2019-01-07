@@ -334,11 +334,12 @@ void Corrfind::main()
             vector< vector<double> > allShifts;
 
             // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
+            // j iterates between xy(0), xz(1) and yz(2) images
             for (int j = 0; j < opt.inputImages.size(); j++)
             {
                 vector<string> curInputImages;
-                curInputImages.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
                 curInputImages.push_back(opt.image_path + opt.inputImages[j][i-1].second + ".png");
+                curInputImages.push_back(opt.image_path + opt.inputImages[j][i].second + ".png");
                 opt_corr.input_images = curInputImages;
 
                 // then we can run corr_main
