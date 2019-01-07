@@ -335,6 +335,7 @@ void Corrfind::main()
 
             // for each TYPE of images, we want to find correlation between i-1 and i
             // j iterates between xy(0), xz(1) and yz(2) images
+            cout << endl;
             for (int j = 0; j < opt.inputImages.size(); j++)
             {
                 vector<string> curInputImages;
@@ -343,17 +344,15 @@ void Corrfind::main()
                 opt_corr.input_images = curInputImages;
 
                 // then we can run corr_main
-                cout << endl << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
+                cout << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
                 auto start = chrono::high_resolution_clock::now();
 
                 // curShift is the between of xy, xz of yz channel
                 std::vector<double> curShift = corr_main(opt_corr);
-                
-                // choose the top two from curShift
-                vector<double> top2curShift;
-                top2curShift.push_back(curShift[0]);
-                top2curShift.push_back(curShift[1]);
-                allShifts.push_back(top2curShift);
+
+                // add to allShifts
+                allShifts.push_back(curShift);
+
                 // print out the result of current channel
                 cout << "Shift between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << " is " << curShift << endl;
 
@@ -368,12 +367,16 @@ void Corrfind::main()
             double xx = (allShifts[0][0] + allShifts[1][0])/2.0;
             double yy = (allShifts[0][1] + allShifts[2][0])/2.0;
             double zz = (allShifts[1][1] + allShifts[2][1])/2.0;
+            cout << "xx = " << xx << endl;
+            cout << "yy = " << yy << endl;
+            cout << "zz = " << zz << endl;
 
             outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, i)} << std::endl;
         }
 
         // close the output file of current time stamp
         outfile.close();
+        cout << opt_corr.output_file << " has been saved successfully" << endl;
 
 
     }
