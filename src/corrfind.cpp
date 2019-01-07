@@ -333,7 +333,7 @@ void Corrfind::main()
             // all the correlation results of current time stamp
             vector< vector<double> > allShifts;
 
-            // for each TYPE of images, we want to find correlation between i-1 and i, so i starts with 1
+            // for each TYPE of images, we want to find correlation between i-1 and i
             // j iterates between xy(0), xz(1) and yz(2) images
             for (int j = 0; j < opt.inputImages.size(); j++)
             {
@@ -346,8 +346,16 @@ void Corrfind::main()
                 cout << endl << "Currently processing between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << endl;
                 auto start = chrono::high_resolution_clock::now();
 
+                // curShift is the between of xy, xz of yz channel
                 std::vector<double> curShift = corr_main(opt_corr);
-                allShifts.push_back(curShift);
+                
+                // choose the top two from curShift
+                vector<double> top2curShift;
+                top2curShift.push_back(curShift[0]);
+                top2curShift.push_back(curShift[1]);
+                allShifts.push_back(top2curShift);
+                // print out the result of current channel
+                cout << "Shift between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << " is " << curShift << endl;
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -355,10 +363,11 @@ void Corrfind::main()
                 
             }
 
+            // after the j-for-loop, we have allShifts to be a 3*3 2D vector, 
             // we take the average of the top 2 xx/yy/zz as the final result
-            double xx = (allShifts[0][0] + allShifts[0][2])/2.0;
-            double yy = (allShifts[1][1] + allShifts[1][4])/2.0;
-            double zz = (allShifts[2][3] + allShifts[2][5])/2.0;
+            double xx = (allShifts[0][0] + allShifts[1][0])/2.0;
+            double yy = (allShifts[0][1] + allShifts[2][0])/2.0;
+            double zz = (allShifts[1][1] + allShifts[2][1])/2.0;
 
             outfile << std::vector<double>{xx, yy, zz, AIR_CAST(double, i)} << std::endl;
         }
