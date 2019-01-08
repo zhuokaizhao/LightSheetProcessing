@@ -1268,6 +1268,9 @@ void start_standard_process_with_corr(CLI::App &app)
             
             // note that the number starts counting at 1
             int nhdrNum = 0;
+
+            // all the valid files
+            vector< pair<int, string> > allValidFiles;
             
             for (int i = 0; i < files.size(); i++) 
             {
@@ -1312,7 +1315,7 @@ void start_standard_process_with_corr(CLI::App &app)
 
                     if (is_number(sequenceNumString))
                     {
-                        opt->allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                        allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
                     }
                     else
                     {
@@ -1323,12 +1326,12 @@ void start_standard_process_with_corr(CLI::App &app)
             }
 
             // after finding all the files, sort the allValidFiles in ascending order
-            sort(opt->allValidFiles.begin(), opt->allValidFiles.end());
+            sort(allValidFiles.begin(), allValidFiles.end());
 
             cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
             // sanity check
-            if (nhdrNum != opt->allValidFiles.size())
+            if (nhdrNum != allValidFiles.size())
             {
                 cout << "ERROR: Not all valid files have been recorded" << endl;
             }
@@ -1339,8 +1342,9 @@ void start_standard_process_with_corr(CLI::App &app)
                 nhdrNum = stoi(opt->maxFileNum);
             }
                 
-            // update file number
+            // update file number and allValidFiles
             opt->tmax = nhdrNum;
+            opt->allValidFiles = allValidFiles;
             cout << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
 
             try
