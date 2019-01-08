@@ -963,12 +963,96 @@ void start_standard_process_with_corr(CLI::App &app)
         cout << "********** Running Corrnhdr **********" << endl;
         try
         {
-            // construct options for LSP
-            auto opt_corrnhdr = make_shared<corrnhdrOptions>();
-            opt_corrnhdr->nhdr_path = opt->nhdr_path;
-            opt_corrnhdr->corr_path = opt->align_path;
-            opt_corrnhdr->new_nhdr_path = opt->new_nhdr_path;
-            Corrnhdr(*opt_corrnhdr).main();
+            // read shifts and offsets from input file
+            // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
+            if (checkIfDirectory(opt->corr_path) && checkIfDirectory(opt->nhdr_path))
+            {
+                cout << "Input correlation path " << opt->corr_path << " is valid, start processing" << endl << endl;
+
+                const vector<string> files = GetDirectoryFiles(opt->corr_path);
+
+                // vector of pairs which stores each txt file's extracted serial number and its name
+                vector< pair<int, string> > allValidFiles;
+
+                // count the number of .txt files
+                int numCorr = 0;
+
+                for (int i = 0; i < files.size(); i++)
+                {
+                    // check if input file is a .txt file
+                    string curFile = files[i];
+                    int end = curFile.rfind(".txt");
+
+                    // if this is indeed a valid .txt file
+                    if ( (end != string::npos) && (end == curFile.length() - 4) )
+                    {
+                        numCorr++;
+
+                        // now we need to understand the sequence number of this file
+                        int start = -1;
+                        
+                        // current file name without type
+                        string curFileName = curFile.substr(0, end);
+
+                        // The sequenceNumString will have zero padding, like 001
+                        for (int i = 0; i < end; i++)
+                        {
+                            // we get the first position that zero padding ends
+                            if (curFile[i] != '0')
+                            {
+                                start = i;
+                                break;
+                            }
+                        }
+            
+                        string sequenceNumString;
+                        // for the case that it is just 000 which represents the initial time stamp
+                        if (start == -1)
+                        {
+                            sequenceNumString = "0";
+                        }
+                        else
+                        {
+                            int length = end - start;
+                            sequenceNumString = curFile.substr(start, length);
+                        }
+
+                        if (is_number(sequenceNumString))
+                        {
+                            allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
+                        }
+                        else
+                        {
+                            cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                        }
+                    }
+
+                }
+
+                // after finding all the files, sort the allFileSerialNumber in ascending order
+                sort(allValidFiles.begin(), allValidFiles.end());
+
+                cout << numCorr << " .txt correlation results found in input path " << opt->corr_path << endl << endl;
+
+                // sanity check
+                if (numCorr != allValidFiles.size())
+                {
+                    cout << "ERROR: Not all valid files have been recorded" << endl;
+                }
+
+                // organize information into opt
+                opt->allValidFiles = allValidFiles;
+                opt->num = numCorr;
+
+                // construct options for LSP
+                auto opt_corrnhdr = make_shared<corrnhdrOptions>();
+                opt_corrnhdr->nhdr_path = opt->nhdr_path;
+                opt_corrnhdr->corr_path = opt->align_path;
+                opt_corrnhdr->new_nhdr_path = opt->new_nhdr_path;
+
+                // run the corrnhdr main
+                Corrnhdr(*opt_corrnhdr).main();
+            }
         } 
         catch (LSPException &e) 
         {
