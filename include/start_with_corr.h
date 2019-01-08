@@ -64,6 +64,9 @@ struct startwithcorrOptions {
     unsigned int bound = 10;
     double epsilon = 0.00000000000001;
 
+    // from corrnhdrOptions
+    int num;
+
     // from animOptions
     int fps = 10;
     vector< pair<int, string> > allValidFiles;

@@ -965,11 +965,11 @@ void start_standard_process_with_corr(CLI::App &app)
         {
             // read shifts and offsets from input file
             // check if input_path is valid, notice that there is no Single file mode for this task, has to be directory
-            if (checkIfDirectory(opt->corr_path) && checkIfDirectory(opt->nhdr_path))
+            if (checkIfDirectory(opt->align_path) && checkIfDirectory(opt->nhdr_path))
             {
-                cout << "Input correlation path " << opt->corr_path << " is valid, start processing" << endl << endl;
+                cout << "Input correlation path " << opt->align_path << " is valid, start processing" << endl << endl;
 
-                const vector<string> files = GetDirectoryFiles(opt->corr_path);
+                const vector<string> files = GetDirectoryFiles(opt->align_path);
 
                 // vector of pairs which stores each txt file's extracted serial number and its name
                 vector< pair<int, string> > allValidFiles;
@@ -1032,7 +1032,7 @@ void start_standard_process_with_corr(CLI::App &app)
                 // after finding all the files, sort the allFileSerialNumber in ascending order
                 sort(allValidFiles.begin(), allValidFiles.end());
 
-                cout << numCorr << " .txt correlation results found in input path " << opt->corr_path << endl << endl;
+                cout << numCorr << " .txt correlation results found in input path " << opt->align_path << endl << endl;
 
                 // sanity check
                 if (numCorr != allValidFiles.size())
@@ -1049,6 +1049,9 @@ void start_standard_process_with_corr(CLI::App &app)
                 opt_corrnhdr->nhdr_path = opt->nhdr_path;
                 opt_corrnhdr->corr_path = opt->align_path;
                 opt_corrnhdr->new_nhdr_path = opt->new_nhdr_path;
+                opt_corrnhdr->num = opt->num;
+                opt_corrnhdr->allValidFiles = opt->allValidFiles;
+                opt_corrnhdr->verbose = opt->verbose;
 
                 // run the corrnhdr main
                 Corrnhdr(*opt_corrnhdr).main();
