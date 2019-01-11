@@ -412,9 +412,9 @@ void Corrnhdr::main()
         if (fs::exists(infilePath.string())) 
         {
             // compute new origin scale with offset_origin
-            double x_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+0);
-            double y_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+1);
-            double z_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+2);
+            // double x_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+0);
+            // double y_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+1);
+            // double z_scale = nrrdDLookup[offset_origin->type](offset_origin->data, i*3+2);
 
             // compute new origin scale with offset_median
             // double x_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+0);
@@ -422,9 +422,9 @@ void Corrnhdr::main()
             // double z_scale = nrrdDLookup[offset_median->type](offset_median->data, i*3+2);
             
             // compute new origin scale with offset_smooth
-            // double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
-            // double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
-            // double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
+            double x_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+0);
+            double y_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+1);
+            double z_scale = nrrdDLookup[offset_smooth->type](offset_smooth->data, i*3+2);
 
             cout << "x_scale = " << x_scale << endl;
             cout << "y_scale = " << y_scale << endl;
