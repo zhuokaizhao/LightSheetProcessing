@@ -319,7 +319,7 @@ std::vector<double> corr_main(corrOptions const &opt)
 
     std::vector<double> shift;
 
-    cout << "reached line 322 at corr.cpp" << endl;
+    // cout << "reached line 322 at corr.cpp" << endl;
     nin[0] = safe_nrrd_load(mop, opt.input_images[0]);
     nin[1] = safe_nrrd_load(mop, opt.input_images[1]);
 
@@ -328,7 +328,7 @@ std::vector<double> corr_main(corrOptions const &opt)
     nrrdKernelParse(&(kk[0]->kernel), kk[0]->parm, opt.kernel[0].c_str());
     nrrdKernelParse(&(kk[1]->kernel), kk[1]->parm, opt.kernel[1].c_str());
     
-    cout << "reached line 331 at corr.cpp" << endl;
+    // cout << "reached line 331 at corr.cpp" << endl;
     
     nout = nrrdNew();
     airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
@@ -337,7 +337,7 @@ std::vector<double> corr_main(corrOptions const &opt)
     airMopAdd(mop, kk[0], (airMopper)nrrdKernelSpecNix, airMopAlways);
     airMopAdd(mop, kk[1], (airMopper)nrrdKernelSpecNix, airMopAlways);
 
-    cout << "reached line 349 at corr.cpp" << endl;
+    // cout << "reached line 349 at corr.cpp" << endl;
 
     if (crossCorrImg(nout, maxIdx, nin, bound, verbose, mop)) 
     {
@@ -363,6 +363,8 @@ std::vector<double> corr_main(corrOptions const &opt)
                         "should increase -b bound %d\n",
                     maxIdx[0], maxIdx[1], bound);
 
+            cout << "reached line 366 at corr.cpp" << endl;
+
             airMopError(mop);
 
             throw LSPException(msg, "corr.cpp", "corr_main");
@@ -384,6 +386,8 @@ std::vector<double> corr_main(corrOptions const &opt)
         double *dout = AIR_CAST(double*, nout->data);
         unsigned int size = AIR_CAST(unsigned int, nout->axis[0].size);
 
+        cout << "reached line 389 at corr.cpp" << endl;
+
         if (AIR_ABS(AIR_ABS(maxIdx[0]) - bound) + 1 <= ksup ||
             AIR_ABS(AIR_ABS(maxIdx[1]) - bound) + 1 <= ksup) 
         {
@@ -398,7 +402,7 @@ std::vector<double> corr_main(corrOptions const &opt)
             throw LSPException(msg, "corr.cpp", "corr_main");
         }
 
-        cout << "reached line 401 at corr.cpp" << endl;
+        // cout << "reached line 401 at corr.cpp" << endl;
 
         if (verbose) 
         {
@@ -421,7 +425,7 @@ std::vector<double> corr_main(corrOptions const &opt)
         printf("start: %g %g --> (out %d) %g (%g,%g)\n", pos0[0], pos0[0], out, val0, grad0[0], grad0[1]);
     }
 
-    cout << "reached line 424 at corr.cpp" << endl;
+    // cout << "reached line 424 at corr.cpp" << endl;
     
     for (iter=0; iter<iterMax; iter++) 
     {
@@ -472,7 +476,7 @@ std::vector<double> corr_main(corrOptions const &opt)
         }
     }
 
-    cout << "reached line 475 at corr.cpp" << endl;
+    //cout << "reached line 475 at corr.cpp" << endl;
     
     if(verbose)
         printf("%f %f = shift\n", pos1[0] - bound, pos1[1] - bound);
