@@ -350,6 +350,8 @@ void Corrfind::main()
                 // curShift is the between of xy, xz of yz channel
                 std::vector<double> curShift = corr_main(opt_corr);
 
+                cout << curShift << endl;
+
                 // add to allShifts
                 allShifts.push_back(curShift);
 
