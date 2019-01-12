@@ -352,7 +352,7 @@ std::vector<double> corr_main(corrOptions const &opt)
         throw LSPException(msg, "corr.cpp", "corr_main");
     }
 
-    cout << "reached line 355 at corr.cpp" << endl;
+    // cout << "reached line 355 at corr.cpp" << endl;
 
     if (nrrdKernelBox == kk[0]->kernel && nrrdKernelBox == kk[1]->kernel) 
     {
@@ -386,25 +386,25 @@ std::vector<double> corr_main(corrOptions const &opt)
         double *dout = AIR_CAST(double*, nout->data);
         unsigned int size = AIR_CAST(unsigned int, nout->axis[0].size);
 
-        cout << "reached line 389 at corr.cpp" << endl;
+        // cout << "reached line 389 at corr.cpp" << endl;
 
         if (AIR_ABS(AIR_ABS(maxIdx[0]) - bound) + 1 <= ksup ||
             AIR_ABS(AIR_ABS(maxIdx[1]) - bound) + 1 <= ksup) 
         {
             char *msg;
 
-            cout << "reached line 396 at corr.cpp" << endl;
+            // cout << "reached line 396 at corr.cpp" << endl;
 
-            cout << "maxIdx[0] is " << maxIdx[0] << endl;
-            cout << "maxIdx[1] is " << maxIdx[1] << endl;
-            cout << "ksup is " << ksup << endl;
-            cout << "bound is " << bound << endl;
+            // cout << "maxIdx[0] is " << maxIdx[0] << endl;
+            // cout << "maxIdx[1] is " << maxIdx[1] << endl;
+            // cout << "ksup is " << ksup << endl;
+            // cout << "bound is " << bound << endl;
 
             sprintf(msg, "maxIdx %d,%d is within kernel support %d "
                         "of test space boundary; should increase -b bound %d\n",
                     maxIdx[0], maxIdx[1], ksup, bound);
 
-            cout << "reached line 402 at corr.cpp" << endl;
+            // cout << "reached line 402 at corr.cpp" << endl;
 
             airMopError(mop);
 

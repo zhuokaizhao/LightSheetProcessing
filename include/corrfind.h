@@ -21,7 +21,7 @@ struct corrfindOptions
     vector< vector< pair<int, string> > > inputImages;
     int file_number;
     std::vector<std::string> kernel = {"c4hexic", "c4hexicd"};
-    unsigned int bound = 10;
+    unsigned int bound = 20;
     double epsilon = 0.00000000000001;
     int verbose = 0;
 };

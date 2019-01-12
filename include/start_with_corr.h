@@ -61,7 +61,7 @@ struct startwithcorrOptions {
     vector<string> input_images;
     vector< vector< pair<int, string> > > inputImages;
     vector<string> kernel_corrfind = {"c4hexic", "c4hexicd"};
-    unsigned int bound = 10;
+    unsigned int bound = 20;
     double epsilon = 0.00000000000001;
 
     // from corrnhdrOptions
