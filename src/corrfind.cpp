@@ -351,8 +351,6 @@ void Corrfind::main()
                 std::vector<double> curShift{0, 0, 0};
                 curShift = corr_main(opt_corr);
 
-                cout << curShift << endl;
-
                 // add to allShifts
                 allShifts.push_back(curShift);
 

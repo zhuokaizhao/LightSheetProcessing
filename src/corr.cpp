@@ -398,6 +398,8 @@ std::vector<double> corr_main(corrOptions const &opt)
             throw LSPException(msg, "corr.cpp", "corr_main");
         }
 
+        cout << "reached line 401 at corr.cpp" << endl;
+
         if (verbose) 
         {
             printf("%s->support=%g, %s->support=%g ==> ksup = %d\n",
@@ -418,6 +420,8 @@ std::vector<double> corr_main(corrOptions const &opt)
     {
         printf("start: %g %g --> (out %d) %g (%g,%g)\n", pos0[0], pos0[0], out, val0, grad0[0], grad0[1]);
     }
+
+    cout << "reached line 424 at corr.cpp" << endl;
     
     for (iter=0; iter<iterMax; iter++) 
     {
@@ -467,6 +471,8 @@ std::vector<double> corr_main(corrOptions const &opt)
             printf("%d: %f %f --> (%d tries) %f (%g,%g) (hh %g)\n", iter, pos0[0], pos0[0], tries, val0, grad0[0], grad0[1], hh);
         }
     }
+
+    cout << "reached line 475 at corr.cpp" << endl;
     
     if(verbose)
         printf("%f %f = shift\n", pos1[0] - bound, pos1[1] - bound);
