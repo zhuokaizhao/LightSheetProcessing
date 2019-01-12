@@ -393,16 +393,20 @@ std::vector<double> corr_main(corrOptions const &opt)
         {
             char *msg;
 
+            cout << "reached line 396 at corr.cpp" << endl;
+
             sprintf(msg, "maxIdx %d,%d is within kernel support %d "
                         "of test space boundary; should increase -b bound %d\n",
                     maxIdx[0], maxIdx[1], ksup, bound);
+
+            cout << "reached line 402 at corr.cpp" << endl;
 
             airMopError(mop);
 
             throw LSPException(msg, "corr.cpp", "corr_main");
         }
 
-        // cout << "reached line 401 at corr.cpp" << endl;
+        // cout << "reached line 409 at corr.cpp" << endl;
 
         if (verbose) 
         {
