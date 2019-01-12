@@ -357,7 +357,7 @@ void Corrfind::main()
                 allShifts.push_back(curShift);
 
                 // print out the result of current channel
-                cout << "Shift between " << opt_corr.input_images[0] << " and " << opt_corr.input_images[1] << " is " << curShift << endl;
+                cout << "Shift between them is " << curShift << endl;
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 

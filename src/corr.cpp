@@ -319,7 +319,7 @@ std::vector<double> corr_main(corrOptions const &opt)
 
     std::vector<double> shift;
 
-
+    cout << "reached line 322 at corr.cpp" << endl;
     nin[0] = safe_nrrd_load(mop, opt.input_images[0]);
     nin[1] = safe_nrrd_load(mop, opt.input_images[1]);
 
@@ -327,13 +327,17 @@ std::vector<double> corr_main(corrOptions const &opt)
     kk[1] = nrrdKernelSpecNew();
     nrrdKernelParse(&(kk[0]->kernel), kk[0]->parm, opt.kernel[0].c_str());
     nrrdKernelParse(&(kk[1]->kernel), kk[1]->parm, opt.kernel[1].c_str());
-
+    
+    cout << "reached line 331 at corr.cpp" << endl;
+    
     nout = nrrdNew();
     airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
     airMopAdd(mop, nin[0], (airMopper)nrrdNuke, airMopAlways);
     airMopAdd(mop, nin[1], (airMopper)nrrdNuke, airMopAlways);
     airMopAdd(mop, kk[0], (airMopper)nrrdKernelSpecNix, airMopAlways);
     airMopAdd(mop, kk[1], (airMopper)nrrdKernelSpecNix, airMopAlways);
+
+    cout << "reached line 349 at corr.cpp" << endl;
 
     if (crossCorrImg(nout, maxIdx, nin, bound, verbose, mop)) 
     {
@@ -347,6 +351,8 @@ std::vector<double> corr_main(corrOptions const &opt)
 
         throw LSPException(msg, "corr.cpp", "corr_main");
     }
+
+    cout << "reached line 355 at corr.cpp" << endl;
 
     if (nrrdKernelBox == kk[0]->kernel && nrrdKernelBox == kk[1]->kernel) 
     {
