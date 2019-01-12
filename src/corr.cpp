@@ -395,6 +395,11 @@ std::vector<double> corr_main(corrOptions const &opt)
 
             cout << "reached line 396 at corr.cpp" << endl;
 
+            cout << "maxIdx[0] is " << maxIdx[0] << endl;
+            cout << "maxIdx[1] is " << maxIdx[1] << endl;
+            cout << "ksup is " << ksup << endl;
+            cout << "bound is " << bound << endl;
+
             sprintf(msg, "maxIdx %d,%d is within kernel support %d "
                         "of test space boundary; should increase -b bound %d\n",
                     maxIdx[0], maxIdx[1], ksup, bound);
