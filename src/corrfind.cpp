@@ -348,7 +348,8 @@ void Corrfind::main()
                 auto start = chrono::high_resolution_clock::now();
 
                 // curShift is the between of xy, xz of yz channel
-                std::vector<double> curShift = corr_main(opt_corr);
+                std::vector<double> curShift{0, 0, 0};
+                curShift = corr_main(opt_corr);
 
                 cout << curShift << endl;
 
