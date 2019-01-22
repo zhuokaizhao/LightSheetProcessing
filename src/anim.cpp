@@ -262,6 +262,11 @@ int Anim::set_origins()
         cerr << "[ANIM Notice]: All .nhdr files have origins {0, 0, 0}, will not implement origin relocation." << endl;
         return 1;
     }
+    else
+    {
+        cout << "We decided to take out resampling because it feels better not to be part of LSP" << endl;
+        return 1;
+    }
 
     //find minmax values in each dimension.
     for(auto i: {0, 1, 2})
