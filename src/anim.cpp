@@ -268,7 +268,7 @@ int Anim::set_origins()
     //     return 1;
     // }
 
-    //find minmax values in each dimension.
+    // find minmax values in each dimension.
     for(auto i: {0, 1, 2})
     {
         int o_min = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::max(),
@@ -319,7 +319,7 @@ void Anim::split_type()
 
         std::cout << "===================== " + to_string(i) + "/" + std::to_string(opt.tmax-1) + " =====================\n";
 
-        //read proj files
+        // read proj files
         string xy_proj_file, yz_proj_file;
         xy_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projXY.nrrd";
         yz_proj_file = opt.proj_path + opt.allValidFiles[i].second + "-projYZ.nrrd";
@@ -329,39 +329,61 @@ void Anim::split_type()
                              safe_nrrd_load(mop_t, yz_proj_file)};
 
         
-        // take off the cropping part after discussing with Gordon
         // reset projs to space coordinate using new origins
-        // crop the area that we are going to perform resample
-        // Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
-        //                    safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+        Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
+                           safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+        
+        if(!no_origin)
+        {
+            // get the new origin coordinates
+            int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
 
-        // if(!no_origin)
-        // {
-        //     int x = origins[i][0], y = origins[i][1], z = origins[i][2];
-        //     int minx = minmax[0][0], maxx = minmax[0][1];
-        //     int miny = minmax[1][0], maxy = minmax[1][1];
-        //     int minz = minmax[2][0], maxz = minmax[2][1];
+            // get min and max values for each dimension
+            int minx = minmax[0][0], maxx = minmax[0][1];
+            int miny = minmax[1][0], maxy = minmax[1][1];
+            int minz = minmax[2][0], maxz = minmax[2][1];
 
-        //     size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
-        //     size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
-        //                         static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
-        //                         proj_rsm[0]->axis[2].size-1,
-        //                         proj_rsm[0]->axis[3].size-1}; 
-        //     size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
-        //     size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
-        //                         static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
-        //                         proj_rsm[1]->axis[2].size-1,
-        //                         proj_rsm[1]->axis[3].size-1};
+            // take off the cropping part after discussing with Gordon
+            // size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
+            // size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
+            //                     static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
+            //                     proj_rsm[0]->axis[2].size-1,
+            //                     proj_rsm[0]->axis[3].size-1}; 
+            // size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
+            // size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
+            //                     static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
+            //                     proj_rsm[1]->axis[2].size-1,
+            //                     proj_rsm[1]->axis[3].size-1};
+            
+            // for the xy-projection
+            // min
+            size_t min_xy[4] = {static_cast<size_t>(0 - x0), static_cast<size_t>(0 - y0), 0, 0};
+            // max
+            size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0) - 1,
+                                static_cast<size_t>(proj_rsm[0]->axis[1].size - y0) - 1,
+                                proj_rsm[0]->axis[2].size - 1,
+                                proj_rsm[0]->axis[3].size - 1}; 
 
-        //     nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min0, max0) ||
-        //                     nrrdCrop(proj_t[1], proj_rsm[1], min1, max1),
-        //                     mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
+            // for the yz-projection
+            // min
+            size_t min_yz[4] = {static_cast<size_t>(0 - y0), static_cast<size_t>(0 - z0), 0, 0};
+            // max
+            size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0) - 1,
+                                static_cast<size_t>(proj_rsm[1]->axis[1].size - z0) - 1,
+                                proj_rsm[1]->axis[2].size - 1,
+                                proj_rsm[1]->axis[3].size - 1};
 
-        //     proj_rsm[0] = proj_t[0];
-        //     proj_rsm[1] = proj_t[1];
-        // }
+            
+            // crop the area that we are going to perform resample
+            nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min_xy, max_xy) ||
+                            nrrdCrop(proj_t[1], proj_rsm[1], min_yz, max_yz),
+                            mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
 
-        //resample
+            proj_rsm[0] = proj_t[0];
+            proj_rsm[1] = proj_t[1];
+        }
+
+        // resample
         // initialize some new spaces
         Nrrd* res_rsm[2][2] = { //store {{max_z, avg_z}, {max_x, avg_x}}
                                 {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
