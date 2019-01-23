@@ -332,8 +332,8 @@ void Anim::split_type()
         // take off the cropping part after discussing with Gordon
         // reset projs to space coordinate using new origins
         // crop the area that we are going to perform resample
-        Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
-                           safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+        // Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
+        //                    safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
 
         // if(!no_origin)
         // {
