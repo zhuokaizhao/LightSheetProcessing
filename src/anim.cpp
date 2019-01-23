@@ -337,6 +337,7 @@ void Anim::split_type()
         {
             // get the new origin coordinates
             int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
+            cout << "New origin is: " << "(" << x0 << ", " << y0 << ", " << z0 << ")" << endl;
 
             // get min and max values for each dimension
             int minx = minmax[0][0], maxx = minmax[0][1];
