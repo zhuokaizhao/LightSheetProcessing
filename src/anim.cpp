@@ -336,13 +336,24 @@ void Anim::split_type()
         if(!no_origin)
         {
             // get the new origin coordinates
-            int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
+            // Zhuokai: changed from int to float
+            // int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
+            float x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
             cout << "New origin is: " << "(" << x0 << ", " << y0 << ", " << z0 << ")" << endl;
 
             // get min and max values for each dimension
             int minx = minmax[0][0], maxx = minmax[0][1];
+            cout << "minx = " << minx << endl;
+            cout << "maxx = " << maxx << endl;
+
             int miny = minmax[1][0], maxy = minmax[1][1];
+            cout << "miny = " << miny << endl;
+            cout << "maxy = " << maxy << endl;
+
             int minz = minmax[2][0], maxz = minmax[2][1];
+            cout << "minz = " << minz << endl;
+            cout << "maxz = " << maxz << endl;
+            
 
             // take off the cropping part after discussing with Gordon
             // size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
