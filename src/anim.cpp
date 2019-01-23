@@ -262,11 +262,11 @@ int Anim::set_origins()
         cerr << "[ANIM Notice]: All .nhdr files have origins {0, 0, 0}, will not implement origin relocation." << endl;
         return 1;
     }
-    else
-    {
-        cout << "We decided to take out resampling because it feels better not to be part of LSP" << endl;
-        return 1;
-    }
+    // else
+    // {
+    //     cout << "We decided to take out resampling because it feels better not to be part of LSP" << endl;
+    //     return 1;
+    // }
 
     //find minmax values in each dimension.
     for(auto i: {0, 1, 2})
@@ -332,32 +332,33 @@ void Anim::split_type()
         Nrrd* proj_t[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
                            safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
         
+        // take off the cropping part after discussing with Gordon
         // crop the area that we are going to perform resample
-        if(!no_origin)
-        {
-            int x = origins[i][0], y = origins[i][1], z = origins[i][2];
-            int minx = minmax[0][0], maxx = minmax[0][1];
-            int miny = minmax[1][0], maxy = minmax[1][1];
-            int minz = minmax[2][0], maxz = minmax[2][1];
+        // if(!no_origin)
+        // {
+        //     int x = origins[i][0], y = origins[i][1], z = origins[i][2];
+        //     int minx = minmax[0][0], maxx = minmax[0][1];
+        //     int miny = minmax[1][0], maxy = minmax[1][1];
+        //     int minz = minmax[2][0], maxz = minmax[2][1];
 
-            size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
-            size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
-                                static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
-                                proj_rsm[0]->axis[2].size-1,
-                                proj_rsm[0]->axis[3].size-1}; 
-            size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
-            size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
-                                static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
-                                proj_rsm[1]->axis[2].size-1,
-                                proj_rsm[1]->axis[3].size-1};
+        //     size_t min0[4] = {static_cast<size_t>(maxx-x), static_cast<size_t>(maxy-y), 0, 0};
+        //     size_t max0[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size-x+minx)-1,
+        //                         static_cast<size_t>(proj_rsm[0]->axis[1].size-y+miny)-1,
+        //                         proj_rsm[0]->axis[2].size-1,
+        //                         proj_rsm[0]->axis[3].size-1}; 
+        //     size_t min1[4] = {static_cast<size_t>(maxy-y), static_cast<size_t>(maxz-z), 0, 0};
+        //     size_t max1[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size-y+miny)-1,
+        //                         static_cast<size_t>(proj_rsm[1]->axis[1].size-z+minz)-1,
+        //                         proj_rsm[1]->axis[2].size-1,
+        //                         proj_rsm[1]->axis[3].size-1};
 
-            nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min0, max0) ||
-                            nrrdCrop(proj_t[1], proj_rsm[1], min1, max1),
-                            mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
+        //     nrrd_checker(nrrdCrop(proj_t[0], proj_rsm[0], min0, max0) ||
+        //                     nrrdCrop(proj_t[1], proj_rsm[1], min1, max1),
+        //                     mop_t, "Error cropping nrrd:\n", "anim.cpp", "Anim::split_type");
 
-            proj_rsm[0] = proj_t[0];
-            proj_rsm[1] = proj_t[1];
-        }
+        //     proj_rsm[0] = proj_t[0];
+        //     proj_rsm[1] = proj_t[1];
+        // }
 
         //resample
         // initialize some new spaces
