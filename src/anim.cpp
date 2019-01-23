@@ -358,20 +358,24 @@ void Anim::split_type()
             // for the xy-projection
             // min
             size_t min_xy[4] = {static_cast<size_t>(minx - x0), static_cast<size_t>(miny - y0), 0, 0};
+            cout << "min_xy is: " << min_xy << endl;
             // max
             size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + minx) - 1,
                                 static_cast<size_t>(proj_rsm[0]->axis[1].size - y0 + miny) - 1,
                                 proj_rsm[0]->axis[2].size - 1,
                                 proj_rsm[0]->axis[3].size - 1}; 
+            cout << "max_xy is: " << max_xy << endl;
 
             // for the yz-projection
             // min
             size_t min_yz[4] = {static_cast<size_t>(miny - y0), static_cast<size_t>(minz - z0), 0, 0};
+            cout << "min_yz is: " << min_yz << endl;
             // max
             size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + miny) - 1,
                                 static_cast<size_t>(proj_rsm[1]->axis[1].size - z0 + minz) - 1,
                                 proj_rsm[1]->axis[2].size - 1,
                                 proj_rsm[1]->axis[3].size - 1};
+            cout << "max_yz is: " << max_yz << endl;
 
             
             // crop the area that we are going to perform resample
