@@ -279,7 +279,7 @@ int Anim::set_origins()
 
         // int my_max = std::accumulate(origins[i].begin(), origins[i].end(), 0);
         int my_max;
-        for (int j = 0; j < origins[i].size; j++)
+        for (int j = 0; j < origins[i].size(); j++)
         {
             my_max += fabs(origins[i][j]);
         }
