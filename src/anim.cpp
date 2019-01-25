@@ -343,16 +343,16 @@ void Anim::split_type()
 
             // get min and max origins for each dimension
             int x0_min = minmax[0][0], x0_max = minmax[0][1];
-            cout << "minx = " << x0_min << endl;
-            cout << "maxx = " << x0_max << endl;
+            cout << "x0_min = " << x0_min << endl;
+            cout << "x0_max = " << x0_max << endl;
 
             int y0_min = minmax[1][0], y0_max = minmax[1][1];
-            cout << "miny = " << y0_min << endl;
-            cout << "maxy = " << y0_max << endl;
+            cout << "y0_min = " << y0_min << endl;
+            cout << "y0_max = " << y0_max << endl;
 
             int z0_min = minmax[2][0], z0_max = minmax[2][1];
-            cout << "minz = " << z0_min << endl;
-            cout << "maxz = " << z0_max << endl;
+            cout << "z0_min = " << z0_min << endl;
+            cout << "z0_max = " << z0_max << endl;
             
 
             // take off the cropping part after discussing with Gordon
@@ -369,7 +369,7 @@ void Anim::split_type()
             
             // for the xy-projection
             // min
-            size_t min_xy[4] = {static_cast<size_t>(minx - x0), static_cast<size_t>(miny - y0), 0, 0};
+            size_t min_xy[4] = {static_cast<size_t>(x0_min - x0), static_cast<size_t>(y0_min - y0), 0, 0};
             cout << "min_xy is: " << min_xy[0] << ", " << min_xy[1] << ", " << min_xy[2] << ", " << min_xy[3] << endl;
             // max
             size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + minx) - 1,
@@ -380,7 +380,7 @@ void Anim::split_type()
 
             // for the yz-projection
             // min
-            size_t min_yz[4] = {static_cast<size_t>(miny - y0), static_cast<size_t>(minz - z0), 0, 0};
+            size_t min_yz[4] = {static_cast<size_t>(y0_min - y0), static_cast<size_t>(z0_min - z0), 0, 0};
             cout << "min_yz is: " << min_yz[0] << ", " << min_yz[1] << ", " << min_yz[2] << ", " << min_yz[3] << endl;
             // max
             size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + miny) - 1,
