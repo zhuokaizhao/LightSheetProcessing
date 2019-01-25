@@ -277,9 +277,9 @@ int Anim::set_origins()
         int o_max = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::min(),
                                     [i](int acc, std::vector<int> o){return AIR_MAX(acc, o[i]);});
 
-        auto it = max_element(std::begin(origins[i]), std::end(origins[i]));
+        int my_max = std::accumulate(origins[i].begin(), origins[i].end(), std::plus<int>());
 
-        cout << "o_max is " << o_max << "   it is " << *it << endl;
+        cout << "o_max is " << o_max << "   my_max is " << my_max << endl;
         
         minmax.push_back(std::vector<int>{o_min, o_max});
     }
