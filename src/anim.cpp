@@ -339,20 +339,32 @@ void Anim::split_type()
             // Zhuokai: changed from int to float
             // int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
             int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
-            cout << "New origin is: " << "(" << x0 << ", " << y0 << ", " << z0 << ")" << endl;
+            if (opt.verbose)
+            {
+                cout << "New origin is: " << "(" << x0 << ", " << y0 << ", " << z0 << ")" << endl;
+            }
 
             // get min and max origins for each dimension
             int x0_min = minmax[0][0], x0_max = minmax[0][1];
-            cout << "x0_min = " << x0_min << endl;
-            cout << "x0_max = " << x0_max << endl;
-
+            if (opt.verbose)
+            {
+                cout << "x0_min = " << x0_min << endl;
+                cout << "x0_max = " << x0_max << endl;
+            }
+            
             int y0_min = minmax[1][0], y0_max = minmax[1][1];
-            cout << "y0_min = " << y0_min << endl;
-            cout << "y0_max = " << y0_max << endl;
+            if (opt.verbose)
+            {
+                cout << "y0_min = " << y0_min << endl;
+                cout << "y0_max = " << y0_max << endl;
+            }
 
             int z0_min = minmax[2][0], z0_max = minmax[2][1];
-            cout << "z0_min = " << z0_min << endl;
-            cout << "z0_max = " << z0_max << endl;
+            if (opt.verbose)
+            {
+                cout << "z0_min = " << z0_min << endl;
+                cout << "z0_max = " << z0_max << endl;
+            }
             
 
             // take off the cropping part after discussing with Gordon
@@ -370,24 +382,42 @@ void Anim::split_type()
             // for the xy-projection
             // min
             size_t min_xy[4] = {static_cast<size_t>(x0 - x0_min), static_cast<size_t>(y0 - y0_min), 0, 0};
-            cout << "min_xy is: " << min_xy[0] << ", " << min_xy[1] << ", " << min_xy[2] << ", " << min_xy[3] << endl;
+            if (opt.verbose)
+            {
+                cout << "min_xy is: " << min_xy[0] << ", " << min_xy[1] << ", " << min_xy[2] << ", " << min_xy[3] << endl;
+            }
+        
             // max
             size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + x0_min) - 1,
                                 static_cast<size_t>(proj_rsm[0]->axis[1].size - y0 + y0_min) - 1,
                                 proj_rsm[0]->axis[2].size - 1,
                                 proj_rsm[0]->axis[3].size - 1}; 
-            cout << "max_xy is: " << max_xy[0] << ", " << max_xy[1] << ", " << max_xy[2] << ", " << max_xy[3] << endl;
+            if (opt.verbose)
+            {
+                cout << "x-axis size is " << proj_rsm[0]->axis[0].size << endl;
+                cout << "y-axis.size is " << proj_rsm[0]->axis[1].size << endl;
+                cout << "max_xy is: " << max_xy[0] << ", " << max_xy[1] << ", " << max_xy[2] << ", " << max_xy[3] << endl;
+            }
 
             // for the yz-projection
             // min
             size_t min_yz[4] = {static_cast<size_t>(y0 - y0_min), static_cast<size_t>(z0 - z0_min), 0, 0};
-            cout << "min_yz is: " << min_yz[0] << ", " << min_yz[1] << ", " << min_yz[2] << ", " << min_yz[3] << endl;
+            if (opt.verbose)
+            {
+                cout << "min_yz is: " << min_yz[0] << ", " << min_yz[1] << ", " << min_yz[2] << ", " << min_yz[3] << endl;
+            }
+            
             // max
             size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + y0_min) - 1,
                                 static_cast<size_t>(proj_rsm[1]->axis[1].size - z0 + z0_min) - 1,
                                 proj_rsm[1]->axis[2].size - 1,
                                 proj_rsm[1]->axis[3].size - 1};
-            cout << "max_yz is: " << max_yz[0] << ", " << max_yz[1] << ", " << max_yz[2] << ", " << max_yz[3] << endl;
+            if (opt.verbose)
+            {
+                cout << "y-axis size is " << proj_rsm[1]->axis[0].size << endl;
+                cout << "z-axis.size is " << proj_rsm[1]->axis[1].size << endl;
+                cout << "max_yz is: " << max_yz[0] << ", " << max_yz[1] << ", " << max_yz[2] << ", " << max_yz[3] << endl;
+            }
 
             
             // crop the area that we are going to perform resample
