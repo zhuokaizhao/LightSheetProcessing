@@ -372,8 +372,8 @@ void Anim::split_type()
             size_t min_xy[4] = {static_cast<size_t>(x0_min - x0), static_cast<size_t>(y0_min - y0), 0, 0};
             cout << "min_xy is: " << min_xy[0] << ", " << min_xy[1] << ", " << min_xy[2] << ", " << min_xy[3] << endl;
             // max
-            size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + minx) - 1,
-                                static_cast<size_t>(proj_rsm[0]->axis[1].size - y0 + miny) - 1,
+            size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + x0_min) - 1,
+                                static_cast<size_t>(proj_rsm[0]->axis[1].size - y0 + y0_min) - 1,
                                 proj_rsm[0]->axis[2].size - 1,
                                 proj_rsm[0]->axis[3].size - 1}; 
             cout << "max_xy is: " << max_xy[0] << ", " << max_xy[1] << ", " << max_xy[2] << ", " << max_xy[3] << endl;
@@ -383,8 +383,8 @@ void Anim::split_type()
             size_t min_yz[4] = {static_cast<size_t>(y0_min - y0), static_cast<size_t>(z0_min - z0), 0, 0};
             cout << "min_yz is: " << min_yz[0] << ", " << min_yz[1] << ", " << min_yz[2] << ", " << min_yz[3] << endl;
             // max
-            size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + miny) - 1,
-                                static_cast<size_t>(proj_rsm[1]->axis[1].size - z0 + minz) - 1,
+            size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + y0_min) - 1,
+                                static_cast<size_t>(proj_rsm[1]->axis[1].size - z0 + z0_min) - 1,
                                 proj_rsm[1]->axis[2].size - 1,
                                 proj_rsm[1]->axis[3].size - 1};
             cout << "max_yz is: " << max_yz[0] << ", " << max_yz[1] << ", " << max_yz[2] << ", " << max_yz[3] << endl;
