@@ -271,20 +271,13 @@ int Anim::set_origins()
     // find minmax values in each dimension.
     for(auto i: {0, 1, 2})
     {
+        // get the min of all the numbers in each column
         int o_min = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::max(),
                                     [i](int acc, std::vector<int> o){return AIR_MIN(acc, o[i]);});
         
+        // get the max of all the numbers in each column
         int o_max = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::min(),
                                     [i](int acc, std::vector<int> o){return AIR_MAX(acc, o[i]);});
-
-        // int my_max = std::accumulate(origins[i].begin(), origins[i].end(), 0);
-        int my_max;
-        for (int j = 0; j < origins[i].size(); j++)
-        {
-            my_max += fabs(origins[i][j]);
-        }
-
-        cout << "o_max is " << o_max << "   my_max is " << my_max << endl;
         
         minmax.push_back(std::vector<int>{o_min, o_max});
     }
