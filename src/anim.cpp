@@ -276,6 +276,10 @@ int Anim::set_origins()
         
         int o_max = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::min(),
                                     [i](int acc, std::vector<int> o){return AIR_MAX(acc, o[i]);});
+
+        auto it = max_element(std::begin(origins[i]), std::end(origins[i]));
+
+        cout << "o_max is " << o_max << "   it is " << *it << endl;
         
         minmax.push_back(std::vector<int>{o_min, o_max});
     }
@@ -388,8 +392,8 @@ void Anim::split_type()
             }
         
             // max
-            size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + x0_min) - 1,
-                                static_cast<size_t>(proj_rsm[0]->axis[1].size - y0 + y0_min) - 1,
+            size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - (x0 - x0_min)) - 1,
+                                static_cast<size_t>(proj_rsm[0]->axis[1].size - (y0 - y0_min)) - 1,
                                 proj_rsm[0]->axis[2].size - 1,
                                 proj_rsm[0]->axis[3].size - 1}; 
             if (opt.verbose)
@@ -408,8 +412,8 @@ void Anim::split_type()
             }
             
             // max
-            size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + y0_min) - 1,
-                                static_cast<size_t>(proj_rsm[1]->axis[1].size - z0 + z0_min) - 1,
+            size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - (y0 - y0_min)) - 1,
+                                static_cast<size_t>(proj_rsm[1]->axis[1].size - (z0 - z0_min)) - 1,
                                 proj_rsm[1]->axis[2].size - 1,
                                 proj_rsm[1]->axis[3].size - 1};
             if (opt.verbose)
