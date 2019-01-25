@@ -338,7 +338,7 @@ void Anim::split_type()
             // get the new origin coordinates
             // Zhuokai: changed from int to float
             // int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
-            float x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
+            int x0 = origins[i][0], y0 = origins[i][1], z0 = origins[i][2];
             cout << "New origin is: " << "(" << x0 << ", " << y0 << ", " << z0 << ")" << endl;
 
             // get min and max origins for each dimension
@@ -369,7 +369,7 @@ void Anim::split_type()
             
             // for the xy-projection
             // min
-            size_t min_xy[4] = {static_cast<size_t>(x0_min - x0), static_cast<size_t>(y0_min - y0), 0, 0};
+            size_t min_xy[4] = {static_cast<size_t>(x0 - x0_min), static_cast<size_t>(y0 - y0_min), 0, 0};
             cout << "min_xy is: " << min_xy[0] << ", " << min_xy[1] << ", " << min_xy[2] << ", " << min_xy[3] << endl;
             // max
             size_t max_xy[4] = {static_cast<size_t>(proj_rsm[0]->axis[0].size - x0 + x0_min) - 1,
@@ -380,7 +380,7 @@ void Anim::split_type()
 
             // for the yz-projection
             // min
-            size_t min_yz[4] = {static_cast<size_t>(y0_min - y0), static_cast<size_t>(z0_min - z0), 0, 0};
+            size_t min_yz[4] = {static_cast<size_t>(y0 - y0_min), static_cast<size_t>(z0 - z0_min), 0, 0};
             cout << "min_yz is: " << min_yz[0] << ", " << min_yz[1] << ", " << min_yz[2] << ", " << min_yz[3] << endl;
             // max
             size_t max_yz[4] = {static_cast<size_t>(proj_rsm[1]->axis[0].size - y0 + y0_min) - 1,
