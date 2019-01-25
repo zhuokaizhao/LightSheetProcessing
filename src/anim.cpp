@@ -277,7 +277,12 @@ int Anim::set_origins()
         int o_max = std::accumulate(origins.begin(), origins.end(), std::numeric_limits<int>::min(),
                                     [i](int acc, std::vector<int> o){return AIR_MAX(acc, o[i]);});
 
-        int my_max = std::accumulate(origins[i].begin(), origins[i].end(), 0);
+        // int my_max = std::accumulate(origins[i].begin(), origins[i].end(), 0);
+        int my_max;
+        for (int j = 0; j < origins[i].size; j++)
+        {
+            my_max += fabs(origins[i][j]);
+        }
 
         cout << "o_max is " << o_max << "   my_max is " << my_max << endl;
         
