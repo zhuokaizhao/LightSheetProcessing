@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "CLI11.hpp"
+#include "resamp.h"
 
 using namespace std;
 
