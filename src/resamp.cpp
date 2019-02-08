@@ -35,7 +35,7 @@ void setup_resamp(CLI::App &app)
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
 
-    sub->set_callback([opt])()
+    sub->set_callback([opt]()
     {
         // first determine if input image_path is valid
         if ( checkIfDirectory(opt->image_path) )
