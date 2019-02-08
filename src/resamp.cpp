@@ -15,6 +15,7 @@
 #include "skimczi.h"
 #include "resamp.h"
 #include "lsp_math.h"
+#include "image.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -313,7 +314,7 @@ void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw)
                 for (int i1 = lower; i1 <= upper; i1++)
                 {
                     // not outside
-                    sum = sum + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
+                    sum = sum + ctx->image->data.dl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
 
                     // if (needgrad)
                     // {
