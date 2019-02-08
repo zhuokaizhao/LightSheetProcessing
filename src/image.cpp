@@ -1,0 +1,477 @@
+// The program gives support to various image-related parts
+// Created by Zhuokai Zhao
+// Contact: zhuokai@uchicago.edu
+
+
+#include "image.h"
+#include "lsp_math.h"
+#include <assert.h> // for assert()
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// utility macro for malloc() and casting to right type
+#define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
+
+/* an airEnum is a gadget for managing identifications between
+   integers (C enum values) and strings */
+static const airEnum _lspType_ae = {
+    "pixel value type",
+    2,
+    (const char*[]) { "(unknown_type)", "uchar",      "double" },
+    (int [])        {lspTypeUnknown,    lspTypeUChar, lspTypeDouble},
+    (const char*[]) {
+        "unknown type",
+        "unsigned char",
+        "real (double)"
+    },
+    NULL, NULL,
+    AIR_FALSE
+};
+const airEnum *const
+lspType_ae = &_lspType_ae;
+
+// convert from nrrd type to lsptype
+static lspType typeNRRDtoLSP(int ntype) 
+{
+    lspType ret;
+    
+    switch (ntype) 
+    {
+        case nrrdTypeUChar: ret = lspTypeUChar;
+            break;
+        case nrrdTypeDouble: // one of these is nrrdTypeReal
+            ret = lspTypeDouble;
+            break;
+        default: ret = lspTypeUnknown;
+    }
+
+    return ret;
+}
+
+static void setItoW(double *ItoW, const Nrrd *nin, uint bidx) 
+{
+    /* 0  1  2
+       3  4  5
+       6  7  8 */
+    ItoW[0] = (double)(nin->axis[bidx+0].spaceDirection[0]);
+    ItoW[3] = (double)(nin->axis[bidx+0].spaceDirection[1]);
+    ItoW[6] = 0;
+    ItoW[1] = (double)(nin->axis[bidx+1].spaceDirection[0]);
+    ItoW[4] = (double)(nin->axis[bidx+1].spaceDirection[1]);
+    ItoW[7] = 0;
+    ItoW[2] = (double)(nin->spaceOrigin[0]);
+    ItoW[5] = (double)(nin->spaceOrigin[1]);
+    ItoW[8] = 1;
+}
+
+static int ItoWCheck(const double *ItoW) {
+    if (!ItoW) {
+        biffAddf(LSP, "%s: got NULL pointer", __func__);
+        return 1;
+    }
+    if (!M3_ISFINITE(ItoW)) {
+        biffAddf(LSP, "%s: matrix is not all set: "
+                 "[%g,%g,%g; %g,%g,%g; %g,%g,%g]", __func__,
+                 ItoW[0], ItoW[1], ItoW[2],
+                 ItoW[3], ItoW[4], ItoW[5],
+                 ItoW[6], ItoW[7], ItoW[8]);
+        return 1;
+    }
+    if (!( 0 == ItoW[6] &&
+           0 == ItoW[7] &&
+           1 == ItoW[8] )) {
+        biffAddf(LSP, "%s: ItoW matrix last row [%g,%g,%g] not [0,0,1]",
+                 __func__, ItoW[6], ItoW[7], ItoW[8]);
+        return 1;
+    }
+    // else no problems
+    return 0;
+}
+
+static size_t typeSize(lspType dtype) 
+{
+    size_t ret;
+    switch (dtype) 
+    {
+        case lspTypeUChar: ret = sizeof(unsigned char);
+            break;
+        case lspTypeDouble: ret = sizeof(double);
+            break;
+        default: ret = 0;
+    }
+    return ret;
+}
+
+// initialize a new image
+lspImage *lspImageNew() 
+{
+    lspImage *ret = MALLOC(1, lspImage);
+    assert(ret);
+    ret->content = NULL;
+    ret->channel = ret->size[0] = ret->size[1] = 0;
+    M3_SET_NAN(ret->ItoW);
+    ret->dtype = lspTypeUnknown;
+    ret->data.vd = NULL;
+    return ret;
+}
+
+// free image structs
+lspImage* lspImageNix(lspImage *img) 
+{
+    if (img) 
+    {
+        if (img->content) 
+        {
+            free(img->content);
+        }
+        
+        free(img->data.vd);
+        free(img);
+    }
+
+    return NULL;
+}
+
+/* static because even if this is generally useful;
+   it is only needed inside this file */
+static int lspNrrdImageCheck(const Nrrd *nin) {
+    if (nrrdCheck(nin)) {
+        biffMovef(LSP, NRRD, "%s: problem with nrrd itself", __func__);
+        return 1;
+    }
+    if (!( nrrdTypeUChar == nin->type ||
+           nrrdTypeFloat == nin->type ||
+           nrrdTypeDouble == nin->type )) {
+        biffAddf(LSP, "%s: can't handle nrrd type %s (need %s, %s, or %s)",
+                 __func__, airEnumStr(nrrdType, nin->type),
+                 airEnumStr(nrrdType, nrrdTypeUChar),
+                 airEnumStr(nrrdType, nrrdTypeFloat),
+                 airEnumStr(nrrdType, nrrdTypeDouble));
+        return 1;
+    }
+    if (!( 2 == nin->dim || 3 == nin->dim )) {
+        biffAddf(LSP, "%s: got dimension %u, not 2 or 3", __func__, nin->dim);
+        return 1;
+    }
+    uint bidx;
+    if (3 == nin->dim) {
+        bidx = 1;
+        if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 )) {
+            biffAddf(LSP, "%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)",
+                     __func__, (uint)(nin->axis[0].size));
+            return 1;
+        }
+    } else {
+        bidx = 0;
+    }
+    if (airEnumValCheck(nrrdSpace, nin->space)) {
+        biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
+        return 1;
+    }
+    if (nrrdSpaceRightUp != nin->space) {
+        biffAddf(LSP, "%s: array space %s not expected %s", __func__,
+                 airEnumStr(nrrdSpace, nin->space),
+                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
+        return 1;
+    }
+    double ItoW[9];
+
+    setItoW(ItoW, nin, bidx);
+
+    if (ItoWCheck(ItoW)) {
+        biffAddf(LSP, "%s: problem with ItoW", __func__);
+        return 1;
+    }
+    if (!( nrrdCenterCell == nin->axis[bidx+0].center
+           && nrrdCenterCell == nin->axis[bidx+1].center )) {
+        biffAddf(LSP, "%s: axis[%u,%u] centering not both %s", __func__,
+                 bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
+        return 1;
+    }
+    return 0;
+}
+
+static int metaDataCheck(uint channel,
+               uint size0, uint size1,
+               const double *ItoW,
+               lspType dtype) {
+    if (!( 0 < channel && channel <= 3 )) {
+        biffAddf(LSP, "%s: invalid channel value %u", __func__, channel);
+        return 1;
+    }
+    if (!( 0 < size0 && 0 < size1 )) {
+        biffAddf(LSP, "%s: invalid image sizes (%u,%u)",
+                 __func__, size0, size1);
+        return 1;
+    }
+    if (airEnumValCheck(lspType_ae, dtype)) {
+        biffAddf(LSP, "%s: invalid type %d", __func__, dtype);
+        return 1;
+    }
+    if (ItoW && ItoWCheck(ItoW)) { // only call ItoWCheck() on non-NULL ItoW
+        biffAddf(LSP, "%s: problem with ItoW matrix", __func__);
+        return 1;
+    }
+    return 0;
+}
+
+/*
+  Allocates an image. Re-uses an existing data allocation when
+  possible.  Returns 1 and sets a biff message in case of problems
+*/
+int lspImageAlloc(lspImage *img, uint channel,
+              uint size0, uint size1,
+              lspType dtype) 
+{
+    if (!img) {
+        biffAddf(LSP, "%s: got NULL pointer", __func__);
+        return 1;
+    }
+    if (metaDataCheck(channel, size0, size1, NULL, dtype)) {
+        biffAddf(LSP, "%s: problem with meta-data", __func__);
+        return 1;
+    }
+    int doalloc;
+    if (!(img->data.vd)) {
+        // NULL data; definitely not already allocated
+        doalloc = 1;
+    } else if (img->channel != channel
+               || img->size[0] != size0
+               || img->size[1] != size1
+               || img->dtype != dtype) {
+        // already allocated, but not the right size/type
+        free(img->data.vd);
+        doalloc = 1;
+    } else {
+        // cool; re-use existing allocating
+        doalloc = 0;
+    }
+    if (doalloc) {
+        img->data.vd = calloc(channel*size0*size1, typeSize(dtype));
+        if (!img->data.vd) {
+            biffAddf(LSP, "%s: failed to allocate %u * %u * %u %s", __func__,
+                     channel, size0, size1, airEnumStr(lspType_ae, dtype));
+            return 1;
+        }
+    }
+    // img->content untouched
+    img->channel = channel;
+    img->size[0] = size0;
+    img->size[1] = size1;
+    img->dtype = dtype;
+    return 0;
+}
+
+// helper function that loads images
+int lspImageLoad(lspImage *img, const char *fname) 
+{
+    if (!(img && fname)) 
+    {
+        biffAddf(LSP, "%s: got NULL pointer (%p,%p)\n", __func__,
+                 (void*)img, (void*)fname);
+        return 1;
+    }
+
+    airArray *mop = airMopNew();
+    Nrrd *nin = nrrdNew();
+    airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
+
+    // load images
+    if (nrrdLoad(nin, fname, NULL)) 
+    {
+        biffMovef(LSP, NRRD, "%s: trouble reading file", __func__);
+        airMopError(mop);
+        return 1;
+    }
+
+    // check loaded images
+    if (lspNrrdImageCheck(nin)) 
+    {
+        biffAddf(LSP, "%s: given array doesn't conform to a mapr image", __func__);
+        airMopError(mop);
+        return 1;
+    }
+    
+    uint dim, bidx;
+    if (nin->dim == 2) 
+    {
+        dim = 2;
+        bidx = 0;
+    } 
+    else 
+    {
+        dim = 3;
+        bidx = 1;
+    }
+
+    lspType mtype = typeNRRDtoLSP(nin->type);
+    if (lspImageAlloc(img, (3 == dim ? nin->axis[0].size : 1),
+                      nin->axis[bidx+0].size, nin->axis[bidx+1].size,
+                      mtype)) {
+        biffAddf(LSP, "%s: trouble allocating image", __func__);
+        airMopError(mop);
+        return 1;
+    }
+
+    if (nin->content) 
+    {
+        img->content = airStrdup(nin->content);
+    }
+
+    uint elSize = (uint)nrrdElementSize(nin);
+    uint elNum = (uint)nrrdElementNumber(nin);
+
+    if (lspTypeUChar == mtype || nrrdTypeDouble == nin->type) 
+    {
+        memcpy(img->data.vd, nin->data, elSize*elNum);
+    }
+    // else not uchar, so double, and have to check it matches nrrd
+    else 
+    {
+        double (*lup)(const void *, size_t) = nrrdDLookup[nin->type];
+        for (uint ii=0; ii<elNum; ii++) {
+            img->data.dl[ii] = lup(nin->data, ii);
+        }
+    }
+
+    setItoW(img->ItoW, nin, bidx);
+
+    airMopOkay(mop);
+    return 0;
+}
+
+int mprImageNrrdWrap(Nrrd *nout, const lspImage *img) {
+    if (!(nout && img)) {
+        biffAddf(LSP, "%s: got NULL pointer (%p,%p)\n", __func__,
+                 (void*)nout, (void*)img);
+        return 1;
+    }
+
+    uint ndim, bidx;
+    size_t size[3];
+    if (1 == img->channel) {
+        ndim = 2;
+        bidx = 0;
+    } else {
+        ndim = 3;
+        size[0] = img->channel;
+        bidx = 1;
+    }
+    size[bidx+0] = img->size[0];
+    size[bidx+1] = img->size[1];
+    if (nrrdWrap_nva(nout, img->data.vd, typeNRRDtoLSP(img->dtype),
+                     ndim, size)) {
+        biffMovef(LSP, NRRD, "%s: trouble wrapping data in nrrd", __func__);
+        return 1;
+    }
+    if (img->content) {
+        nout->content = airStrdup(img->content);
+    }
+    nrrdSpaceSet(nout, nrrdSpaceRightUp);
+    /* 0  1  2
+       3  4  5
+       6  7  8 */
+    nout->axis[bidx+0].spaceDirection[0] = img->ItoW[0];
+    nout->axis[bidx+0].spaceDirection[1] = img->ItoW[3];
+    nout->axis[bidx+1].spaceDirection[0] = img->ItoW[1];
+    nout->axis[bidx+1].spaceDirection[1] = img->ItoW[4];
+    nout->spaceOrigin[0] = img->ItoW[2];
+    nout->spaceOrigin[1] = img->ItoW[5];
+    nout->axis[bidx+0].center = nrrdCenterCell;
+    nout->axis[bidx+1].center = nrrdCenterCell;
+    return 0;
+}
+
+int lspImageSave(const char *fname, const lspImage *img) 
+{
+    if (!(fname && img)) 
+    {
+        biffAddf(LSP, "%s: got NULL pointer (%p,%p)\n", __func__,
+                 (void*)fname, (void*)img);
+        return 1;
+    }
+    airArray *mop = airMopNew();
+    Nrrd *nout = nrrdNew();
+    airMopAdd(mop, nout, (airMopper)nrrdNix, airMopAlways);
+    
+    if (mprImageNrrdWrap(nout, img)) 
+    {
+        biffAddf(LSP, "%s: trouble wrapping image into Nrrd", __func__);
+        airMopError(mop);
+        return 1;
+    }
+    
+    if (nrrdSave(fname, nout, NULL)) 
+    {
+        biffMovef(LSP, NRRD, "%s: trouble saving output", __func__);
+        airMopError(mop);
+        return 1;
+    }
+
+    airMopOkay(mop);
+    return 0;
+}
+
+/* static because even if this is generally useful;
+   it is only needed inside this file */
+static int
+mprNrrdImageCheck(const Nrrd *nin) {
+    if (nrrdCheck(nin)) {
+        biffMovef(LSP, NRRD, "%s: problem with nrrd itself", __func__);
+        return 1;
+    }
+    if (!( nrrdTypeUChar == nin->type ||
+           nrrdTypeFloat == nin->type ||
+           nrrdTypeDouble == nin->type )) {
+        biffAddf(LSP, "%s: can't handle nrrd type %s (need %s, %s, or %s)",
+                 __func__, airEnumStr(nrrdType, nin->type),
+                 airEnumStr(nrrdType, nrrdTypeUChar),
+                 airEnumStr(nrrdType, nrrdTypeFloat),
+                 airEnumStr(nrrdType, nrrdTypeDouble));
+        return 1;
+    }
+    if (!( 2 == nin->dim || 3 == nin->dim )) {
+        biffAddf(LSP, "%s: got dimension %u, not 2 or 3", __func__, nin->dim);
+        return 1;
+    }
+    uint bidx;
+    if (3 == nin->dim) {
+        bidx = 1;
+        if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 )) {
+            biffAddf(LSP, "%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)",
+                     __func__, (uint)(nin->axis[0].size));
+            return 1;
+        }
+    } else {
+        bidx = 0;
+    }
+    if (airEnumValCheck(nrrdSpace, nin->space)) {
+        biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
+        return 1;
+    }
+    if (nrrdSpaceRightUp != nin->space) {
+        biffAddf(LSP, "%s: array space %s not expected %s", __func__,
+                 airEnumStr(nrrdSpace, nin->space),
+                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
+        return 1;
+    }
+    double ItoW[9];
+    setItoW(ItoW, nin, bidx);
+    if (ItoWCheck(ItoW)) {
+        biffAddf(LSP, "%s: problem with ItoW", __func__);
+        return 1;
+    }
+    if (!( nrrdCenterCell == nin->axis[bidx+0].center
+           && nrrdCenterCell == nin->axis[bidx+1].center )) {
+        biffAddf(LSP, "%s: axis[%u,%u] centering not both %s", __func__,
+                 bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
+        return 1;
+    }
+    return 0;
+}
+
+#ifdef __cplusplus
+}
+#endif

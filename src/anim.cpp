@@ -152,7 +152,7 @@ void setup_anim(CLI::App &app)
 
             std::cout << "Current file name is: " << curFile << endl;
             
-            // check if input file is a .czi file
+            // check if input file is a .nhdr file
             int suff = curFile.rfind(".nhdr");
 
             if ( (suff != string::npos) || (suff != curFile.length() - 5)) 

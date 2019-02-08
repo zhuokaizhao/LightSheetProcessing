@@ -11,10 +11,10 @@
 #include <algorithm>
 #include <limits>
 
-#include "anim.h"
 #include "util.h"
 #include "skimczi.h"
 #include "resamp.h"
+#include "lsp_math.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -30,6 +30,7 @@ void setup_resamp(CLI::App &app)
     auto sub = app.add_subcommand("resamp", "Perform resampling on input images");
 
     sub->add_option("-i, --image_path", opt->image_path, "Path that includes input images")->required();
+    sub->add_option("-t, --image_type", opt->image_type, "Type of the image, max or ave")->required();
     sub->add_option("-k, --kernel", opt->kernel_path, "Path that includes the kernel file")->required();
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
@@ -49,21 +50,154 @@ void setup_resamp(CLI::App &app)
 
             for (int i = 0; i < images.size(); i++)
             {
-                string curImageName = images[i];
+                string curImage = images[i];
 
                 // check if input image is a .png file
-                int png_suff = curImageName.rfind(".png");
-                if ( (png_suff != string::npos) && (png_) )
+                int png_suff = curImage.rfind(".png");
+                if ( (png_suff != string::npos) && (png_suff == curImage.length()-4) )
+                {
+                    if (opt->verbose)
+                    {
+                        cout << "Current input file " + curImage + " ends with .png, count this file" << endl;
+                    }
+
+                    imageNum++;
+
+                    // now we need to understand the sequence number of this file
+                    // the naming of input images are like xxx-type.png
+                    int start = -1;
+                    // suffix is either -max.png or -avg.png
+                    string suffix = "-" + type + ".png";
+                    int end = curImage.rfind(suffix);
+                    
+                    // current file name without -max.png or -avg.png
+                    string curImageName = curFile.substr(0, end);
+                    
+                    // The sequenceNumString will have zero padding, like 001
+                    for (int i = 0; i < end; i++)
+                    {
+                        // we get the first position that zero padding ends so that we know the real number
+                        if (curFile[i] != '0')
+                        {
+                            start = i;
+                            break;
+                        }
+                    }
+        
+                    string sequenceNumString;
+                    // for the case that it is just 000 which represents the initial time stamp
+                    if (start == -1)
+                    {
+                        sequenceNumString = "0";
+                    }
+                    else
+                    {
+                        int length = end - start;
+                        sequenceNumString = curFile.substr(start, length);
+                    }
+
+                    if (is_number(sequenceNumString))
+                    {
+                        opt->allValidImages.push_back( make_pair(stoi(sequenceNumString), (curImageName+"-"+type)) );
+                    }
+                    else
+                    {
+                        cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+                    }
+                }
+            }
+
+            // after finding all the files, sort the allValidFiles in ascending order
+            sort(opt->allValidFiles.begin(), opt->allValidFiles.end());
+
+            cout << imageNum << " " << type << " .png files found in input path " << opt->image_path << endl << endl;
+
+            // sanity check
+            if (imageNum != opt->allValidImages.size())
+            {
+                cout << "ERROR: Not all valid files have been recorded" << endl;
+            }
+
+            // if the user restricts the number of files to process
+            if (!opt->maxFileNum.empty())
+            {
+                imageNum = stoi(opt->maxFileNum);
+            }
+
+            opt->imageNum = imageNum;
+            cout << "Total number of .png images that we are processing is: " << opt->imageNum << endl << endl;
+
+            try
+            {
+                auto start = chrono::high_resolution_clock::now();
+                Resamp(*opt).main();
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+            }
+            catch(LSPException &e)
+            {
+                std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
             }
         }
-    }
+        else
+        {
+            // the program also handles if input file is a single image
+            cout << opt->image_path << " is not a directory, check if it is a valid .png file" << endl;
+            const string curImage = opt->image_path;
+
+            std::cout << "Current image name is: " << curFile << endl;
+            
+            // check if input file is a .png file
+            int suff = curImage.rfind(".png");
+
+            if ( (suff != string::npos) || (suff != curFile.length() - 4)) 
+            {
+                cout << "Current input image " + curImage + " does not end with .png, error" << endl;
+                return;
+            }
+            else
+            {
+                cout << "Current input image " + curImage + " ends with .png, process this file" << endl;
+
+                // update file number, -1 triggers single mode
+                opt->imageNum = -1;    
+
+                try
+                {
+                    auto start = chrono::high_resolution_clock::now();
+                    Resamp(*opt).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                }
+                catch(LSPException &e)
+                {
+                    std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+                }
+            }
+        }
+    });
 }
 
 
+Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
+{
+    // create folder if it does not exist
+    if (!checkIfDirectory(opt.out_path))
+    {
+        boost::filesystem::create_directory(opt.out_path);
+        cout << "Image output path " << opt.out_path << " does not exits, but has been created" << endl;
+    }
+}
+
+Resamp::~Resamp()
+{
+    airMopOkay(mop);
+}
 
 
-
-void ConvoEval(mprCtx *ctx, real xw, real yw) 
+void Resamp::ConvoEval(mprCtx *ctx, real xw, real yw) 
 {
     // figure out if you need to also measure the 1st derivative
     int needgrad = mprModeNeedsGradient(ctx->mode);
@@ -205,4 +339,20 @@ void ConvoEval(mprCtx *ctx, real xw, real yw)
     // ^'^'^'^'^'^'^'^'^'^'^'^'^'^'^  end student code (83L in ref)
 
     return;
+}
+
+
+// main function
+void Resamp::main()
+{
+    // the number of images
+    int imageNum = opt.imageNum;
+
+    // if imageNum == -1, single image mode
+    if (imageNum == -1)
+    {
+        lspImage *image = lspImageNew();
+
+
+    }
 }
