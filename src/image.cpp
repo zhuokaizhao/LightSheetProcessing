@@ -268,12 +268,14 @@ lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const real* imm)
                  (void*)img, (void*)kern);
         return NULL;
     }
-    if (1 != img->channel) {
+    if (1 != img->channel) 
+    {
         biffAddf(LSP, "%s: only works on scalar (not %u-channel) images",
                  __func__, img->channel);
         return NULL;
     }
-    if (airEnumValCheck(lspMode_ae, mode)) {
+    if (airEnumValCheck(lspMode_ae, mode)) 
+    {
         biffAddf(MPR, "%s: %s %d not valid", __func__,
                  lspMode_ae->name, mode);
         return NULL;

@@ -353,9 +353,24 @@ void Resamp::main()
     // if imageNum == -1, single image mode
     if (imageNum == -1)
     {
+        // load the image first
         lspImage *image = lspImageNew();
-        lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
+        airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
+        int loadImageSuccess = lspImageLoad(image, opt.image_path);
+        if (!loadImageSuccess)
+        {
+            cout << "Error loading image with path " << opt.image_path << endl;
+            return;
+        }
 
+        // save the output image
+        int saveImageSuccess = lspImageSave(opt.out_path, image);
 
+        if (!saveImageSuccess)
+        {
+            cout << "Error saving image to path " << opt.out_path << endl;
+        }
+
+        // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
     }
 }
