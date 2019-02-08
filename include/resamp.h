@@ -45,6 +45,7 @@ class Resamp {
     private:
         // evaluate convolution between image and kernel
         void ConvoEval(lspCtx *ctx, double xw, double yw);
+        airArray* mop;
 };
 
 #endif //LSP_RESAMP_H

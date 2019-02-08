@@ -78,7 +78,7 @@ void setup_resamp(CLI::App &app)
                     for (int i = 0; i < end; i++)
                     {
                         // we get the first position that zero padding ends so that we know the real number
-                        if (curFile[i] != '0')
+                        if (curImage[i] != '0')
                         {
                             start = i;
                             break;
@@ -94,12 +94,12 @@ void setup_resamp(CLI::App &app)
                     else
                     {
                         int length = end - start;
-                        sequenceNumString = curFile.substr(start, length);
+                        sequenceNumString = curImage.substr(start, length);
                     }
 
                     if (is_number(sequenceNumString))
                     {
-                        opt->allValidImages.push_back( make_pair(stoi(sequenceNumString), (curImageName+"-"+type)) );
+                        opt->allValidImages.push_back( make_pair(stoi(sequenceNumString), (curImageName+"-"+opt->image_type)) );
                     }
                     else
                     {
