@@ -291,7 +291,7 @@ lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm)
     M3_INVERSE(ctx->WtoI, ctx->image->ItoW, TMP);
 
     // change gradient sum from index to world space (Equation 4.82 in FSV)
-    M23_INVERSE_TRANSPOSE(ctx->ItoW_d, ctx->image->ItoW, TMP);
+    //M23_INVERSE_TRANSPOSE(ctx->ItoW_d, ctx->image->ItoW, TMP);
 
     return ctx;
 }
