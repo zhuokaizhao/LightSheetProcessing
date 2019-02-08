@@ -11,6 +11,20 @@
 #ifndef MPR_MATH_HAS_BEEN_INCLUDED
 #define MPR_MATH_HAS_BEEN_INCLUDED
 
+double lspNan(unsigned short payload) 
+{
+    double rr;
+    /* the logic for both cases is the same: make it a non-finite number by
+       setting all the exponent bits, make it a NaN by making sure the highest
+       bit of the fraction is on (else it would be an infinity), and then put
+       the 16-bit payload in the highest bits (because experience suggests
+       these will more likely survive a conversion between a 32-bit float and
+       64-bit double */
+    //                                                     52 - 1 - 16 == 35
+    rr = ((unsigned long long)0x7ff<<52)| ((unsigned long long)1<<51) | ((unsigned long long)payload<<35);
+    return rr;
+}
+
 // #ifdef __cplusplus
 // extern "C" {
 // #endif
