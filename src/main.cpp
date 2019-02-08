@@ -19,6 +19,7 @@
 //#include "pack.h"
 #include "start.h"
 #include "start_with_corr.h"
+#include "resamp.h"
 
 
 int main(int argc, char** argv) {
@@ -54,6 +55,9 @@ int main(int argc, char** argv) {
     setup_corrnhdr(app);
     // Process dataset with standard format
     //setup_pack(app);
+
+    // apply resampling to images
+    setup_resamp(app);
 
     CLI11_PARSE(app, argc, argv);
 

@@ -20,7 +20,7 @@ typedef unsigned int uint;
 const char *lspBiffKey = "lsp";
 #define LSP lspBiffKey // identifies this library in biff error messages
 
-double mprNan(unsigned short payload) 
+double lspNan(unsigned short payload) 
 {
     double rr;
     /* the logic for both cases is the same: make it a non-finite number by
@@ -101,7 +101,7 @@ typedef struct lspKernel_t
     const struct lspKernel_t *deriv;
 } lspKernel;
 
-// mprCtx is a container for all the state associated with doing convolution
+// lspCtx is a container for all the state associated with doing convolution
 typedef struct {
     // input
     const lspImage *image;
@@ -119,7 +119,7 @@ typedef struct {
     
     // convolution result, if outside == 0
     double value;       
-    double gradient[2];
+    // double gradient[2];
 
     /* output set by mprPictureSample: the rate, in kHz, at which output
        pixels could be computed (includes convolution and possibly
@@ -129,18 +129,27 @@ typedef struct {
     // homogeneous coordinate mapping from world-space to index space
     double ItoW[9];
     double WtoI[9];
-    double ItoW_d[4];
+    // double ItoW_d[4];
 } lspCtx;
 
 // load image
 int lspImageLoad(lspImage *img, const char *fname);
-// save image to fname
-int lspImageSave(const char *fname, const lspImage *img);
+
 // Allocates an image. Re-uses an existing data allocation when
 // possible.  Returns 1 and sets a biff message in case of problems
 int lspImageAlloc(lspImage *img, uint channel, uint size0, uint size1, lspType dtype);
+
 // wraping image to nrrd
 int lspImageNrrdWrap(Nrrd *nout, const lspImage *img);
+/*
+  mprImageMinMax discovers the range of finite values in a given image,
+  with some error handling. Will always set minmax[0,1] to some
+  finite range, even if the input was all non-finite values.
+*/
+int lspImageMinMax(double minmax[2], int *allFinite, const lspImage *img);
+
+// save image to fname
+int lspImageSave(const char *fname, const lspImage *img);
 
 // #ifdef __cplusplus
 // }

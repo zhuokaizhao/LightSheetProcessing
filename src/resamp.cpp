@@ -196,23 +196,25 @@ Resamp::~Resamp()
     airMopOkay(mop);
 }
 
-
-void Resamp::ConvoEval(mprCtx *ctx, real xw, real yw) 
+// ********************** some static helper functions *********************
+static int isEven (uint x)
 {
-    // figure out if you need to also measure the 1st derivative
-    int needgrad = mprModeNeedsGradient(ctx->mode);
+    if (x % 2 == 0)
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+
+void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw) 
+{
     // initialize output
     ctx->wpos[0] = xw;
     ctx->wpos[1] = yw;
-    /* NOTE: you need to (in code below) set ctx->ipos to
-       inverse of ctx->image->ItoW, multiplied by ctx->wpos */
     ctx->outside = 0;
-    ctx->value = mprNan(0);
-    if (needgrad) {
-        ctx->gradient[0] = ctx->gradient[1] = mprNan(0);
-    }
-
-    // v.v.v.v.v.v.v.v.v.v.v.v.v.v.v  begin student code
+    ctx->value = lspNan(0);
 
     // first convert wpos to ipos, where ipos are x1 and x2 as in FSV
     // MV3_MUL only takes 3-vector
@@ -352,6 +354,7 @@ void Resamp::main()
     if (imageNum == -1)
     {
         lspImage *image = lspImageNew();
+        lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
 
 
     }
