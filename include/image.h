@@ -123,6 +123,8 @@ typedef struct {
     // double ItoW_d[4];
 } lspCtx;
 
+double lspNan(unsigned short payload);
+
 // initialize a new image
 lspImage* lspImageNew();
 
