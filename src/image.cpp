@@ -7,9 +7,9 @@
 #include "lsp_math.h"
 #include <assert.h> // for assert()
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
 
 // utility macro for malloc() and casting to right type
 #define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
@@ -423,6 +423,6 @@ int lspImageSave(const char *fname, const lspImage *img)
     return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// }
+// #endif
