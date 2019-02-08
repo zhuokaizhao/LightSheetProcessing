@@ -31,7 +31,7 @@ double lspNan(unsigned short payload)
        these will more likely survive a conversion between a 32-bit float and
        64-bit double */
     //                                                     52 - 1 - 16 == 35
-    rr = ((uint64_t)0x7ff<<52)| ((uint64_t)1<<51) | ((uint64_t)payload<<35);
+    rr = ((unsigned long long)0x7ff<<52)| ((unsigned long long)1<<51) | ((unsigned long long)payload<<35);
     return rr;
 }
 
