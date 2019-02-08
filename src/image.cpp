@@ -296,7 +296,8 @@ lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm)
     return ctx;
 }
 
-lspCtx* lspCtxNix(lspCtx* ctx) 
+// free a lspCtx
+lspCtx* lspCtxNix(lspCtx* ctx)
 {
 
     if (ctx) 

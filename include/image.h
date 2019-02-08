@@ -135,12 +135,28 @@ typedef struct {
     // double ItoW_d[4];
 } lspCtx;
 
-// load image
-int lspImageLoad(lspImage *img, const char *fname);
+// initialize a new image
+lspImage* lspImageNew();
+
+// free image structs
+lspImage* lspImageNix(lspImage* img);
+
+/*
+  lspCtxNew creates the context to contain all resources and state
+  associated with computing on a given image "img", reconstruction kernel
+  "kern"
+*/
+lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm);
+
+// free a lspCtx
+lspCtx* lspCtxNix(lspCtx* ctx);
 
 // Allocates an image. Re-uses an existing data allocation when
 // possible.  Returns 1 and sets a biff message in case of problems
 int lspImageAlloc(lspImage *img, uint channel, uint size0, uint size1, lspType dtype);
+
+// load image
+int lspImageLoad(lspImage *img, const char *fname);
 
 // wraping image to nrrd
 int lspImageNrrdWrap(Nrrd *nout, const lspImage *img);
