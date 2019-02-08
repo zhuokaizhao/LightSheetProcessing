@@ -67,11 +67,11 @@ void setup_resamp(CLI::App &app)
                     // the naming of input images are like xxx-type.png
                     int start = -1;
                     // suffix is either -max.png or -avg.png
-                    string suffix = "-" + type + ".png";
+                    string suffix = "-" + opt->image_type + ".png";
                     int end = curImage.rfind(suffix);
                     
                     // current file name without -max.png or -avg.png
-                    string curImageName = curFile.substr(0, end);
+                    string curImageName = curImage.substr(0, end);
                     
                     // The sequenceNumString will have zero padding, like 001
                     for (int i = 0; i < end; i++)
@@ -108,9 +108,9 @@ void setup_resamp(CLI::App &app)
             }
 
             // after finding all the files, sort the allValidFiles in ascending order
-            sort(opt->allValidFiles.begin(), opt->allValidFiles.end());
+            sort(opt->allValidImages.begin(), opt->allValidImages.end());
 
-            cout << imageNum << " " << type << " .png files found in input path " << opt->image_path << endl << endl;
+            cout << imageNum << " " << opt->image_type << " .png files found in input path " << opt->image_path << endl << endl;
 
             // sanity check
             if (imageNum != opt->allValidImages.size())
@@ -146,12 +146,12 @@ void setup_resamp(CLI::App &app)
             cout << opt->image_path << " is not a directory, check if it is a valid .png file" << endl;
             const string curImage = opt->image_path;
 
-            std::cout << "Current image name is: " << curFile << endl;
+            std::cout << "Current image name is: " << curImage << endl;
             
             // check if input file is a .png file
             int suff = curImage.rfind(".png");
 
-            if ( (suff != string::npos) || (suff != curFile.length() - 4)) 
+            if ( (suff != string::npos) || (suff != curImage.length() - 4)) 
             {
                 cout << "Current input image " + curImage + " does not end with .png, error" << endl;
                 return;
@@ -218,8 +218,8 @@ void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw)
 
     // first convert wpos to ipos, where ipos are x1 and x2 as in FSV
     // MV3_MUL only takes 3-vector
-    real ipos[3];
-    real wpos[3] = {ctx->wpos[0], ctx->wpos[1], 1};
+    double ipos[3];
+    double wpos[3] = {ctx->wpos[0], ctx->wpos[1], 1};
 
     // 3-vector ipos = 3x3 matrix WtoI * 3-vector wpos
     MV3_MUL(ipos, ctx->WtoI, wpos);
@@ -257,18 +257,18 @@ void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw)
     }
 
     // calculate alpha based on n1, n2
-    real alpha1, alpha2;
+    double alpha1, alpha2;
     alpha1 = ctx->ipos[0] - n1;
     alpha2 = ctx->ipos[1] - n2;
 
     // separable convolution
-    real sum = 0;
-    real sum_d1 = 0, sum_d2 = 0;
+    double sum = 0;
+    // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    real k1[ctx->kern->support], k2[ctx->kern->support];
+    double k1[ctx->kern->support], k2[ctx->kern->support];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
-    real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
+    // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
@@ -277,11 +277,11 @@ void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw)
         k2[i - lower] = ctx->kern->eval(alpha2 - i);
 
         // if gradient is true, kernel is calculated with gradient
-        if (needgrad)
-        {
-            k1_d[i - lower] = ctx->kern->deriv->eval(alpha1 - i);
-            k2_d[i - lower] = ctx->kern->deriv->eval(alpha2 - i);
-        }
+        // if (needgrad)
+        // {
+        //     k1_d[i - lower] = ctx->kern->deriv->eval(alpha1 - i);
+        //     k2_d[i - lower] = ctx->kern->deriv->eval(alpha2 - i);
+        // }
     }
 
     // compute via two nested loops over the 2D-kernel support
@@ -315,27 +315,27 @@ void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw)
                     // not outside
                     sum = sum + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
 
-                    if (needgrad)
-                    {
-                        sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
-                        sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
-                    }
+                    // if (needgrad)
+                    // {
+                    //     sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
+                    //     sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
+                    // }
                 }
             }
 
             // if no outside, assign value
             ctx->value = sum;
             // derivative
-            if (needgrad)
-            {
-                // convert from index-space to world space
-                real gradient_w[2];
-                real gradient_i[2] = {sum_d1, sum_d2};
-                MV2_MUL(gradient_w, ctx->ItoW_d, gradient_i);
+            // if (needgrad)
+            // {
+            //     // convert from index-space to world space
+            //     real gradient_w[2];
+            //     real gradient_i[2] = {sum_d1, sum_d2};
+            //     MV2_MUL(gradient_w, ctx->ItoW_d, gradient_i);
 
-                // save the *world-space* gradient result in ctx->gradient
-                V2_COPY(ctx->gradient, gradient_w);
-            }
+            //     // save the *world-space* gradient result in ctx->gradient
+            //     V2_COPY(ctx->gradient, gradient_w);
+            // }
         }
     }
     // ^'^'^'^'^'^'^'^'^'^'^'^'^'^'^  end student code (83L in ref)

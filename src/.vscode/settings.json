@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.cu": "cpp",
         "__hash_table": "cpp",
         "__split_buffer": "cpp",
         "__tree": "cpp",
@@ -34,6 +35,7 @@
         "cstdint": "cpp",
         "memory": "cpp",
         "chrono": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "complex": "cpp"
     }
 }
