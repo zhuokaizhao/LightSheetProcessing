@@ -357,7 +357,7 @@ void Resamp::main()
         // load the image first
         lspImage *image = lspImageNew();
         airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
-        int loadImageSuccess = lspImageLoad(image, opt.image_path);
+        int loadImageSuccess = lspImageLoad(image, opt.image_path.c_str());
         if (!loadImageSuccess)
         {
             cout << "Error loading image with path " << opt.image_path << endl;
@@ -365,7 +365,7 @@ void Resamp::main()
         }
 
         // save the output image
-        int saveImageSuccess = lspImageSave(opt.out_path, image);
+        int saveImageSuccess = lspImageSave(opt.out_path.c_str(), image);
 
         if (!saveImageSuccess)
         {
