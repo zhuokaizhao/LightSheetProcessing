@@ -136,6 +136,11 @@ typedef struct {
 int lspImageLoad(lspImage *img, const char *fname);
 // save image to fname
 int lspImageSave(const char *fname, const lspImage *img);
+// Allocates an image. Re-uses an existing data allocation when
+// possible.  Returns 1 and sets a biff message in case of problems
+int lspImageAlloc(lspImage *img, uint channel, uint size0, uint size1, lspType dtype);
+// wraping image to nrrd
+int lspImageNrrdWrap(Nrrd *nout, const lspImage *img);
 
 // #ifdef __cplusplus
 // }

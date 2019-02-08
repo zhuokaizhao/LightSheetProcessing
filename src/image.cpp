@@ -29,8 +29,10 @@ static const airEnum _lspType_ae = {
     NULL, NULL,
     AIR_FALSE
 };
-const airEnum *const
-lspType_ae = &_lspType_ae;
+const airEnum *const lspType_ae = &_lspType_ae;
+
+
+// *********************** static functions start **********************
 
 // convert from nrrd type to lsptype
 static lspType typeNRRDtoLSP(int ntype) 
@@ -90,6 +92,7 @@ static int ItoWCheck(const double *ItoW) {
     return 0;
 }
 
+// get the size of a type
 static size_t typeSize(lspType dtype) 
 {
     size_t ret;
@@ -104,39 +107,10 @@ static size_t typeSize(lspType dtype)
     return ret;
 }
 
-// initialize a new image
-lspImage *lspImageNew() 
-{
-    lspImage *ret = MALLOC(1, lspImage);
-    assert(ret);
-    ret->content = NULL;
-    ret->channel = ret->size[0] = ret->size[1] = 0;
-    M3_SET_NAN(ret->ItoW);
-    ret->dtype = lspTypeUnknown;
-    ret->data.vd = NULL;
-    return ret;
-}
-
-// free image structs
-lspImage* lspImageNix(lspImage *img) 
-{
-    if (img) 
-    {
-        if (img->content) 
-        {
-            free(img->content);
-        }
-        
-        free(img->data.vd);
-        free(img);
-    }
-
-    return NULL;
-}
-
 /* static because even if this is generally useful;
    it is only needed inside this file */
-static int lspNrrdImageCheck(const Nrrd *nin) {
+static int lspNrrdImageCheck(const Nrrd *nin) 
+{
     if (nrrdCheck(nin)) {
         biffMovef(LSP, NRRD, "%s: problem with nrrd itself", __func__);
         return 1;
@@ -217,6 +191,38 @@ static int metaDataCheck(uint channel,
     return 0;
 }
 
+// *************************** End of static functions ******************
+
+// initialize a new image
+lspImage *lspImageNew() 
+{
+    lspImage *ret = MALLOC(1, lspImage);
+    assert(ret);
+    ret->content = NULL;
+    ret->channel = ret->size[0] = ret->size[1] = 0;
+    M3_SET_NAN(ret->ItoW);
+    ret->dtype = lspTypeUnknown;
+    ret->data.vd = NULL;
+    return ret;
+}
+
+// free image structs
+lspImage* lspImageNix(lspImage *img) 
+{
+    if (img) 
+    {
+        if (img->content) 
+        {
+            free(img->content);
+        }
+        
+        free(img->data.vd);
+        free(img);
+    }
+
+    return NULL;
+}
+
 /*
   Allocates an image. Re-uses an existing data allocation when
   possible.  Returns 1 and sets a biff message in case of problems
@@ -264,7 +270,7 @@ int lspImageAlloc(lspImage *img, uint channel,
     return 0;
 }
 
-// helper function that loads images
+// function that loads images
 int lspImageLoad(lspImage *img, const char *fname) 
 {
     if (!(img && fname)) 
@@ -342,8 +348,11 @@ int lspImageLoad(lspImage *img, const char *fname)
     return 0;
 }
 
-int mprImageNrrdWrap(Nrrd *nout, const lspImage *img) {
-    if (!(nout && img)) {
+// wrapping image into Nrrd
+int lspImageNrrdWrap(Nrrd *nout, const lspImage *img) 
+{
+    if (!(nout && img)) 
+    {
         biffAddf(LSP, "%s: got NULL pointer (%p,%p)\n", __func__,
                  (void*)nout, (void*)img);
         return 1;
@@ -396,7 +405,7 @@ int lspImageSave(const char *fname, const lspImage *img)
     Nrrd *nout = nrrdNew();
     airMopAdd(mop, nout, (airMopper)nrrdNix, airMopAlways);
     
-    if (mprImageNrrdWrap(nout, img)) 
+    if (lspImageNrrdWrap(nout, img)) 
     {
         biffAddf(LSP, "%s: trouble wrapping image into Nrrd", __func__);
         airMopError(mop);
@@ -411,64 +420,6 @@ int lspImageSave(const char *fname, const lspImage *img)
     }
 
     airMopOkay(mop);
-    return 0;
-}
-
-/* static because even if this is generally useful;
-   it is only needed inside this file */
-static int
-mprNrrdImageCheck(const Nrrd *nin) {
-    if (nrrdCheck(nin)) {
-        biffMovef(LSP, NRRD, "%s: problem with nrrd itself", __func__);
-        return 1;
-    }
-    if (!( nrrdTypeUChar == nin->type ||
-           nrrdTypeFloat == nin->type ||
-           nrrdTypeDouble == nin->type )) {
-        biffAddf(LSP, "%s: can't handle nrrd type %s (need %s, %s, or %s)",
-                 __func__, airEnumStr(nrrdType, nin->type),
-                 airEnumStr(nrrdType, nrrdTypeUChar),
-                 airEnumStr(nrrdType, nrrdTypeFloat),
-                 airEnumStr(nrrdType, nrrdTypeDouble));
-        return 1;
-    }
-    if (!( 2 == nin->dim || 3 == nin->dim )) {
-        biffAddf(LSP, "%s: got dimension %u, not 2 or 3", __func__, nin->dim);
-        return 1;
-    }
-    uint bidx;
-    if (3 == nin->dim) {
-        bidx = 1;
-        if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 )) {
-            biffAddf(LSP, "%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)",
-                     __func__, (uint)(nin->axis[0].size));
-            return 1;
-        }
-    } else {
-        bidx = 0;
-    }
-    if (airEnumValCheck(nrrdSpace, nin->space)) {
-        biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
-        return 1;
-    }
-    if (nrrdSpaceRightUp != nin->space) {
-        biffAddf(LSP, "%s: array space %s not expected %s", __func__,
-                 airEnumStr(nrrdSpace, nin->space),
-                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
-        return 1;
-    }
-    double ItoW[9];
-    setItoW(ItoW, nin, bidx);
-    if (ItoWCheck(ItoW)) {
-        biffAddf(LSP, "%s: problem with ItoW", __func__);
-        return 1;
-    }
-    if (!( nrrdCenterCell == nin->axis[bidx+0].center
-           && nrrdCenterCell == nin->axis[bidx+1].center )) {
-        biffAddf(LSP, "%s: axis[%u,%u] centering not both %s", __func__,
-                 bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
-        return 1;
-    }
     return 0;
 }
 
