@@ -19,8 +19,8 @@
 // #endif
 
 typedef unsigned int uint;
-const char *lspBiffKey = "lsp";
-#define LSP lspBiffKey // identifies this library in biff error messages
+
+
 // typedef unsigned long long uint64_t;
 
 /*

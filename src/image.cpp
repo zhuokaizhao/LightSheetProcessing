@@ -11,6 +11,10 @@
 // extern "C" {
 // #endif
 
+// identifies this library in biff error messages
+const char *lspBiffKey = "lsp";
+#define LSP lspBiffKey
+
 // utility macro for malloc() and casting to right type
 #define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
 
