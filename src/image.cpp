@@ -24,7 +24,7 @@ static const airEnum _lspType_ae = {
     (const char*[]) {
         "unknown type",
         "unsigned char",
-        "real (double)"
+        "double"
     },
     NULL, NULL,
     AIR_FALSE
@@ -43,7 +43,7 @@ static lspType typeNRRDtoLSP(int ntype)
     {
         case nrrdTypeUChar: ret = lspTypeUChar;
             break;
-        case nrrdTypeDouble: // one of these is nrrdTypeReal
+        case nrrdTypeDouble: // one of these is nrrdTypeDouble
             ret = lspTypeDouble;
             break;
         default: ret = lspTypeUnknown;
@@ -259,7 +259,7 @@ lspImage* lspImageNix(lspImage* img)
   associated with computing on a given image "img", reconstruction kernel
   "kern"
 */
-lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const real* imm) 
+lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm) 
 {
     // some error checks
     if (!(img && kern)) 
@@ -274,26 +274,20 @@ lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const real* imm)
                  __func__, img->channel);
         return NULL;
     }
-    if (airEnumValCheck(lspMode_ae, mode)) 
-    {
-        biffAddf(MPR, "%s: %s %d not valid", __func__,
-                 lspMode_ae->name, mode);
-        return NULL;
-    }
     
-    lspCtx *ctx = MALLOC(1, mprCtx);
+    lspCtx *ctx = MALLOC(1, lspCtx);
     assert(ctx);
     ctx->verbose = 0;
     ctx->image = img;
     ctx->kern = kern;
-    ctx->imgMinMax[0] = imm ? imm[0] : mprNan(0);
-    ctx->imgMinMax[1] = imm ? imm[1] : mprNan(0);
+    ctx->imgMinMax[0] = imm ? imm[0] : lspNan(0);
+    ctx->imgMinMax[1] = imm ? imm[1] : lspNan(0);
 
     // copy image->ItoW for consistancy
     M3_COPY(ctx->ItoW, ctx->image->ItoW);
     // convert wpos to index-space
     // sets 3x3 WtoI to inverse of 3x3 ctx->image->ItoW, using tmp variable TMP
-    real TMP;
+    double TMP;
     M3_INVERSE(ctx->WtoI, ctx->image->ItoW, TMP);
 
     // change gradient sum from index to world space (Equation 4.82 in FSV)
@@ -508,7 +502,7 @@ int lspImageNrrdWrap(Nrrd *nout, const lspImage *img)
 }
 
 /*
-  mprImageMinMax discovers the range of finite values in a given image,
+  lspImageMinMax discovers the range of finite values in a given image,
   with some error handling. Will always set minmax[0,1] to some
   finite range, even if the input was all non-finite values.
 */
@@ -518,7 +512,7 @@ int lspImageMinMax(double minmax[2], int *allFinite, const lspImage *img)
     if (!(minmax && img)) 
     {
         // allFinite can be NULL
-        biffAddf(MPR, "%s: got NULL pointer (%p,%p)", __func__,
+        biffAddf(LSP, "%s: got NULL pointer (%p,%p)", __func__,
                  (void*)minmax, (void*)img);
         return 1;
     }
@@ -531,7 +525,7 @@ int lspImageMinMax(double minmax[2], int *allFinite, const lspImage *img)
     // convert from image to nrrd
     if (lspImageNrrdWrap(nin, img)) 
     {
-        biffAddf(MPR, "%s: trouble wrapping image as nrrd", __func__);
+        biffAddf(LSP, "%s: trouble wrapping image as nrrd", __func__);
         airMopError(mop); return 1;
     }
 

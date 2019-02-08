@@ -19,6 +19,7 @@
 typedef unsigned int uint;
 const char *lspBiffKey = "lsp";
 #define LSP lspBiffKey // identifies this library in biff error messages
+typedef unsigned long long uint64_t;
 
 double lspNan(unsigned short payload) 
 {
@@ -103,8 +104,10 @@ typedef struct lspKernel_t
 
 // lspCtx is a container for all the state associated with doing convolution
 typedef struct {
+    int verbose = 0;
     // input
     const lspImage *image;
+    double imgMinMax[2];
     const lspKernel *kern;
 
     // output fields set by mprConvoEval

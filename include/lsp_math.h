@@ -239,9 +239,9 @@
 
 // sets given 3x3 matrix M to all NaNs
 #define M3_SET_NAN(M)                                                   \
-    ((M)[0] = mprNan(0), (M)[1] = mprNan(0), (M)[2] = mprNan(0),  \
-     (M)[3] = mprNan(0), (M)[4] = mprNan(0), (M)[5] = mprNan(0),  \
-     (M)[6] = mprNan(0), (M)[7] = mprNan(0), (M)[8] = mprNan(0))
+    ((M)[0] = lspNan(0), (M)[1] = lspNan(0), (M)[2] = lspNan(0),  \
+     (M)[3] = lspNan(0), (M)[4] = lspNan(0), (M)[5] = lspNan(0),  \
+     (M)[6] = lspNan(0), (M)[7] = lspNan(0), (M)[8] = lspNan(0))
 
 // test if given 3x3 matrix M isfinite() for all entries
 #define M3_ISFINITE(M)                                                  \
