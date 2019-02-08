@@ -46,8 +46,9 @@
 */
 
 // returns the max or min of two things
-#define MAX(A, B) ((A) > (B) ? (A) : (B))
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
+// opencv defines the same
+//#define MAX(A, B) ((A) > (B) ? (A) : (B))
+//#define MIN(A, B) ((A) < (B) ? (A) : (B))
 
 // clamps value V to interval [A,B]
 #define CLAMP(A, V, B) ((V) < (A)               \
@@ -440,7 +441,7 @@
     ((V)[0] = (S)[0], (V)[1] = (S)[1], (V)[2] = (S)[2], \
      (V)[3] = (S)[3], (V)[4] = (S)[4], (V)[5] = (S)[5])
 
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// }
+// #endif
 #endif /* MPR_MATH_HAS_BEEN_INCLUDED */
