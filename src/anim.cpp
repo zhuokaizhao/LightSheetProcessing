@@ -155,7 +155,7 @@ void setup_anim(CLI::App &app)
             // check if input file is a .nhdr file
             int suff = curFile.rfind(".nhdr");
 
-            if ( (suff != string::npos) || (suff != curFile.length() - 5)) 
+            if ( (suff == string::npos) || (suff != curFile.length() - 5)) 
             {
                 cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
                 return;

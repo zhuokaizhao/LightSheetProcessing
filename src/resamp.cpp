@@ -152,10 +152,8 @@ void setup_resamp(CLI::App &app)
             // check if input file is a .png file
             int suff = curImage.rfind(".png");
 
-            if ( (suff != string::npos) || (suff != curImage.length() - 4)) 
+            if ( (suff == string::npos) || (suff != curImage.length() - 4)) 
             {
-                cout << "curImage.length() = " << curImage.length() << endl;
-                cout << "suff = " << suff << endl;
                 cout << "Current input image " + curImage + " does not end with .png, error" << endl;
                 return;
             }

@@ -153,7 +153,7 @@ void setup_corrimg(CLI::App &app)
             int start = curFile.rfind("/");
             int length = suff - start - 1;
 
-            if ( (suff != string::npos) || (suff != curFile.length() - 5)) 
+            if ( (suff == string::npos) || (suff != curFile.length() - 5)) 
             {
                 cout << "Current input file " + curFile + " does not end with .nrrd, error" << endl;
                 return;
