@@ -185,11 +185,11 @@ void setup_resamp(CLI::App &app)
 Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
 {
     // create folder if it does not exist
-    if (!checkIfDirectory(opt.out_path))
-    {
-        boost::filesystem::create_directory(opt.out_path);
-        cout << "Image output path " << opt.out_path << " does not exits, but has been created" << endl;
-    }
+    // if (!checkIfDirectory(opt.out_path))
+    // {
+    //     boost::filesystem::create_directory(opt.out_path);
+    //     cout << "Image output path " << opt.out_path << " does not exits, but has been created" << endl;
+    // }
 }
 
 Resamp::~Resamp()
