@@ -355,19 +355,19 @@ void Resamp::main()
     if (imageNum == -1)
     {
         // load the image first
-        lspImage* image = lspImageNew();
-        airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
-        int loadImageSuccess = lspImageLoad(image, opt.image_path.c_str());
+        // lspImage* image = lspImageNew();
+        // airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
+        // int loadImageSuccess = lspImageLoad(image, opt.image_path.c_str());
         
-        if (!loadImageSuccess)
-        {
-            cout << "Error loading image with path " << opt.image_path << endl;
-            return;
-        }
-        else
-        {
-            cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
-        }
+        // if (!loadImageSuccess)
+        // {
+        //     cout << "Error loading image with path " << opt.image_path << endl;
+        //     return;
+        // }
+        // else
+        // {
+        //     cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
+        // }
 
         // save the output image
         // int saveImageSuccess = lspImageSave(opt.out_path.c_str(), image);
@@ -381,9 +381,12 @@ void Resamp::main()
         // {
         //     cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
         // }
-        Nrrd *nout = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
 
-        nrrd_checker(nrrdJoin(nout, image.data(), image.size(), 0, 1),
+        Nrrd* image = safe_nrrd_load(mop_t, opt.image_path);
+
+        Nrrd* nout = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+
+        nrrd_checker(nrrdJoin(nout, image->data(), image->size(), 0, 1),
                         mop_t, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
 
         
