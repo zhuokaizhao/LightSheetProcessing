@@ -382,16 +382,16 @@ void Resamp::main()
         //     cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
         // }
 
-        Nrrd* image = safe_nrrd_load(mop_t, opt.image_path);
+        Nrrd* image = safe_nrrd_load(mop, opt.image_path);
 
-        Nrrd* nout = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+        Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
 
         nrrd_checker(nrrdJoin(nout, image->data(), image->size(), 0, 1),
-                        mop_t, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
+                        mop, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
 
         
         nrrd_checker(nrrdSave(opt.out_path.c_str(), nout, nullptr), 
-                    mop_t, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
+                    mop, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
         
 
         // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
