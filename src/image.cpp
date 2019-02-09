@@ -136,7 +136,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
            nrrdTypeFloat == nin->type ||
            nrrdTypeDouble == nin->type )) 
     {
-        printf("%s: can't handle nrrd type %s (need %s, %s, or %s)", __func__, airEnumStr(nrrdType, nin->type),
+        printf("%s: can't handle nrrd type %s (need %s, %s, or %s)\n", __func__, airEnumStr(nrrdType, nin->type),
                  airEnumStr(nrrdType, nrrdTypeUChar),
                  airEnumStr(nrrdType, nrrdTypeFloat),
                  airEnumStr(nrrdType, nrrdTypeDouble));
@@ -150,6 +150,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
 
     if (!( 2 == nin->dim || 3 == nin->dim )) 
     {
+        printf("%s: got dimension %u, not 2 or 3\n", __func__, nin->dim);
         biffAddf(LSP, "%s: got dimension %u, not 2 or 3", __func__, nin->dim);
         return 1;
     }
@@ -160,7 +161,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
         bidx = 1;
         if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 ))
         {
-            printf("%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)", __func__, (uint)(nin->axis[0].size));
+            printf("%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)\n", __func__, (uint)(nin->axis[0].size));
             biffAddf(LSP, "%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)",
                      __func__, (uint)(nin->axis[0].size));
             return 1;
@@ -173,7 +174,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
     
     if (airEnumValCheck(nrrdSpace, nin->space)) 
     {
-        printf("%s: array space %u not set or known", __func__, nin->space);
+        printf("%s: array space %u not set or known\n", __func__, nin->space);
         biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
         return 1;
     }
