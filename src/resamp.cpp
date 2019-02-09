@@ -30,55 +30,194 @@ void setup_resamp(CLI::App &app)
     auto opt = std::make_shared<resampOptions>();
     auto sub = app.add_subcommand("resamp", "Perform resampling on input images");
 
-    sub->add_option("-i, --image_path", opt->image_path, "Path that includes input images")->required();
-    sub->add_option("-t, --image_type", opt->image_type, "Type of the image, max or ave")->required();
-    sub->add_option("-k, --kernel", opt->kernel_path, "Path that includes the kernel file")->required();
+    //sub->add_option("-i, --image_path", opt->image_path, "Path that includes input images")->required();
+    // sub->add_option("-t, --image_type", sopt->image_type, "Type of the image, max or ave")->required();
+    sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Path of input nrrd header files.")->required();
+    
+    sub->add_option("-g, --kernel", opt->grid_path, "Path that includes the grid file")->required();
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
 
-    sub->set_callback([opt]()
-    {
-        // first determine if input image_path is valid
-        if ( checkIfDirectory(opt->image_path) )
+    // sub->set_callback([opt]()
+    // {
+    //     // first determine if input image_path is valid
+    //     if ( checkIfDirectory(opt->image_path) )
+    //     {
+    //         cout << "image input directory " << opt->image_path << " is valid" << endl;
+
+    //         // count the number of files
+    //         const vector<string> images = GetDirectoryFiles(opt->image_path);
+
+    //         // the number starts at 0
+    //         int imageNum = 0;
+
+    //         for (int i = 0; i < images.size(); i++)
+    //         {
+    //             string curImage = images[i];
+
+    //             // check if input image is a .png file
+    //             int png_suff = curImage.rfind(".png");
+    //             if ( (png_suff != string::npos) && (png_suff == curImage.length()-4) )
+    //             {
+    //                 if (opt->verbose)
+    //                 {
+    //                     cout << "Current input file " + curImage + " ends with .png, count this file" << endl;
+    //                 }
+
+    //                 imageNum++;
+
+    //                 // now we need to understand the sequence number of this file
+    //                 // the naming of input images are like xxx-type.png
+    //                 int start = -1;
+    //                 // suffix is either -max.png or -avg.png
+    //                 string suffix = "-" + opt->image_type + ".png";
+    //                 int end = curImage.rfind(suffix);
+                    
+    //                 // current file name without -max.png or -avg.png
+    //                 string curImageName = curImage.substr(0, end);
+                    
+    //                 // The sequenceNumString will have zero padding, like 001
+    //                 for (int i = 0; i < end; i++)
+    //                 {
+    //                     // we get the first position that zero padding ends so that we know the real number
+    //                     if (curImage[i] != '0')
+    //                     {
+    //                         start = i;
+    //                         break;
+    //                     }
+    //                 }
+        
+    //                 string sequenceNumString;
+    //                 // for the case that it is just 000 which represents the initial time stamp
+    //                 if (start == -1)
+    //                 {
+    //                     sequenceNumString = "0";
+    //                 }
+    //                 else
+    //                 {
+    //                     int length = end - start;
+    //                     sequenceNumString = curImage.substr(start, length);
+    //                 }
+
+    //                 if (is_number(sequenceNumString))
+    //                 {
+    //                     opt->allValidImages.push_back( make_pair(stoi(sequenceNumString), (curImageName+"-"+opt->image_type)) );
+    //                 }
+    //                 else
+    //                 {
+    //                     cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
+    //                 }
+    //             }
+    //         }
+
+    //         // after finding all the files, sort the allValidFiles in ascending order
+    //         sort(opt->allValidImages.begin(), opt->allValidImages.end());
+
+    //         cout << imageNum << " " << opt->image_type << " .png files found in input path " << opt->image_path << endl << endl;
+
+    //         // sanity check
+    //         if (imageNum != opt->allValidImages.size())
+    //         {
+    //             cout << "ERROR: Not all valid files have been recorded" << endl;
+    //         }
+
+    //         // if the user restricts the number of files to process
+    //         if (!opt->maxFileNum.empty())
+    //         {
+    //             imageNum = stoi(opt->maxFileNum);
+    //         }
+
+    //         opt->imageNum = imageNum;
+    //         cout << "Total number of .png images that we are processing is: " << opt->imageNum << endl << endl;
+
+    //         try
+    //         {
+    //             auto start = chrono::high_resolution_clock::now();
+    //             Resamp(*opt).main();
+    //             auto stop = chrono::high_resolution_clock::now(); 
+    //             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+    //             cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+    //         }
+    //         catch(LSPException &e)
+    //         {
+    //             std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         // the program also handles if input file is a single image
+    //         cout << opt->image_path << " is not a directory, check if it is a valid .png file" << endl;
+    //         const string curImage = opt->image_path;
+
+    //         std::cout << "Current image name is: " << curImage << endl;
+            
+    //         // check if input file is a .png file
+    //         int suff = curImage.rfind(".png");
+
+    //         if ( (suff == string::npos) || (suff != curImage.length() - 4)) 
+    //         {
+    //             cout << "Current input image " + curImage + " does not end with .png, error" << endl;
+    //             return;
+    //         }
+    //         else
+    //         {
+    //             cout << "Current input image " + curImage + " ends with .png, process this file" << endl;
+
+    //             // update file number, -1 triggers single mode
+    //             opt->imageNum = -1;    
+
+    //             try
+    //             {
+    //                 auto start = chrono::high_resolution_clock::now();
+    //                 Resamp(*opt).main();
+    //                 auto stop = chrono::high_resolution_clock::now(); 
+    //                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+    //                 cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+    //             }
+    //             catch(LSPException &e)
+    //             {
+    //                 std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
+    //             }
+    //         }
+    //     }
+    // });
+
+    sub->set_callback([opt]() 
+    { 
+        // first determine if input nhdr_path is valid
+        if (checkIfDirectory(opt->nhdr_path))
         {
-            cout << "image input directory " << opt->image_path << " is valid" << endl;
-
+            cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
+            
             // count the number of files
-            const vector<string> images = GetDirectoryFiles(opt->image_path);
-
-            // the number starts at 0
-            int imageNum = 0;
-
-            for (int i = 0; i < images.size(); i++)
+            const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
+            
+            // note that the number starts counting at 0
+            int nhdrNum = 0;
+            
+            for (int i = 0; i < files.size(); i++) 
             {
-                string curImage = images[i];
-
-                // check if input image is a .png file
-                int png_suff = curImage.rfind(".png");
-                if ( (png_suff != string::npos) && (png_suff == curImage.length()-4) )
+                string curFile = files[i];
+                // check if input file is a .nhdr file
+                int nhdr_suff = curFile.rfind(".nhdr");
+                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
                 {
                     if (opt->verbose)
-                    {
-                        cout << "Current input file " + curImage + " ends with .png, count this file" << endl;
-                    }
-
-                    imageNum++;
-
-                    // now we need to understand the sequence number of this file
-                    // the naming of input images are like xxx-type.png
-                    int start = -1;
-                    // suffix is either -max.png or -avg.png
-                    string suffix = "-" + opt->image_type + ".png";
-                    int end = curImage.rfind(suffix);
+                        cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
                     
-                    // current file name without -max.png or -avg.png
-                    string curImageName = curImage.substr(0, end);
+                    nhdrNum++;
+                
+                    // now we need to understand the sequence number of this file
+                    int start = -1;
+                    int end = curFile.rfind(".nhdr");
+                    // current file name without type
+                    string curFileName = curFile.substr(0, end);
                     
                     // The sequenceNumString will have zero padding, like 001
                     for (int i = 0; i < end; i++)
                     {
-                        // we get the first position that zero padding ends so that we know the real number
-                        if (curImage[i] != '0')
+                        // we get the first position that zero padding ends
+                        if (curFile[i] != '0')
                         {
                             start = i;
                             break;
@@ -94,27 +233,28 @@ void setup_resamp(CLI::App &app)
                     else
                     {
                         int length = end - start;
-                        sequenceNumString = curImage.substr(start, length);
+                        sequenceNumString = curFile.substr(start, length);
                     }
 
                     if (is_number(sequenceNumString))
                     {
-                        opt->allValidImages.push_back( make_pair(stoi(sequenceNumString), (curImageName+"-"+opt->image_type)) );
+                        opt->allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
                     }
                     else
                     {
                         cout << "WARNING: " << sequenceNumString << " is NOT a number" << endl;
                     }
                 }
+
             }
 
             // after finding all the files, sort the allValidFiles in ascending order
-            sort(opt->allValidImages.begin(), opt->allValidImages.end());
+            sort(opt->allValidFiles.begin(), opt->allValidFiles.end());
 
-            cout << imageNum << " " << opt->image_type << " .png files found in input path " << opt->image_path << endl << endl;
+            cout << nhdrNum << " .nhdr files found in input path " << opt->nhdr_path << endl << endl;
 
             // sanity check
-            if (imageNum != opt->allValidImages.size())
+            if (nhdrNum != opt->allValidFiles.size())
             {
                 cout << "ERROR: Not all valid files have been recorded" << endl;
             }
@@ -122,11 +262,12 @@ void setup_resamp(CLI::App &app)
             // if the user restricts the number of files to process
             if (!opt->maxFileNum.empty())
             {
-                imageNum = stoi(opt->maxFileNum);
+                nhdrNum = stoi(opt->maxFileNum);
             }
-
-            opt->imageNum = imageNum;
-            cout << "Total number of .png images that we are processing is: " << opt->imageNum << endl << endl;
+                
+            // update file number
+            opt->file_number = nhdrNum;
+            cout << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
 
             try
             {
@@ -143,26 +284,26 @@ void setup_resamp(CLI::App &app)
         }
         else
         {
-            // the program also handles if input file is a single image
-            cout << opt->image_path << " is not a directory, check if it is a valid .png file" << endl;
-            const string curImage = opt->image_path;
+            // the program also handles if input file is a single file
+            cout << opt->nhdr_path << " is not a directory, check if it is a valid .nhdr file" << endl;
+            const string curFile = opt->nhdr_path;
 
-            std::cout << "Current image name is: " << curImage << endl;
+            std::cout << "Current file name is: " << curFile << endl;
             
-            // check if input file is a .png file
-            int suff = curImage.rfind(".png");
+            // check if input file is a .nhdr file
+            int suff = curFile.rfind(".nhdr");
 
-            if ( (suff == string::npos) || (suff != curImage.length() - 4)) 
+            if ( (suff == string::npos) || (suff != curFile.length() - 5)) 
             {
-                cout << "Current input image " + curImage + " does not end with .png, error" << endl;
+                cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
                 return;
             }
             else
             {
-                cout << "Current input image " + curImage + " ends with .png, process this file" << endl;
+                cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
 
-                // update file number, -1 triggers single mode
-                opt->imageNum = -1;    
+                // update file number
+                opt->file_number = -1;    
 
                 try
                 {
@@ -178,6 +319,7 @@ void setup_resamp(CLI::App &app)
                 }
             }
         }
+        
     });
 }
 
@@ -209,7 +351,7 @@ static int isEven (uint x)
 }
 
 
-void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw) 
+void Resamp::ConvoEval2D(lspCtx *ctx, double xw, double yw) 
 {
     // initialize output
     ctx->wpos[0] = xw;
@@ -339,69 +481,124 @@ void Resamp::ConvoEval(lspCtx *ctx, double xw, double yw)
             // }
         }
     }
-    // ^'^'^'^'^'^'^'^'^'^'^'^'^'^'^  end student code (83L in ref)
 
     return;
 }
 
 
+
+
 // main function
 void Resamp::main()
 {
-    // the number of images
-    int imageNum = opt.imageNum;
-
-    // if imageNum == -1, single image mode
-    if (imageNum == -1)
+    // single file mode
+    if (opt.file_number == -1)
     {
-        // load the image first
-        lspImage* image = lspImageNew();
-        airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
+        // nhdr_path is just the nhdr file namae instead of a folder path
+        string nhdr_name = opt.nhdr_path;
+        // load the nhdr header
+        Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
+
+        // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
+        unsigned int permute[4] = {2, 0, 1, 3};
+
+        // do the permute
+        Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        nrrdAxesPermute(nin_permuted, nin, permute);
+
+        // do the resampling
+        // initialize the output result
+        Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         
-        // int loadImageFail = lspImageLoad(image, opt.image_path.c_str());
+        // set input to resample context
+        NrrdResampleContext* resampContext = nrrdResampleContextNew();
+        airMopAdd(mop, resampContext, (airMopper)nrrdResampleContextNix, airMopAlways);
+        nrrdResampleInputSet(resampContext, nin_permuted);
         
-        // if (loadImageFail)
-        // {
-        //     cout << "Error loading image with path " << opt.image_path << endl;
-        //     return;
-        // }
-        // else
-        // {
-        //     cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
-        // }
+        // get the sample ready
+        nrrdResampleSamplesSet(resampConext, 0, nin->axis[0].size);
+        nrrdResampleRangeFullSet(resampContext, 0);
+        // nrrdBoundaryBleed: copy the last/first value out as needed
+        nrrdResampleBoundarySet(resampContext, nrrdBoundaryBleed);
+        
+        // set the kernel
+        // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
+        // Catmull-Rom spline at (B,C)=(0,0.5) and the uniform cubic B-spline at (B,C)=(1,0)
+        double kparm[2] = {0, 0.5};
+        nrrdResampleKernelSet(resampContex, 0, nrrdKernelCatmullRom, kparm);
 
-        // // save the output image
-        // int saveImageFail = lspImageSave(opt.out_path.c_str(), image);
-
-        // if (saveImageFail)
-        // {
-        //     cout << "Error saving image to path " << opt.out_path << endl;
-        //     return;
-        // }
-        // else
-        // {
-        //     cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
-        // }
-
-        // load the image as nrrd
-        Nrrd *nin = nrrdNew();
-        airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
-        if (nrrdLoad(nin, opt.image_path.c_str(), NULL)) 
-        {
-            printf("%s: trouble reading file\n", __func__);
-            airMopError(mop);
-            return;
-        }
-
-        Nrrd *nout = nin;
-        airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
-        // save the nrrd
+        // start the resampling
+        nrrdResampleExecute(resampContext, nout);
+        
+        // save the nrrd as image
         if (nrrdSave(opt.out_path.c_str(), nout, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
             return;
         }
+
+    }
+    
+    
+    
+    
+    // // the number of images
+    // int imageNum = opt.imageNum;
+
+    // // if imageNum == -1, single image mode
+    // if (imageNum == -1)
+    // {
+    //     // load the image first
+    //     lspImage* image = lspImageNew();
+    //     airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
+        
+    //     int loadImageFail = lspImageLoad(image, opt.image_path.c_str());
+        
+    //     if (loadImageFail)
+    //     {
+    //         cout << "Error loading image with path " << opt.image_path << endl;
+    //         return;
+    //     }
+    //     else
+    //     {
+    //         cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
+    //     }
+
+    //     // load the kernel
+
+    //     // save the output image
+    //     int saveImageFail = lspImageSave(opt.out_path.c_str(), image);
+
+    //     if (saveImageFail)
+    //     {
+    //         cout << "Error saving image to path " << opt.out_path << endl;
+    //         return;
+    //     }
+    //     else
+    //     {
+    //         cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
+    //     }
+
+        // // load the image as nrrd
+        // Nrrd *nin = nrrdNew();
+        // airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
+        // if (nrrdLoad(nin, opt.image_path.c_str(), NULL)) 
+        // {
+        //     printf("%s: trouble reading file\n", __func__);
+        //     airMopError(mop);
+        //     return;
+        // }
+
+        // // save the nrrd
+        // Nrrd *nout = nin;
+        // airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
+        // if (nrrdSave(opt.out_path.c_str(), nout, NULL)) 
+        // {
+        //     printf("%s: trouble saving output\n", __func__);
+        //     airMopError(mop);
+        //     return;
+        // }
         
         airMopOkay(mop);
         // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
