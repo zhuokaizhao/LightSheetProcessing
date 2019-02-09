@@ -390,7 +390,7 @@ void Resamp::main()
         {
             printf("%s: trouble reading file\n", __func__);
             airMopError(mop);
-            return 1;
+            return;
         }
 
         // save the nrrd
@@ -398,7 +398,7 @@ void Resamp::main()
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
-            return 1;
+            return;
         }
         
         airMopOkay(mop);
