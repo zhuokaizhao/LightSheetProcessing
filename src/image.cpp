@@ -390,6 +390,7 @@ int lspImageLoad(lspImage *img, const char *fname)
 {
     if (!(img && fname)) 
     {
+        printf("%s: got NULL pointer (%p,%p)\n", __func__, (void*)img, (void*)fname);
         biffAddf(LSP, "%s: got NULL pointer (%p,%p)\n", __func__,
                  (void*)img, (void*)fname);
         return 1;
@@ -402,6 +403,7 @@ int lspImageLoad(lspImage *img, const char *fname)
     // load images
     if (nrrdLoad(nin, fname, NULL)) 
     {
+        printf("%s: trouble reading file\n", __func__);
         biffMovef(LSP, NRRD, "%s: trouble reading file", __func__);
         airMopError(mop);
         return 1;
@@ -410,6 +412,7 @@ int lspImageLoad(lspImage *img, const char *fname)
     // check loaded images
     if (lspNrrdImageCheck(nin)) 
     {
+        printf("%s: given array doesn't conform to a lsp image\n", __func__);
         biffAddf(LSP, "%s: given array doesn't conform to a lsp image", __func__);
         airMopError(mop);
         return 1;
@@ -430,7 +433,9 @@ int lspImageLoad(lspImage *img, const char *fname)
     lspType mtype = typeNRRDtoLSP(nin->type);
     if (lspImageAlloc(img, (3 == dim ? nin->axis[0].size : 1),
                       nin->axis[bidx+0].size, nin->axis[bidx+1].size,
-                      mtype)) {
+                      mtype)) 
+    {
+        printf("%s: trouble allocating image\n", __func__);
         biffAddf(LSP, "%s: trouble allocating image", __func__);
         airMopError(mop);
         return 1;
