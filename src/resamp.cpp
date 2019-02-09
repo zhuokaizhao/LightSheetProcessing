@@ -389,7 +389,6 @@ void Resamp::main()
         if (nrrdLoad(nin, opt.image_path, NULL)) 
         {
             printf("%s: trouble reading file\n", __func__);
-            biffMovef(LSP, NRRD, "%s: trouble reading file", __func__);
             airMopError(mop);
             return 1;
         }
@@ -397,7 +396,7 @@ void Resamp::main()
         // save the nrrd
         if (nrrdSave(opt.out_path, nin, NULL)) 
         {
-            biffMovef(LSP, NRRD, "%s: trouble saving output", __func__);
+            printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
             return 1;
         }
