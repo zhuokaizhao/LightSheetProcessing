@@ -602,5 +602,4 @@ void Resamp::main()
         
         airMopOkay(mop);
         // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
-    }
 }
