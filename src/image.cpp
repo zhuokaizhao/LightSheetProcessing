@@ -433,13 +433,13 @@ int lspImageLoad(lspImage *img, const char *fname)
     }
 
     // check loaded images
-    if (lspNrrdImageCheck(nin)) 
-    {
-        printf("%s: given array doesn't conform to a lsp image\n", __func__);
-        biffAddf(LSP, "%s: given array doesn't conform to a lsp image", __func__);
-        airMopError(mop);
-        return 1;
-    }
+    // if (lspNrrdImageCheck(nin)) 
+    // {
+    //     printf("%s: given array doesn't conform to a lsp image\n", __func__);
+    //     biffAddf(LSP, "%s: given array doesn't conform to a lsp image", __func__);
+    //     airMopError(mop);
+    //     return 1;
+    // }
     
     uint dim, bidx;
     if (nin->dim == 2) 
@@ -453,10 +453,10 @@ int lspImageLoad(lspImage *img, const char *fname)
         bidx = 1;
     }
 
-    lspType mtype = typeNRRDtoLSP(nin->type);
+    lspType ltype = typeNRRDtoLSP(nin->type);
     if (lspImageAlloc(img, (3 == dim ? nin->axis[0].size : 1),
                       nin->axis[bidx+0].size, nin->axis[bidx+1].size,
-                      mtype)) 
+                      ltype)) 
     {
         printf("%s: trouble allocating image\n", __func__);
         biffAddf(LSP, "%s: trouble allocating image", __func__);
@@ -472,7 +472,7 @@ int lspImageLoad(lspImage *img, const char *fname)
     uint elSize = (uint)nrrdElementSize(nin);
     uint elNum = (uint)nrrdElementNumber(nin);
 
-    if (lspTypeUChar == mtype || nrrdTypeDouble == nin->type) 
+    if (lspTypeUChar == ltype || nrrdTypeDouble == nin->type) 
     {
         memcpy(img->data.vd, nin->data, elSize*elNum);
     }
