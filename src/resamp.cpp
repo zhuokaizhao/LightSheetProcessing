@@ -358,29 +358,48 @@ void Resamp::main()
         lspImage* image = lspImageNew();
         airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
         
-        int loadImageFail = lspImageLoad(image, opt.image_path.c_str());
+        // int loadImageFail = lspImageLoad(image, opt.image_path.c_str());
         
-        if (loadImageFail)
+        // if (loadImageFail)
+        // {
+        //     cout << "Error loading image with path " << opt.image_path << endl;
+        //     return;
+        // }
+        // else
+        // {
+        //     cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
+        // }
+
+        // // save the output image
+        // int saveImageFail = lspImageSave(opt.out_path.c_str(), image);
+
+        // if (saveImageFail)
+        // {
+        //     cout << "Error saving image to path " << opt.out_path << endl;
+        //     return;
+        // }
+        // else
+        // {
+        //     cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
+        // }
+
+        // load the image as nrrd
+        Nrrd *nin = nrrdNew();
+        airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
+        if (nrrdLoad(nin, opt.image_path, NULL)) 
         {
-            cout << "Error loading image with path " << opt.image_path << endl;
-            return;
-        }
-        else
-        {
-            cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
+            printf("%s: trouble reading file\n", __func__);
+            biffMovef(LSP, NRRD, "%s: trouble reading file", __func__);
+            airMopError(mop);
+            return 1;
         }
 
-        // save the output image
-        int saveImageFail = lspImageSave(opt.out_path.c_str(), image);
-
-        if (saveImageFail)
+        // save the nrrd
+        if (nrrdSave(opt.out_path, nin, NULL)) 
         {
-            cout << "Error saving image to path " << opt.out_path << endl;
-            return;
-        }
-        else
-        {
-            cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
+            biffMovef(LSP, NRRD, "%s: trouble saving output", __func__);
+            airMopError(mop);
+            return 1;
         }
         
         airMopOkay(mop);

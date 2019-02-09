@@ -433,13 +433,13 @@ int lspImageLoad(lspImage *img, const char *fname)
     }
 
     // check loaded images
-    // if (lspNrrdImageCheck(nin)) 
-    // {
-    //     printf("%s: given array doesn't conform to a lsp image\n", __func__);
-    //     biffAddf(LSP, "%s: given array doesn't conform to a lsp image", __func__);
-    //     airMopError(mop);
-    //     return 1;
-    // }
+    if (lspNrrdImageCheck(nin)) 
+    {
+        printf("%s: given array doesn't conform to a lsp image\n", __func__);
+        biffAddf(LSP, "%s: given array doesn't conform to a lsp image", __func__);
+        airMopError(mop);
+        return 1;
+    }
     
     uint dim, bidx;
     if (nin->dim == 2) 
