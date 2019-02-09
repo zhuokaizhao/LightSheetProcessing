@@ -525,7 +525,7 @@ void Resamp::main()
         // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
         // Catmull-Rom spline at (B,C)=(0,0.5) and the uniform cubic B-spline at (B,C)=(1,0)
         double kparm[2] = {0, 0.5};
-        nrrdResampleKernelSet(resampContex, 0, nrrdKernelCatmullRom, kparm);
+        nrrdResampleKernelSet(resampContext, 0, nrrdKernelCatmullRom, kparm);
 
         // start the resampling
         nrrdResampleExecute(resampContext, nout);
