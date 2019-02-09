@@ -179,17 +179,17 @@ static int lspNrrdImageCheck(const Nrrd *nin)
     //     biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
     //     return 1;
     // }
-    
-    if (nin->space != nrrdSpaceRightUp) 
-    {
-        printf("%s: array space %s not expected %s", __func__,
-                 airEnumStr(nrrdSpace, nin->space),
-                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
-        biffAddf(LSP, "%s: array space %s not expected %s", __func__,
-                 airEnumStr(nrrdSpace, nin->space),
-                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
-        return 1;
-    }
+
+    // if (nin->space != nrrdSpaceRightUp) 
+    // {
+    //     printf("%s: array space %s not expected %s\n", __func__,
+    //              airEnumStr(nrrdSpace, nin->space),
+    //              airEnumStr(nrrdSpace, nrrdSpaceRightUp));
+    //     biffAddf(LSP, "%s: array space %s not expected %s", __func__,
+    //              airEnumStr(nrrdSpace, nin->space),
+    //              airEnumStr(nrrdSpace, nrrdSpaceRightUp));
+    //     return 1;
+    // }
 
     double ItoW[9];
 
