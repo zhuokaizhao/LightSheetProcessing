@@ -410,7 +410,7 @@ int lspImageLoad(lspImage *img, const char *fname)
     // check loaded images
     if (lspNrrdImageCheck(nin)) 
     {
-        biffAddf(LSP, "%s: given array doesn't conform to a mapr image", __func__);
+        biffAddf(LSP, "%s: given array doesn't conform to a lsp image", __func__);
         airMopError(mop);
         return 1;
     }
