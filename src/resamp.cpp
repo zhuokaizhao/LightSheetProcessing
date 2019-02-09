@@ -393,8 +393,10 @@ void Resamp::main()
             return;
         }
 
+        Nrrd *nout = nin;
+        airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
         // save the nrrd
-        if (nrrdSave(opt.out_path.c_str(), nin, NULL)) 
+        if (nrrdSave(opt.out_path.c_str(), nout, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
