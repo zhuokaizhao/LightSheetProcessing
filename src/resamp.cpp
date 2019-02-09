@@ -363,6 +363,10 @@ void Resamp::main()
             cout << "Error loading image with path " << opt.image_path << endl;
             return;
         }
+        else
+        {
+            cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
+        }
 
         // save the output image
         int saveImageSuccess = lspImageSave(opt.out_path.c_str(), image);
@@ -370,7 +374,13 @@ void Resamp::main()
         if (!saveImageSuccess)
         {
             cout << "Error saving image to path " << opt.out_path << endl;
+            return;
         }
+        else
+        {
+            cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
+        }
+        
 
         // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
     }
