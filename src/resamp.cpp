@@ -386,7 +386,7 @@ void Resamp::main()
         // load the image as nrrd
         Nrrd *nin = nrrdNew();
         airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
-        if (nrrdLoad(nin, opt.image_path, NULL)) 
+        if (nrrdLoad(nin, opt.image_path.c_str(), NULL)) 
         {
             printf("%s: trouble reading file\n", __func__);
             airMopError(mop);
@@ -394,7 +394,7 @@ void Resamp::main()
         }
 
         // save the nrrd
-        if (nrrdSave(opt.out_path, nin, NULL)) 
+        if (nrrdSave(opt.out_path.c_str(), nin, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
