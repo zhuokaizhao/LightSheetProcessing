@@ -516,7 +516,7 @@ void Resamp::main()
         nrrdResampleInputSet(resampContext, nin_permuted);
         
         // get the sample ready
-        nrrdResampleSamplesSet(resampConext, 0, nin->axis[0].size);
+        nrrdResampleSamplesSet(resampContext, 0, nin->axis[0].size);
         nrrdResampleRangeFullSet(resampContext, 0);
         // nrrdBoundaryBleed: copy the last/first value out as needed
         nrrdResampleBoundarySet(resampContext, nrrdBoundaryBleed);
