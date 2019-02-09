@@ -78,6 +78,7 @@ static int ItoWCheck(const double *ItoW)
 {
     if (!ItoW) 
     {
+        printf("%s: got NULL pointer\n", __func__);
         biffAddf(LSP, "%s: got NULL pointer", __func__);
         return 1;
     }
@@ -85,6 +86,10 @@ static int ItoWCheck(const double *ItoW)
     // check if entries are finite
     if (!M3_ISFINITE(ItoW)) 
     {
+        printf("%s: matrix is not all set: [%g,%g,%g; %g,%g,%g; %g,%g,%g]\n", __func__,
+                 ItoW[0], ItoW[1], ItoW[2],
+                 ItoW[3], ItoW[4], ItoW[5],
+                 ItoW[6], ItoW[7], ItoW[8]);
         biffAddf(LSP, "%s: matrix is not all set: "
                  "[%g,%g,%g; %g,%g,%g; %g,%g,%g]", __func__,
                  ItoW[0], ItoW[1], ItoW[2],
@@ -98,6 +103,7 @@ static int ItoWCheck(const double *ItoW)
            0 == ItoW[7] &&
            1 == ItoW[8] )) 
     {
+        printf("%s: ItoW matrix last row [%g,%g,%g] not [0,0,1]\n", __func__, ItoW[6], ItoW[7], ItoW[8]);
         biffAddf(LSP, "%s: ItoW matrix last row [%g,%g,%g] not [0,0,1]",
                  __func__, ItoW[6], ItoW[7], ItoW[8]);
         return 1;
@@ -197,7 +203,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
 
     if (ItoWCheck(ItoW)) 
     {
-        printf("%s: problem with ItoW", __func__);
+        printf("%s: problem with ItoW\n", __func__);
         biffAddf(LSP, "%s: problem with ItoW", __func__);
         return 1;
     }
