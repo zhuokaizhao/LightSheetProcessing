@@ -369,7 +369,8 @@ void Resamp::main()
         }
 
         // save the output image
-        int saveImageSuccess = lspImageSave(opt.out_path.c_str(), image);
+        string output = "abc";
+        int saveImageSuccess = lspImageSave(output.c_str(), image);
 
         if (!saveImageSuccess)
         {
