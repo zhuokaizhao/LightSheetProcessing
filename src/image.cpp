@@ -128,6 +128,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
 {
     if (nrrdCheck(nin)) 
     {
+        printf("%s: problem with nrrd itself\n", __func__);
         biffMovef(LSP, NRRD, "%s: problem with nrrd itself", __func__);
         return 1;
     }
@@ -135,6 +136,10 @@ static int lspNrrdImageCheck(const Nrrd *nin)
            nrrdTypeFloat == nin->type ||
            nrrdTypeDouble == nin->type )) 
     {
+        printf("%s: can't handle nrrd type %s (need %s, %s, or %s)", __func__, airEnumStr(nrrdType, nin->type),
+                 airEnumStr(nrrdType, nrrdTypeUChar),
+                 airEnumStr(nrrdType, nrrdTypeFloat),
+                 airEnumStr(nrrdType, nrrdTypeDouble));
         biffAddf(LSP, "%s: can't handle nrrd type %s (need %s, %s, or %s)",
                  __func__, airEnumStr(nrrdType, nin->type),
                  airEnumStr(nrrdType, nrrdTypeUChar),
@@ -153,7 +158,9 @@ static int lspNrrdImageCheck(const Nrrd *nin)
     if (3 == nin->dim) 
     {
         bidx = 1;
-        if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 )) {
+        if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 ))
+        {
+            printf("%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)", __func__, (uint)(nin->axis[0].size));
             biffAddf(LSP, "%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)",
                      __func__, (uint)(nin->axis[0].size));
             return 1;
@@ -166,11 +173,15 @@ static int lspNrrdImageCheck(const Nrrd *nin)
     
     if (airEnumValCheck(nrrdSpace, nin->space)) 
     {
+        printf("%s: array space %u not set or known", __func__, nin->space);
         biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
         return 1;
     }
     if (nrrdSpaceRightUp != nin->space) 
     {
+        printf("%s: array space %s not expected %s", __func__,
+                 airEnumStr(nrrdSpace, nin->space),
+                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
         biffAddf(LSP, "%s: array space %s not expected %s", __func__,
                  airEnumStr(nrrdSpace, nin->space),
                  airEnumStr(nrrdSpace, nrrdSpaceRightUp));
@@ -183,6 +194,7 @@ static int lspNrrdImageCheck(const Nrrd *nin)
 
     if (ItoWCheck(ItoW)) 
     {
+        printf("%s: problem with ItoW", __func__);
         biffAddf(LSP, "%s: problem with ItoW", __func__);
         return 1;
     }
@@ -190,6 +202,8 @@ static int lspNrrdImageCheck(const Nrrd *nin)
     if (!( nrrdCenterCell == nin->axis[bidx+0].center
            && nrrdCenterCell == nin->axis[bidx+1].center )) 
     {
+        printf("%s: axis[%u,%u] centering not both %s", __func__,
+                 bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
         biffAddf(LSP, "%s: axis[%u,%u] centering not both %s", __func__,
                  bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
         return 1;
