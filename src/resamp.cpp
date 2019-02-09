@@ -355,43 +355,33 @@ void Resamp::main()
     if (imageNum == -1)
     {
         // load the image first
-        // lspImage* image = lspImageNew();
-        // airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
-        // int loadImageSuccess = lspImageLoad(image, opt.image_path.c_str());
+        lspImage* image = lspImageNew();
+        airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
         
-        // if (!loadImageSuccess)
-        // {
-        //     cout << "Error loading image with path " << opt.image_path << endl;
-        //     return;
-        // }
-        // else
-        // {
-        //     cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
-        // }
+        int loadImageSuccess = lspImageLoad(image, opt.image_path.c_str());
+        
+        if (!loadImageSuccess)
+        {
+            cout << "Error loading image with path " << opt.image_path << endl;
+            return;
+        }
+        else
+        {
+            cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
+        }
 
         // save the output image
-        // int saveImageSuccess = lspImageSave(opt.out_path.c_str(), image);
+        int saveImageSuccess = lspImageSave(opt.out_path.c_str(), image);
 
-        // if (!saveImageSuccess)
-        // {
-        //     cout << "Error saving image to path " << opt.out_path << endl;
-        //     return;
-        // }
-        // else
-        // {
-        //     cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
-        // }
-
-        Nrrd* image = safe_nrrd_load(mop, opt.image_path);
-
-        Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-
-        nrrd_checker(nrrdJoin(nout, image->data(), image->size(), 0, 1),
-                        mop, "Error joining ppm files to png:\n", "anim.cpp", "Anim::build_png");
-
-        
-        nrrd_checker(nrrdSave(opt.out_path.c_str(), nout, nullptr), 
-                    mop, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
+        if (!saveImageSuccess)
+        {
+            cout << "Error saving image to path " << opt.out_path << endl;
+            return;
+        }
+        else
+        {
+            cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
+        }
         
 
         // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
