@@ -459,9 +459,9 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         n2 = floor(ctx3D->ipos[1] + 0.5);
         n3 = floor(ctx3D->ipos[2] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - (int)ctx3D->kern->support) / 2;
+        lower = (int)(1 - (int)ctx3D->kern->support[0]) / 2;
         // upper = (support - 1)/2
-        upper = (int)((int)ctx3D->kern->support - 1) / 2;
+        upper = (int)((int)ctx3D->kern->support[0] - 1) / 2;
     }
 
     // calculate alpha based on n1, n2 and n3
@@ -475,7 +475,7 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
     // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    double k1[(int)(ctx3D->kern->support[0])], k2[ctx3D->kern->support[0]], k3[ctx3D->kern->support[0]];
+    double k1[(int)(ctx3D->kern->support)], k2[(int)*(ctx3D->kern->support)], k3[(int)*(ctx3D->kern->support)];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
     // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
