@@ -275,7 +275,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
 
     NrrdKernelSpec* kernel;
     kernel = nrrdKernelSpecNew();
-    nrrdKernelParse(&(kernel->kernel), kernel->parm, ctx2D->kern.c_str());
+    nrrdKernelParse(&(kernel->kernel), kernel->parm, ctx2D->kern->c_str());
     airMopAdd(mop, kernel, (airMopper)nrrdKernelSpecNix, airMopAlways);
 
 
