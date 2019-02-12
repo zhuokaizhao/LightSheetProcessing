@@ -22,6 +22,8 @@
 
 typedef unsigned int uint;
 
+typedef enum lspType;
+
 // typedef unsigned long long uint64_t;
 
 // volume struct for 3D convolution
