@@ -280,9 +280,9 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
         n1 = floor(ctx2D->ipos[0]);
         n2 = floor(ctx2D->ipos[1]);
         // lower = 1 - support/2
-        lower = 1 - (int)(ctx2D->kern->support / 2);
+        lower = 1 - *(ctx2D->kern->support) / 2;
         // upper = support/2
-        upper = (int)(ctx2D->kern->support / 2);
+        upper = *(ctx2D->kern->support) / 2;
     }
     // odd kernel
     else
