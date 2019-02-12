@@ -14,6 +14,7 @@
 
 #include "lsp_math.h"
 #include "resamp.h"
+#include "volume.h"
 
 // #ifdef __cplusplus
 // extern "C" {
@@ -27,7 +28,7 @@ typedef unsigned int uint;
 /*
   lspType: the scalar pixel types supported in lspImage
   lspTypeUChar is only used for output images.
-  All input images (and some outputs) are lspTypeReal.
+  All input images (and some outputs) are lspTypeDouble.
 */
 typedef enum 
 {

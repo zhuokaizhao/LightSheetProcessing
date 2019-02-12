@@ -15,8 +15,8 @@
 #include "skimczi.h"
 #include "resamp.h"
 #include "lsp_math.h"
-#include "image.h"
-#include "volume.h"
+// #include "image.h"
+// #include "volume.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>

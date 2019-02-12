@@ -5,7 +5,7 @@
 
 #include "image.h"
 #include "lsp_math.h"
-#include "resamp.h"
+// #include "resamp.h"
 #include <assert.h> // for assert()
 
 // #ifdef __cplusplus
