@@ -65,10 +65,10 @@ class Resamp {
     private:
         resampOptions const opt;
         // evaluate convolution between image and kernel
-        void ConvoEval2D(lspCtx* ctx, double xw, double yw);
+        void ConvoEval2D(lspCtx2D* ctx, double xw, double yw);
 
         // 3D convolution
-        void ConvoEval3D(Nrrd* nin, double xw, double yw, double zw);
+        void ConvoEval3D(lspCtx3D* ctx, double xw, double yw, double zw);
         airArray* mop;
 };
 
