@@ -321,8 +321,8 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
-        k1[i - lower] = ctx2D->kern->eval1_d(alpha1 - i, 1);
-        k2[i - lower] = ctx2D->kern->eval1_d(alpha2 - i, 1);
+        k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
+        k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
 
         // if gradient is true, kernel is calculated with gradient
         // if (needgrad)
