@@ -13,6 +13,7 @@
 #include <teem/unrrdu.h>
 
 #include "lsp_math.h"
+#include "resamp.h"
 
 // #ifdef __cplusplus
 // extern "C" {
