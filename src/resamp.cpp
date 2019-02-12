@@ -311,25 +311,15 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
 
     // separable convolution
     double sum = 0;
-    // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
     double k1[support], k2[support];
-    // kernel for derivatives (kern->deriv points back to itself when no gradient)
-    // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
         k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
         k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
-
-        // if gradient is true, kernel is calculated with gradient
-        // if (needgrad)
-        // {
-        //     k1_d[i - lower] = ctx->kern->deriv->eval(alpha1 - i);
-        //     k2_d[i - lower] = ctx->kern->deriv->eval(alpha2 - i);
-        // }
     }
 
     // compute via two nested loops over the 2D-kernel support
@@ -362,28 +352,11 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
                 {
                     // not outside
                     sum = sum + ctx2D->image->data.dl[ (n2+i2)*ctx2D->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
-
-                    // if (needgrad)
-                    // {
-                    //     sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
-                    //     sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
-                    // }
                 }
             }
 
             // if no outside, assign value
             ctx2D->value = sum;
-            // derivative
-            // if (needgrad)
-            // {
-            //     // convert from index-space to world space
-            //     real gradient_w[2];
-            //     real gradient_i[2] = {sum_d1, sum_d2};
-            //     MV2_MUL(gradient_w, ctx->ItoW_d, gradient_i);
-
-            //     // save the *world-space* gradient result in ctx->gradient
-            //     V2_COPY(ctx->gradient, gradient_w);
-            // }
         }
     }
 
@@ -447,17 +420,26 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
     // determine lower and upper bounds for later convolution
     int lower, upper;
 
+    // parse the kernel
+    NrrdKernelSpec* kernelSpec;
+    kernelSpec = nrrdKernelSpecNew();
+    airMopAdd(mop, kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
+    nrrdKernelParse(&(kernelSpec->kernel), kernelSpec->parm, ctx3D->kern->name);
+
+    // get the support of kernel
+    int support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
+
     // even kernel
-    if ( (uint)isEven(ctx3D->kern->support) )
+    if ( isEven(support) )
     {
         // n1 = floor(x1), n2 = floor(x2), n3 = floor(n3)
         n1 = floor(ctx3D->ipos[0]);
         n2 = floor(ctx3D->ipos[1]);
         n3 = floor(ctx3D->ipos[2]);
         // lower = 1 - support/2
-        lower = 1 - (ctx3D->kern->support / 2);
+        lower = 1 - support / 2;
         // upper = support/2
-        upper = (ctx3D->kern->support / 2);
+        upper = support / 2;
     }
     // odd kernel
     else
@@ -467,9 +449,9 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         n2 = floor(ctx3D->ipos[1] + 0.5);
         n3 = floor(ctx3D->ipos[2] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - (int)ctx3D->kern->support[0]) / 2;
+        lower = (1 - support) / 2;
         // upper = (support - 1)/2
-        upper = (int)((int)ctx3D->kern->support[0] - 1) / 2;
+        upper = (support - 1) / 2;
     }
 
     // calculate alpha based on n1, n2 and n3
@@ -483,7 +465,7 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
     // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    double k1[(int)(ctx3D->kern->support)], k2[(int)*(ctx3D->kern->support)], k3[(int)*(ctx3D->kern->support)];
+    double k1[support], k2[support], k3[support];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
     // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
