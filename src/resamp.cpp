@@ -274,15 +274,15 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     int lower, upper;
 
     // even kernel
-    if ( isEven((int)(ctx2D->kern->support.first) )
+    if ( isEven((int)(ctx2D->kern->support(1)) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
         n2 = floor(ctx2D->ipos[1]);
         // lower = 1 - support/2
-        lower = 1 - *(ctx2D->kern->support) / 2;
+        lower = 1 - *(ctx2D->kern->support(1)) / 2;
         // upper = support/2
-        upper = *(ctx2D->kern->support) / 2;
+        upper = *(ctx2D->kern->support(1)) / 2;
     }
     // odd kernel
     else
