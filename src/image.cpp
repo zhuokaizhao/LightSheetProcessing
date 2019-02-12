@@ -295,23 +295,6 @@ lspImage* lspImageNix(lspImage* img)
     return NULL;
 }
 
-// free volume structs
-lspImage* lspImageNix(lspImage* img) 
-{
-    if (img) 
-    {
-        if (img->content) 
-        {
-            free(img->content);
-        }
-        
-        free(img->data.vd);
-        free(img);
-    }
-
-    return NULL;
-}
-
 /*
   lspCtx2DNew creates the context to contain all resources and state
   associated with 2D convolution, which is computing on a given image "img", 
