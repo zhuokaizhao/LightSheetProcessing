@@ -20,6 +20,13 @@ const char *lspVolBiffKey = "lspVol";
 // utility macro for malloc() and casting to right type
 #define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
 
+typedef enum 
+{
+    lspTypeUnknown=0, // (0) (no type known)
+    lspTypeUChar,     // (1) 1-byte unsigned char
+    lspTypeDouble,    // (2)
+} lspType;
+
 /* an airEnum is a gadget for managing identifications between
    integers (C enum values) and strings */
 static const airEnum _lspType_ae = {

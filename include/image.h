@@ -29,12 +29,7 @@ typedef unsigned int uint;
   lspTypeUChar is only used for output images.
   All input images (and some outputs) are lspTypeDouble.
 */
-typedef enum 
-{
-    lspTypeUnknown=0, // (0) (no type known)
-    lspTypeUChar,     // (1) 1-byte unsigned char
-    lspTypeDouble,    // (2)
-} lspType;
+
 
 // image struct for 2D convolution
 typedef struct 
