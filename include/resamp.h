@@ -54,8 +54,7 @@ struct resampOptions {
    which may be odd or even (but always positive). The kernels are set up at
    compile-time in such a way that each kernel knows its own derivative; the
    derivative of lspKernel *k is k->deriv. */
-typedef struct 
-{
+typedef struct {
     // short identifying string
     const char *name;
     // short descriptive string

@@ -51,18 +51,6 @@ typedef struct
 
 } lspVolume;
 
-typedef struct 
-{
-    // short identifying string
-    const char *name;
-    // short descriptive string
-    const char *desc;
-    // # samples needed for convolution
-    unsigned int support;             
-    // evaluate kernel once
-    double (*eval)(double xx);
-} lspKernel;
-
 // lspCtx3D is a container for all the state associated with doing 3D convolution
 typedef struct {
     int verbose = 0;
