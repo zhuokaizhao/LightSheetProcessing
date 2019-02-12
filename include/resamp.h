@@ -63,6 +63,7 @@ typedef struct {
     unsigned int support;             
     // evaluate kernel once
     double (*eval)(double xx);
+
 } lspKernel;
 
 const lspKernel *const lspKernelBox;
