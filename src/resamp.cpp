@@ -296,9 +296,9 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
         n1 = floor(ctx2D->ipos[0] + 0.5);
         n2 = floor(ctx2D->ipos[1] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)((1 - ctx2D->kern->support) / 2);
+        lower = (int)((kernelSpec->kernel->support(kernelSpec->parm)) / 2);
         // upper = (support - 1)/2
-        upper = (int)((ctx2D->kern->support - 1) / 2);
+        upper = (int)((kernelSpec->kernel->support(kernelSpec->parm)) / 2);
     }
 
     // calculate alpha based on n1, n2
@@ -311,7 +311,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    double k1[ctx2D->kern->support], k2[ctx2D->kern->support];
+    double k1[(kernelSpec->kernel->support(kernelSpec->parm))], k2[(kernelSpec->kernel->support(kernelSpec->parm))];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
     // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
