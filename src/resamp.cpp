@@ -209,25 +209,25 @@ static int isEven (uint x)
 
 // ********************** end of static helper functions *********************
 
-void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw) 
+void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw) 
 {
     // initialize output
-    ctx->wpos[0] = xw;
-    ctx->wpos[1] = yw;
-    ctx->outside = 0;
-    ctx->value = lspNan(0);
+    ctx2D->wpos[0] = xw;
+    ctx2D->wpos[1] = yw;
+    ctx2D->outside = 0;
+    ctx2D->value = lspNan(0);
 
     // first convert wpos to ipos, where ipos are x1 and x2 as in FSV
     // MV3_MUL only takes 3-vector
     double ipos[3];
-    double wpos[3] = {ctx->wpos[0], ctx->wpos[1], 1};
+    double wpos[3] = {ctx2D->wpos[0], ctx2D->wpos[1], 1};
 
     // 3-vector ipos = 3x3 matrix WtoI * 3-vector wpos
-    MV3_MUL(ipos, ctx->WtoI, wpos);
+    MV3_MUL(ipos, ctx2D->WtoI, wpos);
 
     // set this to ctx
-    ctx->ipos[0] = ipos[0];
-    ctx->ipos[1] = ipos[1];
+    ctx2D->ipos[0] = ipos[0];
+    ctx2D->ipos[1] = ipos[1];
 
     // determine different n1, n2 for even and odd kernels
     int n1, n2;
@@ -238,44 +238,44 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw)
     if ( isEven(ctx->kern->support) )
     {
         // n1 = floor(x1), n2 = floor(x2)
-        n1 = floor(ctx->ipos[0]);
-        n2 = floor(ctx->ipos[1]);
+        n1 = floor(ctx2D->ipos[0]);
+        n2 = floor(ctx2D->ipos[1]);
         // lower = 1 - support/2
-        lower = 1 - (int)ctx->kern->support / 2;
+        lower = 1 - (int)ctx2D->kern->support / 2;
         // upper = support/2
-        upper = (int)ctx->kern->support / 2;
+        upper = (int)ctx2D->kern->support / 2;
     }
     // odd kernel
     else
     {
         // n1 = floor(x1+0.5), n2 = floor(x2+0.5)
-        n1 = floor(ctx->ipos[0] + 0.5);
-        n2 = floor(ctx->ipos[1] + 0.5);
+        n1 = floor(ctx2D->ipos[0] + 0.5);
+        n2 = floor(ctx2D->ipos[1] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - ctx->kern->support) / 2;
+        lower = (int)(1 - ctx2D->kern->support) / 2;
         // upper = (support - 1)/2
-        upper = (int)(ctx->kern->support - 1) / 2;
+        upper = (int)(ctx2D->kern->support - 1) / 2;
     }
 
     // calculate alpha based on n1, n2
     double alpha1, alpha2;
-    alpha1 = ctx->ipos[0] - n1;
-    alpha2 = ctx->ipos[1] - n2;
+    alpha1 = ctx2D->ipos[0] - n1;
+    alpha2 = ctx2D->ipos[1] - n2;
 
     // separable convolution
     double sum = 0;
     // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    double k1[ctx->kern->support], k2[ctx->kern->support];
+    double k1[ctx2D->kern->support], k2[ctx2D->kern->support];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
     // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
-        k1[i - lower] = ctx->kern->eval(alpha1 - i);
-        k2[i - lower] = ctx->kern->eval(alpha2 - i);
+        k1[i - lower] = ctx2D->kern->eval(alpha1 - i);
+        k2[i - lower] = ctx2D->kern->eval(alpha2 - i);
 
         // if gradient is true, kernel is calculated with gradient
         // if (needgrad)
@@ -287,26 +287,26 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw)
 
     // compute via two nested loops over the 2D-kernel support
     // make sure image is not empty
-    if (ctx->image != NULL)
+    if (ctx2D->image != NULL)
     {
         // check for potential outside
         // Notice that both direction should be checked separately
         for (int i1 = lower; i1 <= upper; i1++)
         {
-            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx->image->size[0] )
+            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx2D->image->size[0] )
             {
                 ctx->outside += 1;
             }
         }
         for (int i2 = lower; i2 <= upper; i2++)
         {
-            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx->image->size[1] )
+            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx2D->image->size[1] )
             {
                 ctx->outside += 1;
             }
         }
 
-        if (ctx->outside == 0)
+        if (ctx2D->outside == 0)
         {
             // faster axis first (i1 fast)
             for (int i2 = lower; i2 <= upper; i2++)
@@ -314,7 +314,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw)
                 for (int i1 = lower; i1 <= upper; i1++)
                 {
                     // not outside
-                    sum = sum + ctx->image->data.dl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
+                    sum = sum + ctx2D->image->data.dl[ (n2+i2)*ctx2D->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
 
                     // if (needgrad)
                     // {
@@ -325,7 +325,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw)
             }
 
             // if no outside, assign value
-            ctx->value = sum;
+            ctx2D->value = sum;
             // derivative
             // if (needgrad)
             // {
@@ -343,27 +343,27 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw)
     return;
 }
 
-void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
+void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 {
     // initialize output
-    ctx->wpos[0] = xw;
-    ctx->wpos[1] = yw;
-    ctx->wpos[2] = zw;
-    ctx->outside = 0;
-    ctx->value = lspNan(0);
+    ctx3D->wpos[0] = xw;
+    ctx3D->wpos[1] = yw;
+    ctx3D->wpos[2] = zw;
+    ctx3D->outside = 0;
+    ctx3D->value = lspNan(0);
 
     // first convert wpos to ipos, where ipos are x1, x2 and x3 as in FSV
     // MV4_MUL only takes 4-vector
     double ipos[4];
-    double wpos[4] = {ctx->wpos[0], ctx->wpos[1], ctx->wpos[2], 1};
+    double wpos[4] = {ctx3D->wpos[0], ctx3D->wpos[1], ctx3D->wpos[2], 1};
 
     // 4-vector ipos = 4x4 matrix WtoI * 4-vector wpos
-    MV4_MUL(ipos, ctx->WtoI, wpos);
+    MV4_MUL(ipos, ctx3D->WtoI, wpos);
 
     // set this to ctx
-    ctx->ipos[0] = ipos[0];
-    ctx->ipos[1] = ipos[1];
-    ctx->ipos[2] = ipos[2];
+    ctx3D->ipos[0] = ipos[0];
+    ctx3D->ipos[1] = ipos[1];
+    ctx3D->ipos[2] = ipos[2];
 
     // determine different n1, n2 and n3 for even and odd kernels
     int n1, n2, n3;
@@ -378,44 +378,44 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
         n2 = floor(ctx->ipos[1]);
         n3 = floor(ctx->ipos[2]);
         // lower = 1 - support/2
-        lower = 1 - (int)ctx->kern->support / 2;
+        lower = 1 - (int)ctx3D->kern->support / 2;
         // upper = support/2
-        upper = (int)ctx->kern->support / 2;
+        upper = (int)ctx3D->kern->support / 2;
     }
     // odd kernel
     else
     {
         // n1 = floor(x1+0.5), n2 = floor(x2+0.5), n3 = floor(x3+0.5)
-        n1 = floor(ctx->ipos[0] + 0.5);
-        n2 = floor(ctx->ipos[1] + 0.5);
-        n3 = floor(ctx->ipos[2] + 0.5);
+        n1 = floor(ctx3D->ipos[0] + 0.5);
+        n2 = floor(ctx3D->ipos[1] + 0.5);
+        n3 = floor(ctx3D->ipos[2] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - ctx->kern->support) / 2;
+        lower = (int)(1 - ctx3D->kern->support) / 2;
         // upper = (support - 1)/2
-        upper = (int)(ctx->kern->support - 1) / 2;
+        upper = (int)(ctx3D->kern->support - 1) / 2;
     }
 
     // calculate alpha based on n1, n2 and n3
     double alpha1, alpha2, alpha3;
-    alpha1 = ctx->ipos[0] - n1;
-    alpha2 = ctx->ipos[1] - n2;
-    alpha3 = ctx->ipos[2] - n3;
+    alpha1 = ctx3D->ipos[0] - n1;
+    alpha2 = ctx3D->ipos[1] - n2;
+    alpha3 = ctx3D->ipos[2] - n3;
 
     // separable convolution
     double sum = 0;
     // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    double k1[ctx->kern->support], k2[ctx->kern->support], k3[ctx->kern->support];
+    double k1[ctx3D->kern->support], k2[ctx3D->kern->support], k3[ctx3D->kern->support];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
     // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
-        k1[i - lower] = ctx->kern->eval(alpha1 - i);
-        k2[i - lower] = ctx->kern->eval(alpha2 - i);
-        k3[i - lower] = ctx->kern->eval(alpha3 - i);
+        k1[i - lower] = ctx3D->kern->eval(alpha1 - i);
+        k2[i - lower] = ctx3D->kern->eval(alpha2 - i);
+        k3[i - lower] = ctx3D->kern->eval(alpha3 - i);
 
         // if gradient is true, kernel is calculated with gradient
         // if (needgrad)
@@ -427,34 +427,34 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
 
     // compute via three nested loops over the 3D-kernel support
     // make sure volume is not empty
-    if (ctx->volume != NULL)
+    if (ctx3D->volume != NULL)
     {
         // check for potential outside
         // Notice that both direction should be checked separately
         for (int i1 = lower; i1 <= upper; i1++)
         {
-            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx->volume->size[0] )
+            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx3D->volume->size[0] )
             {
-                ctx->outside += 1;
+                ctx3D->outside += 1;
             }
         }
         for (int i2 = lower; i2 <= upper; i2++)
         {
-            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx->volume->size[1] )
+            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx3D->volume->size[1] )
             {
-                ctx->outside += 1;
+                ctx3D->outside += 1;
             }
         }
         for (int i3 = lower; i3 <= upper; i3++)
         {
-            if ( i3 + n3 < 0 || i3 + n3 >= (int)ctx->volume->size[2] )
+            if ( i3 + n3 < 0 || i3 + n3 >= (int)ctx3D->volume->size[2] )
             {
-                ctx->outside += 1;
+                ctx3D->outside += 1;
             }
         }
 
         // no outside found
-        if (ctx->outside == 0)
+        if (ctx3D->outside == 0)
         {
             // faster axis first (i1 fast)
             for (int i3 = lower; i3 <= upper; i3++)
@@ -464,9 +464,9 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
                     for (int i1 = lower; i1 <= upper; i1++)
                     {
                         // compute data index
-                        uint data_index = (n3+i3)*(ctx->vol->size[1]*ctx->vol->size[0]) + (n2+i2)*(ctx->vol->size[0]) + n1 + i1;
+                        uint data_index = (n3+i3)*(ctx3D->vol->size[1]*ctx3D->vol->size[0]) + (n2+i2)*(ctx3D->vol->size[0]) + n1 + i1;
                         // not outside
-                        sum = sum + ctx->image->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        sum = sum + ctx3D->image->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
 
                         // if (needgrad)
                         // {
@@ -478,7 +478,7 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
             }
 
             // if no outside, assign value
-            ctx->value = sum;
+            ctx3D->value = sum;
             // derivative
             // if (needgrad)
             // {
