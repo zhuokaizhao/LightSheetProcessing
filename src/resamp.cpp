@@ -547,7 +547,7 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
             for (int x = 0; x < sizeX; x++)
             {
                 ConvoEval3D(ctx3D, x, y, z, mop);
-                newVolume[z*sizeZ + y*sizeY + x] = ctx3D->value;
+                newVolume->data[z*sizeZ + y*sizeY + x] = ctx3D->value;
             }
         }
     }
