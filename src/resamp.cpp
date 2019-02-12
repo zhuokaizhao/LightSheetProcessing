@@ -462,19 +462,16 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 
     // separable convolution
     double sum = 0;
-    // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
     double k1[support], k2[support], k3[support];
-    // kernel for derivatives (kern->deriv points back to itself when no gradient)
-    // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
-        k1[i - lower] = ctx3D->kern->eval(alpha1 - i);
-        k2[i - lower] = ctx3D->kern->eval(alpha2 - i);
-        k3[i - lower] = ctx3D->kern->eval(alpha3 - i);
+        k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
+        k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
+        k3[i - lower] = kernelSpec->kernel->eval1_d(alpha3 - i, kernelSpec->parm);
     }
 
     // compute via three nested loops over the 3D-kernel support
@@ -536,7 +533,7 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 {
     // input volume
-    lspVolume* volume = ctx3D->volume;
+    const lspVolume* volume = ctx3D->volume;
     // sizes in x, y and z directions
     uint sizeX = volume->size[0];
     uint sizeY = volume->size[1];
@@ -549,7 +546,7 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
         {
             for (int x = 0; x < sizeX; x++)
             {
-                newVolume[z*sizeZ + y*sizeY + x] = ConvoEval3D(ctx3D, x, y, z);
+                newVolume[z*sizeZ + y*sizeY + x] = Resamp::ConvoEval3D(ctx3D, x, y, z);
             }
         }
     }
