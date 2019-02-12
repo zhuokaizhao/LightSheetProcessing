@@ -10,6 +10,7 @@
 #include "CLI11.hpp"
 #include "lsp_math.h"
 #include "image.h"
+#include "volume.h"
 
 using namespace std;
 
