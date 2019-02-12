@@ -54,20 +54,20 @@ struct resampOptions {
    which may be odd or even (but always positive). The kernels are set up at
    compile-time in such a way that each kernel knows its own derivative; the
    derivative of lspKernel *k is k->deriv. */
-typedef struct {
-    // short identifying string
-    const char *name;
-    // short descriptive string
-    const char *desc;
-    // # samples needed for convolution
-    unsigned int support;             
-    // evaluate kernel once
-    double (*eval)(double xx);
+// typedef struct {
+//     // short identifying string
+//     const char *name;
+//     // short descriptive string
+//     const char *desc;
+//     // # samples needed for convolution
+//     unsigned int support;             
+//     // evaluate kernel once
+//     double (*eval)(double xx);
 
-} lspKernel;
+// } lspKernel;
 
-const lspKernel *const lspKernelBox;
-const lspKernel *const lspKernelCtmr;
+// const lspKernel *const lspKernelBox;
+// const lspKernel *const lspKernelCtmr;
 
 void setup_resamp(CLI::App &app);
 
