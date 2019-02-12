@@ -279,15 +279,15 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     nrrdKernelParse(&(kernelSpec->kernel), kernelSpec->parm, ctx2D->kern->name);
     
     // even kernel
-    if ( isEven( (int)(kernelSpec->support(kernelSpec->parm)) ) )
+    if ( isEven( (int)(kernelSpec->kernel->support(kernelSpec->parm)) ) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
         n2 = floor(ctx2D->ipos[1]);
         // lower = 1 - support/2
-        lower = 1 - (kernelSpec->support(kernelSpec->parm)) / 2;
+        lower = 1 - (kernelSpec->kernel->support(kernelSpec->parm)) / 2;
         // upper = support/2
-        upper = (kernelSpec->support(kernelSpec->parm)) / 2;
+        upper = (kernelSpec->kernel->support(kernelSpec->parm)) / 2;
     }
     // odd kernel
     else
