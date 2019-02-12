@@ -14,6 +14,7 @@
 
 #include "lsp_math.h"
 #include "resamp.h"
+#include "image.h"
 
 // #ifdef __cplusplus
 // extern "C" {
