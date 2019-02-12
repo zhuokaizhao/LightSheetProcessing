@@ -12,11 +12,11 @@
 // #endif
 
 // identifies this library in biff error messages
-// const char *lspBiffKey = "lsp";
-// #define LSP lspBiffKey
+const char *lspVolBiffKey = "lspVol";
+#define VOL lspVolBiffKey
 
 // utility macro for malloc() and casting to right type
-// #define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
+#define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
 
 /* an airEnum is a gadget for managing identifications between
    integers (C enum values) and strings */
@@ -95,7 +95,7 @@ static int ItoW3DCheck(const double *ItoW)
     if (!ItoW) 
     {
         printf("%s: got NULL pointer\n", __func__);
-        biffAddf(LSP, "%s: got NULL pointer", __func__);
+        biffAddf(VOL, "%s: got NULL pointer", __func__);
         return 1;
     }
     
@@ -107,7 +107,7 @@ static int ItoW3DCheck(const double *ItoW)
                  ItoW[4], ItoW[5], ItoW[6], ItoW[7],
                  ItoW[8], ItoW[9], ItoW[10], ItoW[11],
                  ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
-        biffAddf(LSP, "%s: matrix is not all set: [%g,%g,%g,%g; %g,%g,%g,%g; %g,%g,%g,%g; %g,%g,%g,%g]\n", __func__,
+        biffAddf(VOL, "%s: matrix is not all set: [%g,%g,%g,%g; %g,%g,%g,%g; %g,%g,%g,%g; %g,%g,%g,%g]\n", __func__,
                  ItoW[0], ItoW[1], ItoW[2], ItoW[3],
                  ItoW[4], ItoW[5], ItoW[6], ItoW[7],
                  ItoW[8], ItoW[9], ItoW[10], ItoW[11],
@@ -122,7 +122,7 @@ static int ItoW3DCheck(const double *ItoW)
            1 == ItoW[15] )) 
     {
         printf("%s: ItoW matrix last row [%g,%g,%g, %g] not [0,0,0,1]\n", __func__, ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
-        biffAddf(LSP, "%s: ItoW matrix last row [%g,%g,%g,%g] not [0,0,0,1]",
+        biffAddf(VOL, "%s: ItoW matrix last row [%g,%g,%g,%g] not [0,0,0,1]",
                  __func__, ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
         return 1;
     }
@@ -202,13 +202,13 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double*
     // some error checks
     if (!(vol && kern)) 
     {
-        biffAddf(LSP, "%s: got NULL pointer (%p,%p)", __func__,
+        biffAddf(VOL, "%s: got NULL pointer (%p,%p)", __func__,
                  (void*)vol, (void*)kern);
         return NULL;
     }
     if (1 != vol->channel) 
     {
-        biffAddf(LSP, "%s: only works on scalar (not %u-channel) images",
+        biffAddf(VOL, "%s: only works on scalar (not %u-channel) images",
                  __func__, vol->channel);
         return NULL;
     }
