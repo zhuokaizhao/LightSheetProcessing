@@ -274,15 +274,15 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     int lower, upper;
 
     // even kernel
-    if ( isEven(ctx2D->kern->support) )
+    if ( isEven((uint)ctx2D->kern->support) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
         n2 = floor(ctx2D->ipos[1]);
         // lower = 1 - support/2
-        lower = 1 - (int)ctx2D->kern->support / 2;
+        lower = 1 - (int)ctx2D->kern->support[0] / 2;
         // upper = support/2
-        upper = (int)ctx2D->kern->support / 2;
+        upper = (int)ctx2D->kern->support[0] / 2;
     }
     // odd kernel
     else
@@ -291,9 +291,9 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
         n1 = floor(ctx2D->ipos[0] + 0.5);
         n2 = floor(ctx2D->ipos[1] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - ctx2D->kern->support) / 2;
+        lower = (int)(1 - (int)ctx2D->kern->support) / 2;
         // upper = (support - 1)/2
-        upper = (int)(ctx2D->kern->support - 1) / 2;
+        upper = (int)((int)ctx2D->kern->support - 1) / 2;
     }
 
     // calculate alpha based on n1, n2
@@ -313,8 +313,8 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     // precompute two vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
-        k1[i - lower] = ctx2D->kern->eval(alpha1 - i);
-        k2[i - lower] = ctx2D->kern->eval(alpha2 - i);
+        k1[i - lower] = ctx2D->kern->eval1_d(alpha1 - i);
+        k2[i - lower] = ctx2D->kern->eval1_d(alpha2 - i);
 
         // if gradient is true, kernel is calculated with gradient
         // if (needgrad)
@@ -383,7 +383,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
 }
 
 // function that performs 2D resampling
-Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm)
+Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm, airArray* mop)
 {
     // initialize the output result
     Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -440,16 +440,16 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
     int lower, upper;
 
     // even kernel
-    if ( isEven(ctx3D->kern->support) )
+    if ( (uint)isEven(ctx3D->kern->support) )
     {
         // n1 = floor(x1), n2 = floor(x2), n3 = floor(n3)
         n1 = floor(ctx3D->ipos[0]);
         n2 = floor(ctx3D->ipos[1]);
         n3 = floor(ctx3D->ipos[2]);
         // lower = 1 - support/2
-        lower = 1 - (int)ctx3D->kern->support / 2;
+        lower = 1 - floor(ctx3D->kern->support) / 2;
         // upper = support/2
-        upper = (int)ctx3D->kern->support / 2;
+        upper = floor(ctx3D->kern->support) / 2;
     }
     // odd kernel
     else
@@ -459,9 +459,9 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         n2 = floor(ctx3D->ipos[1] + 0.5);
         n3 = floor(ctx3D->ipos[2] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - ctx3D->kern->support) / 2;
+        lower = (int)(1 - (int)ctx3D->kern->support) / 2;
         // upper = (support - 1)/2
-        upper = (int)(ctx3D->kern->support - 1) / 2;
+        upper = (int)((int)ctx3D->kern->support - 1) / 2;
     }
 
     // calculate alpha based on n1, n2 and n3
@@ -475,7 +475,7 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
     // double sum_d1 = 0, sum_d2 = 0;
 
     // initialize kernels
-    double k1[ctx3D->kern->support], k2[ctx3D->kern->support], k3[ctx3D->kern->support];
+    double k1[(int)(ctx3D->kern->support[0])], k2[ctx3D->kern->support[0]], k3[ctx3D->kern->support[0]];
     // kernel for derivatives (kern->deriv points back to itself when no gradient)
     // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
 
