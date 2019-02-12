@@ -123,66 +123,6 @@ typedef struct {
     // double ItoW_d[4];
 } lspCtx2D;
 
-// volume struct for 3D convolution
-typedef struct 
-{
-    // if non-NULL, a descriptive string of what is in this image, or how it was generated
-    char *content;
-    // how many values are at each pixel; this always fastest axis
-    uint channel;
-    // # of samples along faster (size[0]) and slower (size[1]) spatial axes
-    uint size[3];
-    // homogeneous coordinate mapping from index-space
-    // (faster coordinate first) to the "right-up" world-space
-    double ItoW[16];
-    // type of the data; determines which of the union members below to use
-    lspType dtype;
-    // union for the pointer to the image data
-    // the pointer values are all the same; this is just to avoid casting
-    // choose the right union member to use (data.uc vs data.rl) at run-time,
-    // according to the value of dtype
-    union 
-    {
-        void *vd;
-        unsigned char *uc;
-        double *dl;
-    } data;
-
-} lspVolume;
-
-// lspCtx3D is a container for all the state associated with doing 3D convolution
-typedef struct {
-    int verbose = 0;
-    // input
-    const lspImage *image;
-    double imgMinMax[2];
-    const lspKernel *kern;
-
-    // output fields set by lspConvoEval
-    // copy of world-space pos passed to lspConvoEval
-    double wpos[3], ipos[3];   
-
-    /* If the requested convolution location puts the kernel support
-       outside the valid image index domain, "outside" records the
-       number of indices missing on the fast axis, plus the number of
-       indices missing on the slow axes. */
-    uint outside;
-    
-    // convolution result, if outside == 0
-    double value;       
-    // double gradient[3];
-
-    /* output set by lspPictureSample: the rate, in kHz, at which output
-       pixels could be computed (includes convolution and possibly
-       colormapping) */
-    double srate;
-
-    // homogeneous coordinate mapping from world-space to index space
-    double ItoW[16];
-    double WtoI[16];
-    // double ItoW_d[4];
-} lspCtx3D;
-
 double lspNan(unsigned short payload);
 
 // initialize a new image

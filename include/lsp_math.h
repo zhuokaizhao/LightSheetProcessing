@@ -348,6 +348,7 @@ m n o p
 8   9 10 11
 12 13 14 15
 */
+// used source: https://semath.info/src/inverse-cofactor-ex4.html
 #define M4_INVERSE(I, M, TMP)                                                                          \
     ((TMP) = M4_DET(M),                                                                                \
      (I)[0] =  _M3_DET((M)[5],(M)[6],(M)[7],(M)[9],(M)[10],(M)[11],(M)[13],(M)[14],(M)[15])/(TMP),     \

@@ -28,40 +28,40 @@ typedef unsigned int uint;
   lspTypeUChar is only used for output images.
   All input images (and some outputs) are lspTypeReal.
 */
-typedef enum 
-{
-    lspTypeUnknown=0, // (0) (no type known)
-    lspTypeUChar,     // (1) 1-byte unsigned char
-    lspTypeDouble,    // (2)
-} lspType;
+// typedef enum 
+// {
+//     lspTypeUnknown=0, // (0) (no type known)
+//     lspTypeUChar,     // (1) 1-byte unsigned char
+//     lspTypeDouble,    // (2)
+// } lspType;
 
 /* The lspKernel stores everything about a reconstruction kernel. The kernel
    is non-zero only within [-support/2,support/2], for integer "support"
    which may be odd or even (but always positive). The kernels are set up at
    compile-time in such a way that each kernel knows its own derivative; the
    derivative of lspKernel *k is k->deriv. */
-typedef struct lspKernel_t 
-{
-    // short identifying string
-    const char *name;
-    // short descriptive string
-    const char *desc;
-    // # samples needed for convolution
-    unsigned int support;             
-    // evaluate kernel once
-    double (*eval)(double xx);
-    /* The "apply" function evaluates the kernel "support" times, saving the
-       results into ww, as needed for one convolution (FSV section 4.2.2).
-       If the kernel support is even, then xa must satisfy 0 <= xa < 1,
-       and let ilo = 1 - support/2, see FSV (4.32).
-       If support is odd, then xa must satisfy -0.5 <= xa < 0.5,
-       and let ilo = (1 - support)/2, see FSV (4.36).
-       Then, ww[i] = eval(xa-(i+ilo)) for i=0, 1, ... support-1.
-       This may be faster than calling eval() "support" times. */
-    void (*apply)(double *ww, double xa);
-    // derivative of this kernel; will point back to itself when kernel is zero
-    const struct lspKernel_t *deriv;
-} lspKernel;
+// typedef struct lspKernel_t 
+// {
+//     // short identifying string
+//     const char *name;
+//     // short descriptive string
+//     const char *desc;
+//     // # samples needed for convolution
+//     unsigned int support;             
+//     // evaluate kernel once
+//     double (*eval)(double xx);
+//     /* The "apply" function evaluates the kernel "support" times, saving the
+//        results into ww, as needed for one convolution (FSV section 4.2.2).
+//        If the kernel support is even, then xa must satisfy 0 <= xa < 1,
+//        and let ilo = 1 - support/2, see FSV (4.32).
+//        If support is odd, then xa must satisfy -0.5 <= xa < 0.5,
+//        and let ilo = (1 - support)/2, see FSV (4.36).
+//        Then, ww[i] = eval(xa-(i+ilo)) for i=0, 1, ... support-1.
+//        This may be faster than calling eval() "support" times. */
+//     void (*apply)(double *ww, double xa);
+//     // derivative of this kernel; will point back to itself when kernel is zero
+//     const struct lspKernel_t *deriv;
+// } lspKernel;
 
 // volume struct for 3D convolution
 typedef struct 
