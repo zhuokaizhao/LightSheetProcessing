@@ -273,22 +273,21 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     // determine lower and upper bounds for later convolution
     int lower, upper;
 
-    NrrdKernelSpec* kernel;
-    kernel = nrrdKernelSpecNew();
-    nrrdKernelParse(&(kernel->kernel), kernel->parm, ctx2D->kern->name);
-    airMopAdd(mop, kernel, (airMopper)nrrdKernelSpecNix, airMopAlways);
-
-
+    NrrdKernelSpec* kernelSpec;
+    kernelSpec = nrrdKernelSpecNew();
+    airMopAdd(mop, kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
+    nrrdKernelParse(&(kernelSpec->kernel), kernelSpec->parm, ctx2D->kern->name);
+    
     // even kernel
-    if ( isEven( (int)(kernel->support(kernel->parm)) ) )
+    if ( isEven( (int)(kernelSpec->support(kernelSpec->parm)) ) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
         n2 = floor(ctx2D->ipos[1]);
         // lower = 1 - support/2
-        lower = 1 - *(ctx2D->kern->support(1)) / 2;
+        lower = 1 - (kernelSpec->support(kernelSpec->parm)) / 2;
         // upper = support/2
-        upper = *(ctx2D->kern->support(1)) / 2;
+        upper = (kernelSpec->support(kernelSpec->parm)) / 2;
     }
     // odd kernel
     else
