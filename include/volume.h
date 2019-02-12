@@ -109,6 +109,12 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, /*const lspKernel* kern,*/const Nrrd
 // free a lspCtx3D
 lspCtx3D* lspCtx3DNix(lspCtx3D* ctx);
 
+// function that loads Volume from Nrrd
+int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin);
+
+// wrapping image into Nrrd
+int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol);
+
 // #ifdef __cplusplus
 // }
 // #endif
