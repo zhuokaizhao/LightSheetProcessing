@@ -291,9 +291,9 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
         n1 = floor(ctx2D->ipos[0] + 0.5);
         n2 = floor(ctx2D->ipos[1] + 0.5);
         // lower = (1 - support)/2
-        lower = (int)(1 - (int)ctx2D->kern->support) / 2;
+        lower = (int)(1 - (int)ctx2D->kern->support[0]) / 2;
         // upper = (support - 1)/2
-        upper = (int)((int)ctx2D->kern->support - 1) / 2;
+        upper = (int)((int)ctx2D->kern->support[0] - 1) / 2;
     }
 
     // calculate alpha based on n1, n2
@@ -548,9 +548,9 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
     // input volume
     lspVolume* volume = ctx3D->volume;
     // sizes in x, y and z directions
-    uint sizeX = volume.size[0];
-    uint sizeY = volume.size[1];
-    uint sizeZ = volume.size[2];
+    uint sizeX = volume->size[0];
+    uint sizeY = volume->size[1];
+    uint sizeZ = volume->size[2];
 
     // evaluate at each world-space position
     for (int z = 0; z < sizeZ; z++)
@@ -587,7 +587,7 @@ void Resamp::main()
         // put Nrrd data into lspVolume
         lspVolume* volume = lspVolumeNew();
         airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
-        lspVolumeFromNrrd(vol, nin_permuted);
+        lspVolumeFromNrrd(volume, nin_permuted);
 
         // get box kernel
         // lspKernel* box = lspKernelBox;
@@ -625,8 +625,8 @@ void Resamp::main()
         Nrrd* slices = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                         safe_nrrd_new(mop, (airMopper)nrrdNuke)};
         // quantized
-        Nrrd* quantized = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
-                           safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+        Nrrd* quantized = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                           safe_nrrd_new(mop, (airMopper)nrrdNuke)};
 
         // range during quantizing
         auto range = nrrdRangeNew(lspNan(0), lspNan(0));
@@ -635,7 +635,7 @@ void Resamp::main()
         for (int i = 0; i < 2; i++)
         {
             nrrdSlice(slices[i], projNrrd, 0, i);
-            nrrdRangePercentileFromStringSet(range0, slices[i],  "0.1%", "0.1%", 5000, true);
+            nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true);
             nrrdQuantize(quantized[i], slices[i], range, 8);
         }
 
