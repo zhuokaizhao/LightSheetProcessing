@@ -67,7 +67,7 @@ class Resamp {
         void ConvoEval2D(lspCtx* ctx, double xw, double yw);
 
         // 3D convolution
-        void ConvoEval3D(Nrrd* nin, double xw, double yw);
+        void ConvoEval3D(Nrrd* nin, double xw, double yw, double zw);
         airArray* mop;
 };
 

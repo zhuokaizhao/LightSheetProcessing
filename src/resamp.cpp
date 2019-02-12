@@ -339,7 +339,7 @@ Resamp::~Resamp()
     airMopOkay(mop);
 }
 
-// ********************** some static helper functions *********************
+// ********************** some static helper functions **********************
 static int isEven (uint x)
 {
     if (x % 2 == 0)
@@ -350,8 +350,9 @@ static int isEven (uint x)
     return 0;
 }
 
+// ********************** end of static helper functions *********************
 
-void Resamp::ConvoEval2D(lspCtx *ctx, double xw, double yw) 
+void Resamp::ConvoEval2D(lspCtx2D *ctx, double xw, double yw) 
 {
     // initialize output
     ctx->wpos[0] = xw;
@@ -483,6 +484,147 @@ void Resamp::ConvoEval2D(lspCtx *ctx, double xw, double yw)
     }
 
     return;
+}
+
+void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
+{
+    // initialize output
+    ctx->wpos[0] = xw;
+    ctx->wpos[1] = yw;
+    ctx->wpos[2] = zw;
+    ctx->outside = 0;
+    ctx->value = lspNan(0);
+
+    // first convert wpos to ipos, where ipos are x1, x2 and x3 as in FSV
+    // MV4_MUL only takes 4-vector
+    double ipos[4];
+    double wpos[4] = {ctx->wpos[0], ctx->wpos[1], ctx->wpos[2], 1};
+
+    // 4-vector ipos = 4x4 matrix WtoI * 4-vector wpos
+    MV4_MUL(ipos, ctx->WtoI, wpos);
+
+    // set this to ctx
+    ctx->ipos[0] = ipos[0];
+    ctx->ipos[1] = ipos[1];
+    ctx->ipos[2] = ipos[2];
+
+    // determine different n1, n2 and n3 for even and odd kernels
+    int n1, n2, n3;
+    // determine lower and upper bounds for later convolution
+    int lower, upper;
+
+    // even kernel
+    if ( isEven(ctx->kern->support) )
+    {
+        // n1 = floor(x1), n2 = floor(x2), n3 = floor(n3)
+        n1 = floor(ctx->ipos[0]);
+        n2 = floor(ctx->ipos[1]);
+        n3 = floor(ctx->ipos[2]);
+        // lower = 1 - support/2
+        lower = 1 - (int)ctx->kern->support / 2;
+        // upper = support/2
+        upper = (int)ctx->kern->support / 2;
+    }
+    // odd kernel
+    else
+    {
+        // n1 = floor(x1+0.5), n2 = floor(x2+0.5), n3 = floor(x3+0.5)
+        n1 = floor(ctx->ipos[0] + 0.5);
+        n2 = floor(ctx->ipos[1] + 0.5);
+        n3 = floor(ctx->ipos[2] + 0.5);
+        // lower = (1 - support)/2
+        lower = (int)(1 - ctx->kern->support) / 2;
+        // upper = (support - 1)/2
+        upper = (int)(ctx->kern->support - 1) / 2;
+    }
+
+    // calculate alpha based on n1, n2 and n3
+    double alpha1, alpha2, alpha3;
+    alpha1 = ctx->ipos[0] - n1;
+    alpha2 = ctx->ipos[1] - n2;
+    alpha3 = ctx->ipos[2] - n3;
+
+    // separable convolution
+    double sum = 0;
+    // double sum_d1 = 0, sum_d2 = 0;
+
+    // initialize kernels
+    double k1[ctx->kern->support], k2[ctx->kern->support], k3[ctx->kern->support];
+    // kernel for derivatives (kern->deriv points back to itself when no gradient)
+    // real k1_d[ctx->kern->deriv->support], k2_d[ctx->kern->deriv->support];
+
+    // precompute two vectors of kernel evaluations to save time
+    for (int i = lower; i <= upper; i++)
+    {
+        k1[i - lower] = ctx->kern->eval(alpha1 - i);
+        k2[i - lower] = ctx->kern->eval(alpha2 - i);
+        k3[i - lower] = ctx->kern->eval(alpha3 - i);
+
+        // if gradient is true, kernel is calculated with gradient
+        // if (needgrad)
+        // {
+        //     k1_d[i - lower] = ctx->kern->deriv->eval(alpha1 - i);
+        //     k2_d[i - lower] = ctx->kern->deriv->eval(alpha2 - i);
+        // }
+    }
+
+    // compute via two nested loops over the 2D-kernel support
+    // make sure image is not empty
+    if (ctx->image != NULL)
+    {
+        // check for potential outside
+        // Notice that both direction should be checked separately
+        for (int i1 = lower; i1 <= upper; i1++)
+        {
+            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx->image->size[0] )
+            {
+                ctx->outside += 1;
+            }
+        }
+        for (int i2 = lower; i2 <= upper; i2++)
+        {
+            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx->image->size[1] )
+            {
+                ctx->outside += 1;
+            }
+        }
+
+        if (ctx->outside == 0)
+        {
+            // faster axis first (i1 fast)
+            for (int i2 = lower; i2 <= upper; i2++)
+            {
+                for (int i1 = lower; i1 <= upper; i1++)
+                {
+                    // not outside
+                    sum = sum + ctx->image->data.dl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
+
+                    // if (needgrad)
+                    // {
+                    //     sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
+                    //     sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
+                    // }
+                }
+            }
+
+            // if no outside, assign value
+            ctx->value = sum;
+            // derivative
+            // if (needgrad)
+            // {
+            //     // convert from index-space to world space
+            //     real gradient_w[2];
+            //     real gradient_i[2] = {sum_d1, sum_d2};
+            //     MV2_MUL(gradient_w, ctx->ItoW_d, gradient_i);
+
+            //     // save the *world-space* gradient result in ctx->gradient
+            //     V2_COPY(ctx->gradient, gradient_w);
+            // }
+        }
+    }
+
+    return; 
+
 }
 
 

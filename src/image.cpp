@@ -57,7 +57,7 @@ static lspType typeNRRDtoLSP(int ntype)
 }
 
 // set values as 3x3 ItoW matrix
-static void setItoW(double *ItoW, const Nrrd *nin, uint bidx) 
+static void setItoW2D(double *ItoW, const Nrrd *nin, uint bidx) 
 {
     /* 0  1  2
        3  4  5
@@ -74,7 +74,7 @@ static void setItoW(double *ItoW, const Nrrd *nin, uint bidx)
 }
 
 // check if a ItoW matrix is valid
-static int ItoWCheck(const double *ItoW) 
+static int ItoW2DCheck(const double *ItoW) 
 {
     if (!ItoW) 
     {
@@ -199,9 +199,9 @@ static int lspNrrdImageCheck(const Nrrd *nin)
 
     double ItoW[9];
 
-    setItoW(ItoW, nin, bidx);
+    setItoW2D(ItoW, nin, bidx);
 
-    if (ItoWCheck(ItoW)) 
+    if (ItoW2DCheck(ItoW)) 
     {
         printf("%s: problem with ItoW\n", __func__);
         biffAddf(LSP, "%s: problem with ItoW", __func__);
@@ -241,7 +241,7 @@ static int metaDataCheck(uint channel,
         biffAddf(LSP, "%s: invalid type %d", __func__, dtype);
         return 1;
     }
-    if (ItoW && ItoWCheck(ItoW)) 
+    if (ItoW && ItoW2DCheck(ItoW)) 
     { // only call ItoWCheck() on non-NULL ItoW
         biffAddf(LSP, "%s: problem with ItoW matrix", __func__);
         return 1;
@@ -295,12 +295,42 @@ lspImage* lspImageNix(lspImage* img)
     return NULL;
 }
 
+// initialize a new volume
+lspVolume* lspVolumeNew() 
+{
+    lspVolume *ret = MALLOC(1, lspVolume);
+    assert(ret);
+    ret->content = NULL;
+    ret->channel = ret->size[0] = ret->size[1] = 0;
+    M4_SET_NAN(ret->ItoW);
+    ret->dtype = lspTypeUnknown;
+    ret->data.vd = NULL;
+    return ret;
+}
+
+// free volume structs
+lspImage* lspImageNix(lspImage* img) 
+{
+    if (img) 
+    {
+        if (img->content) 
+        {
+            free(img->content);
+        }
+        
+        free(img->data.vd);
+        free(img);
+    }
+
+    return NULL;
+}
+
 /*
-  lspCtxNew creates the context to contain all resources and state
-  associated with computing on a given image "img", reconstruction kernel
-  "kern"
+  lspCtx2DNew creates the context to contain all resources and state
+  associated with 2D convolution, which is computing on a given image "img", 
+  and a reconstruction kernel "kern"
 */
-lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm) 
+lspCtx2D* lspCtx2DNew(const lspImage* img, const lspKernel* kern, const double* imm) 
 {
     // some error checks
     if (!(img && kern)) 
@@ -316,7 +346,7 @@ lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm)
         return NULL;
     }
     
-    lspCtx *ctx = MALLOC(1, lspCtx);
+    lspCtx2D *ctx = MALLOC(1, lspCtx2D);
     assert(ctx);
     ctx->verbose = 0;
     ctx->image = img;
@@ -337,8 +367,8 @@ lspCtx* lspCtxNew(const lspImage* img, const lspKernel* kern, const double* imm)
     return ctx;
 }
 
-// free a lspCtx
-lspCtx* lspCtxNix(lspCtx* ctx)
+// free a lspCtx2D
+lspCtx2D* lspCtx2DNix(lspCtx2D* ctx)
 {
 
     if (ctx) 
@@ -486,7 +516,7 @@ int lspImageLoad(lspImage *img, const char *fname)
         }
     }
 
-    setItoW(img->ItoW, nin, bidx);
+    setItoW2D(img->ItoW, nin, bidx);
 
     airMopOkay(mop);
     return 0;
