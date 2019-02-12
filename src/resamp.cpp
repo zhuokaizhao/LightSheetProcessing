@@ -28,8 +28,7 @@ namespace fs = boost::filesystem;
 
 // box kernel
 #define _KDEF(NAME, DESC, SUPP)                                       \
-    static lspKernel NAME##Kernel = { #NAME, DESC, SUPP, NAME##Eval,  \
-                                        NAME##Apply }
+    static lspKernel NAME##Kernel = { #NAME, DESC, SUPP, NAME##Eval }
 #define KDEF(NAME, DESC, SUPP)                                   \
     _KDEF(NAME, DESC, SUPP);                                     \
     const lspKernel *const lspKernel##NAME = &(NAME##Kernel)
