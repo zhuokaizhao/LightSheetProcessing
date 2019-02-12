@@ -274,7 +274,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     int lower, upper;
 
     // even kernel
-    if ( isEven((int)*(ctx2D->kern->support.first) )
+    if ( isEven((int)(ctx2D->kern->support.first) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
