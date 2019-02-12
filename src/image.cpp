@@ -295,19 +295,6 @@ lspImage* lspImageNix(lspImage* img)
     return NULL;
 }
 
-// initialize a new volume
-lspVolume* lspVolumeNew() 
-{
-    lspVolume *ret = MALLOC(1, lspVolume);
-    assert(ret);
-    ret->content = NULL;
-    ret->channel = ret->size[0] = ret->size[1] = 0;
-    M4_SET_NAN(ret->ItoW);
-    ret->dtype = lspTypeUnknown;
-    ret->data.vd = NULL;
-    return ret;
-}
-
 // free volume structs
 lspImage* lspImageNix(lspImage* img) 
 {
