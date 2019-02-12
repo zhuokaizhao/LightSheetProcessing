@@ -108,7 +108,7 @@ lspImage* lspImageNix(lspImage* img);
 // lspCtx2DNew creates the context to contain all resources and state
 // associated with 2D convolution, which is computing on a given image "img", 
 // and a reconstruction kernel "kern"
-lspCtx2D* lspCtx2DNew(const lspImage* img, const lspKernel* kern, const double* imm);
+lspCtx2D* lspCtx2DNew(const lspImage* img, /*const lspKernel* kern,*/const nrrdKernel* kernel, const double* imm);
 
 // free a lspCtx
 lspCtx2D* lspCtx2DNix(lspCtx2D* ctx);

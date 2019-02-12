@@ -97,7 +97,7 @@ lspVolume* lspVolumeNix(lspVolume* vol);
 // lspCtx3DNew creates the context to contain all resources and state
 // associated with 3D convolution, which is computing on a given volume "vol", 
 // and a reconstruction kernel "kern"
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double* imm);
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, /*const lspKernel* kern,*/const nrrdKernel* kernel, const double* imm);
 
 // free a lspCtx3D
 lspCtx3D* lspCtx3DNix(lspCtx3D* ctx);
