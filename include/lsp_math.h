@@ -11,8 +11,6 @@
 #ifndef MPR_MATH_HAS_BEEN_INCLUDED
 #define MPR_MATH_HAS_BEEN_INCLUDED
 
-// #include "image.h"
-
 // #ifdef __cplusplus
 // extern "C" {
 // #endif

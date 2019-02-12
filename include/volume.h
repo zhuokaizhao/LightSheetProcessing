@@ -13,8 +13,7 @@
 #include <teem/unrrdu.h>
 
 #include "lsp_math.h"
-// #include "resamp.h"
-#include "image.h"
+// #include "image.h"
 
 // #ifdef __cplusplus
 // extern "C" {
