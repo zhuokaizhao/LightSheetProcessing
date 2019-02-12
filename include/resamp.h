@@ -49,26 +49,6 @@ struct resampOptions {
     uint verbose = 0;
 };
 
-/* The lspKernel stores everything about a reconstruction kernel. The kernel
-   is non-zero only within [-support/2,support/2], for integer "support"
-   which may be odd or even (but always positive). The kernels are set up at
-   compile-time in such a way that each kernel knows its own derivative; the
-   derivative of lspKernel *k is k->deriv. */
-// typedef struct {
-//     // short identifying string
-//     const char *name;
-//     // short descriptive string
-//     const char *desc;
-//     // # samples needed for convolution
-//     unsigned int support;             
-//     // evaluate kernel once
-//     double (*eval)(double xx);
-
-// } lspKernel;
-
-// const lspKernel *const lspKernelBox;
-// const lspKernel *const lspKernelCtmr;
-
 void setup_resamp(CLI::App &app);
 
 class Resamp {
@@ -80,10 +60,10 @@ class Resamp {
     
     private:
         resampOptions const opt;
-        // evaluate convolution between image and kernel
-        //void ConvoEval2D(lspCtx2D* ctx, double xw, double yw);
+        // evaluate 2D convolution between image and kernel
+        void ConvoEval2D(lspCtx2D* ctx, double xw, double yw);
 
-        // 3D convolution
+        // evaluate 3D convolution between volume and kernel
         void ConvoEval3D(lspCtx3D* ctx, double xw, double yw, double zw);
         airArray* mop;
 };

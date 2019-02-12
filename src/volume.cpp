@@ -6,6 +6,7 @@
 #include "volume.h"
 #include "lsp_math.h"
 // #include "resamp.h"
+#include "image.h"
 #include <assert.h> // for assert()
 
 // #ifdef __cplusplus
@@ -507,9 +508,9 @@ int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol)
 }
 
 /*
-  lspCtx2DNew creates the context to contain all resources and state
-  associated with 2D convolution, which is computing on a given image "img", 
-  and a reconstruction kernel "kern"
+  lspCtx3DNew creates the context to contain all resources and state
+  associated with 2D convolution, which is computing on a given volume "vol", 
+  and a reconstruction kernel "kernel"
 */
 lspCtx3D* lspCtx3DNew(const lspVolume* vol, /*const lspKernel* kern,*/const NrrdKernel* kernel, const double* vmm) 
 {
@@ -550,7 +551,7 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, /*const lspKernel* kern,*/const Nrrd
     return ctx;
 }
 
-// free a lspCtx2D
+// free a lspCtx3D
 lspCtx3D* lspCtx3DNix(lspCtx3D* ctx)
 {
 
