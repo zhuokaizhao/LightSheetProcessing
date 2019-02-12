@@ -12,11 +12,11 @@
 // #endif
 
 // identifies this library in biff error messages
-const char *lspBiffKey = "lsp";
-#define LSP lspBiffKey
+// const char *lspBiffKey = "lsp";
+// #define LSP lspBiffKey
 
 // utility macro for malloc() and casting to right type
-#define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
+// #define MALLOC(N, T) (T*)(malloc((N)*sizeof(T)))
 
 /* an airEnum is a gadget for managing identifications between
    integers (C enum values) and strings */
