@@ -21,6 +21,12 @@
 // #endif
 
 typedef unsigned int uint;
+typedef enum 
+{
+    lspTypeUnknown=0, // (0) (no type known)
+    lspTypeUChar,     // (1) 1-byte unsigned char
+    lspTypeDouble,    // (2)
+} lspType;
 
 
 // typedef unsigned long long uint64_t;
