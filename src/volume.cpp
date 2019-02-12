@@ -146,9 +146,7 @@ static size_t typeSize(lspType dtype)
     return ret;
 }
 
-// *************************** End of static functions ******************
-
-double lspNan(unsigned short payload)
+static double lspNan(unsigned short payload)
 {
     double rr;
     /* the logic for both cases is the same: make it a non-finite number by
@@ -161,6 +159,8 @@ double lspNan(unsigned short payload)
     rr = ((unsigned long long)0x7ff<<52)| ((unsigned long long)1<<51) | ((unsigned long long)payload<<35);
     return rr;
 }
+
+// *************************** End of static functions ******************
 
 // initialize a new volume
 lspVolume* lspVolumeNew() 

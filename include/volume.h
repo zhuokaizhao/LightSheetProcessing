@@ -83,7 +83,8 @@ typedef struct {
     // double ItoW_d[4];
 } lspCtx3D;
 
-double lspNan(unsigned short payload);
+// image.h has this
+// double lspNan(unsigned short payload);
 
 // initialize a new volume
 lspVolume* lspVolumeNew();
