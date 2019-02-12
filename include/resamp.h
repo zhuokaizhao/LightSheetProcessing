@@ -46,12 +46,28 @@ struct resampOptions {
     // path of the grid file
     string grid_path;
 
-    
-
-    
-    
     uint verbose = 0;
 };
+
+/* The lspKernel stores everything about a reconstruction kernel. The kernel
+   is non-zero only within [-support/2,support/2], for integer "support"
+   which may be odd or even (but always positive). The kernels are set up at
+   compile-time in such a way that each kernel knows its own derivative; the
+   derivative of lspKernel *k is k->deriv. */
+typedef struct lspKernel_t 
+{
+    // short identifying string
+    const char *name;
+    // short descriptive string
+    const char *desc;
+    // # samples needed for convolution
+    unsigned int support;             
+    // evaluate kernel once
+    double (*eval)(double xx);
+} lspKernel;
+
+const lspKernel *const lspKernelBox;
+const lspKernel *const lspKernelCtmr;
 
 void setup_resamp(CLI::App &app);
 

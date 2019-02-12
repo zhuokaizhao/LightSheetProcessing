@@ -26,6 +26,46 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
+// box kernel
+#define _KDEF(NAME, DESC, SUPP)                                       \
+    static lspKernel NAME##Kernel = { #NAME, DESC, SUPP, NAME##Eval,  \
+                                        NAME##Apply }
+#define KDEF(NAME, DESC, SUPP)                                   \
+    _KDEF(NAME, DESC, SUPP);                                     \
+    const lspKernel *const lspKernel##NAME = &(NAME##Kernel)
+
+static double BoxEval(double xx) 
+{
+    return (xx < -0.5
+            ? 0
+            : (xx < 0.5
+               ? 1
+               : 0));
+}
+KDEF(Box, "For nearest-neighbor interpolation", 1);
+
+// CTMR kernel
+static double CtmrEval(double x) 
+{
+    double ret;
+    x = fabs(x);
+    if (x < 1) 
+    {
+        ret = 1 + x*x*(-5.0/2 + x*(3.0/2));
+    } 
+    else if (x < 2) 
+    {
+        x -= 1;
+        ret = x*(-1.0/2 + x*(1 - x/2));
+    } 
+    else 
+    {
+        ret = 0;
+    }
+    return ret;
+}
+KDEF(Ctmr, "Catmull-Rom spline (C1, reconstructs quadratic)", 4);
+
 void setup_resamp(CLI::App &app)
 {
     auto opt = std::make_shared<resampOptions>();
@@ -343,6 +383,36 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     return;
 }
 
+// function that performs 2D resampling
+Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm)
+{
+    // initialize the output result
+    Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+
+    // set input to resample context
+    NrrdResampleContext* resampContext = nrrdResampleContextNew();
+    airMopAdd(mop, resampContext, (airMopper)nrrdResampleContextNix, airMopAlways);
+    nrrdResampleInputSet(resampContext, nin);
+    
+    // get the sample ready
+    nrrdResampleSamplesSet(resampContext, axis, nin->axis[axis].size);
+    nrrdResampleRangeFullSet(resampContext, axis);
+    // nrrdBoundaryBleed: copy the last/first value out as needed
+    nrrdResampleBoundarySet(resampContext, nrrdBoundaryBleed);
+    
+    // set the kernel
+    nrrdResampleKernelSet(resampContext, axis, kernel, kparm);
+
+    // renormalizing
+    nrrdResampleRenormalizeSet(resampContext, AIR_TRUE)
+
+    // start the resampling
+    nrrdResampleExecute(resampContext, nout);
+
+    return nout;
+
+}
+
 void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 {
     // initialize output
@@ -416,13 +486,6 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         k1[i - lower] = ctx3D->kern->eval(alpha1 - i);
         k2[i - lower] = ctx3D->kern->eval(alpha2 - i);
         k3[i - lower] = ctx3D->kern->eval(alpha3 - i);
-
-        // if gradient is true, kernel is calculated with gradient
-        // if (needgrad)
-        // {
-        //     k1_d[i - lower] = ctx->kern->deriv->eval(alpha1 - i);
-        //     k2_d[i - lower] = ctx->kern->deriv->eval(alpha2 - i);
-        // }
     }
 
     // compute via three nested loops over the 3D-kernel support
@@ -467,29 +530,12 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
                         uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
                         // not outside
                         sum = sum + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
-
-                        // if (needgrad)
-                        // {
-                        //     sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
-                        //     sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
-                        // }
                     }
                 }
             }
 
             // if no outside, assign value
             ctx3D->value = sum;
-            // derivative
-            // if (needgrad)
-            // {
-            //     // convert from index-space to world space
-            //     real gradient_w[2];
-            //     real gradient_i[2] = {sum_d1, sum_d2};
-            //     MV2_MUL(gradient_w, ctx->ItoW_d, gradient_i);
-
-            //     // save the *world-space* gradient result in ctx->gradient
-            //     V2_COPY(ctx->gradient, gradient_w);
-            // }
         }
     }
 
@@ -497,8 +543,29 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 
 }
 
+// function that performs 3D resampling (convolution)
+void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
+{
+    // input volume
+    lspVolume* volume = ctx3D->volume;
+    // sizes in x, y and z directions
+    uint sizeX = volume.size[0];
+    uint sizeY = volume.size[1];
+    uint sizeZ = volume.size[2];
 
+    // evaluate at each world-space position
+    for (int z = 0; z < sizeZ; z++)
+    {
+        for (int y = 0; y < sizeY; y++)
+        {
+            for (int x = 0; x < sizeX; x++)
+            {
+                newVolume[z*sizeZ + y*sizeY + x] = ConvoEval3D(ctx3D, x, y, z);
+            }
+        }
+    }
 
+}
 
 // main function
 void Resamp::main()
@@ -514,36 +581,71 @@ void Resamp::main()
         // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
         unsigned int permute[4] = {2, 0, 1, 3};
 
-        // do the permute
+        // do the permutation
         Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         nrrdAxesPermute(nin_permuted, nin, permute);
 
-        // do the resampling
-        // initialize the output result
-        Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        
-        // set input to resample context
-        NrrdResampleContext* resampContext = nrrdResampleContextNew();
-        airMopAdd(mop, resampContext, (airMopper)nrrdResampleContextNix, airMopAlways);
-        nrrdResampleInputSet(resampContext, nin_permuted);
-        
-        // get the sample ready
-        nrrdResampleSamplesSet(resampContext, 0, nin->axis[0].size);
-        nrrdResampleRangeFullSet(resampContext, 0);
-        // nrrdBoundaryBleed: copy the last/first value out as needed
-        nrrdResampleBoundarySet(resampContext, nrrdBoundaryBleed);
-        
-        // set the kernel
-        // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
-        // Catmull-Rom spline at (B,C)=(0,0.5) and the uniform cubic B-spline at (B,C)=(1,0)
-        double kparm[2] = {0, 0.5};
-        nrrdResampleKernelSet(resampContext, 0, nrrdKernelCatmullRom, kparm);
+        // put Nrrd data into lspVolume
+        lspVolume* volume = lspVolumeNew();
+        airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
+        lspVolumeFromNrrd(vol, nin_permuted);
 
-        // start the resampling
-        nrrdResampleExecute(resampContext, nout);
+        // get box kernel
+        lspKernel* box = lspKernelBox;
+
+        // put both volume and box kernel into the Ctx3D
+        lspCtx3D* ctxBox = lspCtx3DNew(volume, box, NULL /* imm */);
+
+        // perform the 3D sampling (convolution)
+        // resulting volume_box
+        lspVolume* volume_box = lspVolumeNew();
+        airMopAdd(mop, volume_box, (airMopper)lspVolumeNix, airMopAlways);
+        nrrdResample3D(volume_box, ctxBox);
+
+        // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
+        lspKernel* ctmr = lspKernelCtmr;
         
-        // save the nrrd as image
-        if (nrrdSave(opt.out_path.c_str(), nout, NULL)) 
+        // put both volume_box and ctmr kernel into the Ctx3D
+        lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, ctmr, NULL /* imm */);
+
+        // perform the 3D sampling (convolution)
+        // resulting volume_ctmr
+        lspVolume* volume_ctmr = lspVolumeNew();
+        airMopAdd(mop, volume_ctmr, (airMopper)lspVolumeNix, airMopAlways);
+        nrrdResample3D(volume_ctmr, ctxCtmr);
+
+        // change the volume back to Nrrd file for projection
+        Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        lspVolumeNrrdWrap(nout, volume_ctmr);
+
+        // Project the volume alone z axis using MIP
+        Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        nrrdProject(projNrrd, nout, 3, nrrdMeasureMax, nrrdTypeDouble);
+        
+        // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
+        Nrrd* slices = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+        // quantized
+        Nrrd* quantized = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
+                           safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+
+        // range during quantizing
+        auto range = nrrdRangeNew(lspNan(0), lspNan(0));
+        airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+
+        for (int i = 0; i < 2; i++)
+        {
+            nrrdSlice(slices[i], projNrrd, 0, i);
+            nrrdRangePercentileFromStringSet(range0, slices[i],  "0.1%", "0.1%", 5000, true);
+            nrrdQuantize(quantized[i], slices[i], range, 8);
+        }
+
+        // Join the two channel
+        Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        nrrdJoin(finalJoined, quantized, 2, 0, 1)
+
+        // save the final nrrd as image
+        if (nrrdSave(opt.out_path.c_str(), finalJoined, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);

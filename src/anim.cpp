@@ -450,6 +450,7 @@ void Anim::split_type()
             auto rsmc = nrrdResampleContextNew();
             airMopAdd(mop_t, rsmc, (airMopper)nrrdResampleContextNix, airMopAlways);
 
+            // proj_rsm[0] is xy, proj_rsm[1] is yz
             nrrd_checker(nrrdResampleInputSet(rsmc, proj_rsm[i]) ||
                             nrrdResampleKernelSet(rsmc, 0, nrrdKernelBCCubic, kparm) ||
                             nrrdResampleSamplesSet(rsmc, 0, size_t(ceil(proj_rsm[i]->axis[0].size*resample_rsm[i][0]))) ||
