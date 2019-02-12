@@ -5,6 +5,7 @@
 
 #include "volume.h"
 #include "lsp_math.h"
+#include "image.h"
 #include <assert.h> // for assert()
 
 // #ifdef __cplusplus
