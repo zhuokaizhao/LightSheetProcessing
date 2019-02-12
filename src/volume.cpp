@@ -160,15 +160,18 @@ static int lspNrrdVolumeCheck(const Nrrd *nin)
     // the type should at least fall into one
     if (!( nrrdTypeUChar == nin->type ||
            nrrdTypeFloat == nin->type ||
+           nrrdTypeUShort == nin->type ||
            nrrdTypeDouble == nin->type )) 
     {
-        printf("%s: can't handle nrrd type %s (need %s, %s, or %s)\n", __func__, airEnumStr(nrrdType, nin->type),
+        printf("%s: can't handle nrrd type %s (need %s, %s, %s or %s)\n", __func__, airEnumStr(nrrdType, nin->type),
                  airEnumStr(nrrdType, nrrdTypeUChar),
+                 airEnumStr(nrrdType, nrrdTypeUShort),
                  airEnumStr(nrrdType, nrrdTypeFloat),
                  airEnumStr(nrrdType, nrrdTypeDouble));
-        biffAddf(VOL, "%s: can't handle nrrd type %s (need %s, %s, or %s)",
+        biffAddf(VOL, "%s: can't handle nrrd type %s (need %s, %s, %s or %s)",
                  __func__, airEnumStr(nrrdType, nin->type),
                  airEnumStr(nrrdType, nrrdTypeUChar),
+                 airEnumStr(nrrdType, nrrdTypeUShort),
                  airEnumStr(nrrdType, nrrdTypeFloat),
                  airEnumStr(nrrdType, nrrdTypeDouble));
         return 1;
