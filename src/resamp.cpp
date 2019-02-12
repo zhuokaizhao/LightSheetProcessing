@@ -235,7 +235,7 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     int lower, upper;
 
     // even kernel
-    if ( isEven(ctx->kern->support) )
+    if ( isEven(ctx2D->kern->support) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
@@ -295,14 +295,14 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
         {
             if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx2D->image->size[0] )
             {
-                ctx->outside += 1;
+                ctx2D->outside += 1;
             }
         }
         for (int i2 = lower; i2 <= upper; i2++)
         {
             if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx2D->image->size[1] )
             {
-                ctx->outside += 1;
+                ctx2D->outside += 1;
             }
         }
 
@@ -371,12 +371,12 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
     int lower, upper;
 
     // even kernel
-    if ( isEven(ctx->kern->support) )
+    if ( isEven(ctx3D->kern->support) )
     {
         // n1 = floor(x1), n2 = floor(x2), n3 = floor(n3)
-        n1 = floor(ctx->ipos[0]);
-        n2 = floor(ctx->ipos[1]);
-        n3 = floor(ctx->ipos[2]);
+        n1 = floor(ctx3D->ipos[0]);
+        n2 = floor(ctx3D->ipos[1]);
+        n3 = floor(ctx3D->ipos[2]);
         // lower = 1 - support/2
         lower = 1 - (int)ctx3D->kern->support / 2;
         // upper = support/2
@@ -464,9 +464,9 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
                     for (int i1 = lower; i1 <= upper; i1++)
                     {
                         // compute data index
-                        uint data_index = (n3+i3)*(ctx3D->vol->size[1]*ctx3D->vol->size[0]) + (n2+i2)*(ctx3D->vol->size[0]) + n1 + i1;
+                        uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
                         // not outside
-                        sum = sum + ctx3D->image->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        sum = sum + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
 
                         // if (needgrad)
                         // {
