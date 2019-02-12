@@ -36,6 +36,8 @@ typedef enum
     lspTypeDouble,    // (2)
 } lspType;
 
+export lspType;
+
 // image struct for 2D convolution
 typedef struct 
 {
