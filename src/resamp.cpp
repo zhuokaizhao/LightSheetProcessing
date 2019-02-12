@@ -273,8 +273,14 @@ void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw)
     // determine lower and upper bounds for later convolution
     int lower, upper;
 
+    NrrdKernelSpec* kernel;
+    kernel = nrrdKernelSpecNew();
+    nrrdKernelParse(&(kernel->kernel), kernel->parm, ctx2D->kern.c_str());
+    airMopAdd(mop, kernel, (airMopper)nrrdKernelSpecNix, airMopAlways);
+
+
     // even kernel
-    if ( isEven((int)(ctx2D->kern->support(1)) )
+    if ( isEven( (int)(kernel->support(kernel->parm)) ) )
     {
         // n1 = floor(x1), n2 = floor(x2)
         n1 = floor(ctx2D->ipos[0]);
