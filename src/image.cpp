@@ -301,13 +301,13 @@ lspImage* lspImageNix(lspImage* img)
   associated with 2D convolution, which is computing on a given image "img", 
   and a reconstruction kernel "kern"
 */
-lspCtx2D* lspCtx2DNew(const lspImage* img, const lspKernel* kern, const double* imm) 
+lspCtx2D* lspCtx2DNew(const lspImage* img, /*const lspKernel* kern,*/const NrrdKernel* kernel, const double* imm) 
 {
     // some error checks
-    if (!(img && kern)) 
+    if (!(img && kernel)) 
     {
         biffAddf(LSP, "%s: got NULL pointer (%p,%p)", __func__,
-                 (void*)img, (void*)kern);
+                 (void*)img, (void*)kernel);
         return NULL;
     }
     if (1 != img->channel) 
@@ -321,7 +321,7 @@ lspCtx2D* lspCtx2DNew(const lspImage* img, const lspKernel* kern, const double* 
     assert(ctx);
     ctx->verbose = 0;
     ctx->image = img;
-    ctx->kern = kern;
+    ctx->kern = kernel;
     ctx->imgMinMax[0] = imm ? imm[0] : lspNan(0);
     ctx->imgMinMax[1] = imm ? imm[1] : lspNan(0);
 

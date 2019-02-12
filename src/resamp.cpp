@@ -27,43 +27,43 @@ using namespace std;
 namespace fs = boost::filesystem;
 
 // box kernel
-#define _KDEF(NAME, DESC, SUPP)                                       \
-    static lspKernel NAME##Kernel = { #NAME, DESC, SUPP, NAME##Eval }
-#define KDEF(NAME, DESC, SUPP)                                   \
-    _KDEF(NAME, DESC, SUPP);                                     \
-    const lspKernel *const lspKernel##NAME = &(NAME##Kernel)
+// #define _KDEF(NAME, DESC, SUPP)                                       \
+//     static lspKernel NAME##Kernel = { #NAME, DESC, SUPP, NAME##Eval }
+// #define KDEF(NAME, DESC, SUPP)                                   \
+//     _KDEF(NAME, DESC, SUPP);                                     \
+//     const lspKernel *const lspKernel##NAME = &(NAME##Kernel)
 
-static double BoxEval(double xx) 
-{
-    return (xx < -0.5
-            ? 0
-            : (xx < 0.5
-               ? 1
-               : 0));
-}
-KDEF(Box, "For nearest-neighbor interpolation", 1);
+// static double BoxEval(double xx) 
+// {
+//     return (xx < -0.5
+//             ? 0
+//             : (xx < 0.5
+//                ? 1
+//                : 0));
+// }
+// KDEF(Box, "For nearest-neighbor interpolation", 1);
 
-// CTMR kernel
-static double CtmrEval(double x) 
-{
-    double ret;
-    x = fabs(x);
-    if (x < 1) 
-    {
-        ret = 1 + x*x*(-5.0/2 + x*(3.0/2));
-    } 
-    else if (x < 2) 
-    {
-        x -= 1;
-        ret = x*(-1.0/2 + x*(1 - x/2));
-    } 
-    else 
-    {
-        ret = 0;
-    }
-    return ret;
-}
-KDEF(Ctmr, "Catmull-Rom spline (C1, reconstructs quadratic)", 4);
+// // CTMR kernel
+// static double CtmrEval(double x) 
+// {
+//     double ret;
+//     x = fabs(x);
+//     if (x < 1) 
+//     {
+//         ret = 1 + x*x*(-5.0/2 + x*(3.0/2));
+//     } 
+//     else if (x < 2) 
+//     {
+//         x -= 1;
+//         ret = x*(-1.0/2 + x*(1 - x/2));
+//     } 
+//     else 
+//     {
+//         ret = 0;
+//     }
+//     return ret;
+// }
+// KDEF(Ctmr, "Catmull-Rom spline (C1, reconstructs quadratic)", 4);
 
 void setup_resamp(CLI::App &app)
 {
@@ -590,10 +590,10 @@ void Resamp::main()
         lspVolumeFromNrrd(vol, nin_permuted);
 
         // get box kernel
-        lspKernel* box = lspKernelBox;
+        // lspKernel* box = lspKernelBox;
 
         // put both volume and box kernel into the Ctx3D
-        lspCtx3D* ctxBox = lspCtx3DNew(volume, box, NULL /* imm */);
+        lspCtx3D* ctxBox = lspCtx3DNew(volume, nrrdKernelBox, NULL /* imm */);
 
         // perform the 3D sampling (convolution)
         // resulting volume_box
@@ -602,10 +602,10 @@ void Resamp::main()
         nrrdResample3D(volume_box, ctxBox);
 
         // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
-        lspKernel* ctmr = lspKernelCtmr;
+        // lspKernel* ctmr = lspKernelCtmr;
         
         // put both volume_box and ctmr kernel into the Ctx3D
-        lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, ctmr, NULL /* imm */);
+        lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, nrrdKernelCatmullRom, NULL /* imm */);
 
         // perform the 3D sampling (convolution)
         // resulting volume_ctmr

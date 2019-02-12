@@ -69,7 +69,8 @@ typedef struct {
     // input
     const lspImage *image;
     double imgMinMax[2];
-    const lspKernel *kern;
+    // const lspKernel *kern;
+    const NrrdKernel *kern;
 
     // output fields set by lspConvoEval
     // copy of world-space pos passed to lspConvoEval

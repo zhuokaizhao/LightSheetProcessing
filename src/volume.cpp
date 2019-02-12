@@ -511,13 +511,13 @@ int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol)
   associated with 2D convolution, which is computing on a given image "img", 
   and a reconstruction kernel "kern"
 */
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double* vmm) 
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, /*const lspKernel* kern,*/const NrrdKernel* kernel, const double* vmm) 
 {
     // some error checks
-    if (!(vol && kern)) 
+    if (!(vol && kernel)) 
     {
         biffAddf(VOL, "%s: got NULL pointer (%p,%p)", __func__,
-                 (void*)vol, (void*)kern);
+                 (void*)vol, (void*)kernel);
         return NULL;
     }
     if (1 != vol->channel) 
@@ -531,7 +531,7 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double*
     assert(ctx);
     ctx->verbose = 0;
     ctx->volume = vol;
-    ctx->kern = kern;
+    ctx->kern = kernel;
     ctx->volMinMax[0] = vmm ? vmm[0] : lspNan(0);
     ctx->volMinMax[1] = vmm ? vmm[1] : lspNan(0);
     ctx->volMinMax[2] = vmm ? vmm[2] : lspNan(0);
