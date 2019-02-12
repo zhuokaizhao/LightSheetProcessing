@@ -15,17 +15,6 @@
 using namespace std;
 
 struct resampOptions {
-    // path that includes all the input images obtained from anim
-    //string image_path;
-
-    // image types (max or avg)
-    // string image_type;
-
-    // total number of images
-    // uint imageNum;
-
-    // vector of pair that includes the file sequence numbers and image names
-    // vector< pair<int, string> > allValidImages;
 
     // path that includes all the nhdr headers
     string nhdr_path;

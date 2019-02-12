@@ -15,8 +15,6 @@
 #include "skimczi.h"
 #include "resamp.h"
 #include "lsp_math.h"
-// #include "image.h"
-// #include "volume.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -26,54 +24,12 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-// box kernel
-// #define _KDEF(NAME, DESC, SUPP)                                       \
-//     static lspKernel NAME##Kernel = { #NAME, DESC, SUPP, NAME##Eval }
-// #define KDEF(NAME, DESC, SUPP)                                   \
-//     _KDEF(NAME, DESC, SUPP);                                     \
-//     const lspKernel *const lspKernel##NAME = &(NAME##Kernel)
-
-// static double BoxEval(double xx) 
-// {
-//     return (xx < -0.5
-//             ? 0
-//             : (xx < 0.5
-//                ? 1
-//                : 0));
-// }
-// KDEF(Box, "For nearest-neighbor interpolation", 1);
-
-// // CTMR kernel
-// static double CtmrEval(double x) 
-// {
-//     double ret;
-//     x = fabs(x);
-//     if (x < 1) 
-//     {
-//         ret = 1 + x*x*(-5.0/2 + x*(3.0/2));
-//     } 
-//     else if (x < 2) 
-//     {
-//         x -= 1;
-//         ret = x*(-1.0/2 + x*(1 - x/2));
-//     } 
-//     else 
-//     {
-//         ret = 0;
-//     }
-//     return ret;
-// }
-// KDEF(Ctmr, "Catmull-Rom spline (C1, reconstructs quadratic)", 4);
-
 void setup_resamp(CLI::App &app)
 {
     auto opt = std::make_shared<resampOptions>();
     auto sub = app.add_subcommand("resamp", "Perform resampling on input images");
 
-    //sub->add_option("-i, --image_path", opt->image_path, "Path that includes input images")->required();
-    // sub->add_option("-t, --image_type", sopt->image_type, "Type of the image, max or ave")->required();
     sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Path of input nrrd header files.")->required();
-    
     sub->add_option("-g, --kernel", opt->grid_path, "Path that includes the grid file")->required();
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
