@@ -568,42 +568,55 @@ void Resamp::ConvoEval3D(lspCtx3D *ctx, double xw, double yw, double zw)
         // }
     }
 
-    // compute via two nested loops over the 2D-kernel support
-    // make sure image is not empty
-    if (ctx->image != NULL)
+    // compute via three nested loops over the 3D-kernel support
+    // make sure volume is not empty
+    if (ctx->volume != NULL)
     {
         // check for potential outside
         // Notice that both direction should be checked separately
         for (int i1 = lower; i1 <= upper; i1++)
         {
-            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx->image->size[0] )
+            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx->volume->size[0] )
             {
                 ctx->outside += 1;
             }
         }
         for (int i2 = lower; i2 <= upper; i2++)
         {
-            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx->image->size[1] )
+            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx->volume->size[1] )
+            {
+                ctx->outside += 1;
+            }
+        }
+        for (int i3 = lower; i3 <= upper; i3++)
+        {
+            if ( i3 + n3 < 0 || i3 + n3 >= (int)ctx->volume->size[2] )
             {
                 ctx->outside += 1;
             }
         }
 
+        // no outside found
         if (ctx->outside == 0)
         {
             // faster axis first (i1 fast)
-            for (int i2 = lower; i2 <= upper; i2++)
+            for (int i3 = lower; i3 <= upper; i3++)
             {
-                for (int i1 = lower; i1 <= upper; i1++)
+                for (int i2 = lower; i2 <= upper; i2++)
                 {
-                    // not outside
-                    sum = sum + ctx->image->data.dl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
+                    for (int i1 = lower; i1 <= upper; i1++)
+                    {
+                        // compute data index
+                        uint data_index = (n3+i3)*(ctx->vol->size[1]*ctx->vol->size[0]) + (n2+i2)*(ctx->vol->size[0]) + n1 + i1;
+                        // not outside
+                        sum = sum + ctx->image->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
 
-                    // if (needgrad)
-                    // {
-                    //     sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
-                    //     sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
-                    // }
+                        // if (needgrad)
+                        // {
+                        //     sum_d1 = sum_d1 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1_d[i1-lower] * k2[i2-lower];
+                        //     sum_d2 = sum_d2 + ctx->image->data.rl[ (n2+i2)*ctx->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2_d[i2-lower];
+                        // }
+                    }
                 }
             }
 

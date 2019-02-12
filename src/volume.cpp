@@ -226,7 +226,7 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double*
     // copy image->ItoW for consistancy
     M4_COPY(ctx->ItoW, ctx->volume->ItoW);
     // convert wpos to index-space
-    // sets 3x3 WtoI to inverse of 3x3 ctx->image->ItoW, using tmp variable TMP
+    // sets 4x4 WtoI to inverse of 4x4 ctx->image->ItoW, using tmp variable TMP
     double TMP;
     M4_INVERSE(ctx->WtoI, ctx->volume->ItoW, TMP);
 
@@ -237,7 +237,7 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double*
 }
 
 // free a lspCtx2D
-lspCtx2D* lspCtx2DNix(lspCtx2D* ctx)
+lspCtx3D* lspCtx3DNix(lspCtx3D* ctx)
 {
 
     if (ctx) 

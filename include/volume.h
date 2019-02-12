@@ -129,14 +129,14 @@ double lspNan(unsigned short payload);
 lspVolume* lspVolumeNew();
 
 // free image structs
-lspVolume* lspVolumeNix(lspVolume* img);
+lspVolume* lspVolumeNix(lspVolume* vol);
 
 // lspCtx3DNew creates the context to contain all resources and state
-// associated with 2D convolution, which is computing on a given volume "vol", 
+// associated with 3D convolution, which is computing on a given volume "vol", 
 // and a reconstruction kernel "kern"
 lspCtx3D* lspCtx3DNew(const lspVolume* vol, const lspKernel* kern, const double* imm);
 
-// free a lspCtx
+// free a lspCtx3D
 lspCtx3D* lspCtx3DNix(lspCtx3D* ctx);
 
 // #ifdef __cplusplus
