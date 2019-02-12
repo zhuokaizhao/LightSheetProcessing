@@ -18,6 +18,18 @@
 // #endif
 
 /*
+  lspType: the scalar pixel types supported in lspImage
+  lspTypeUChar is only used for output images.
+  All input images (and some outputs) are lspTypeDouble.
+*/
+typedef enum 
+{
+    lspTypeUnknown=0, // (0) (no type known)
+    lspTypeUChar,     // (1) 1-byte unsigned char
+    lspTypeDouble,    // (2)
+} lspType;
+
+/*
   All these macros obey these conventions:
   "V2": 2-vector, which is just a length-2 array of reals
   "V3": 3-vector, which is just a length-3 array of reals
