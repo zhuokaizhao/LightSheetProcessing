@@ -24,7 +24,13 @@ typedef unsigned int uint;
 
 // typedef unsigned long long uint64_t;
 
-typedef enum 
+/*
+  lspType: the scalar pixel types supported in lspImage
+  lspTypeUChar is only used for output images.
+  All input images (and some outputs) are lspTypeDouble.
+*/
+
+extern typedef enum 
 {
     lspTypeUnknown=0, // (0) (no type known)
     lspTypeUChar,     // (1) 1-byte unsigned char

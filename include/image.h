@@ -24,12 +24,6 @@ typedef unsigned int uint;
 
 // typedef unsigned long long uint64_t;
 
-/*
-  lspType: the scalar pixel types supported in lspImage
-  lspTypeUChar is only used for output images.
-  All input images (and some outputs) are lspTypeDouble.
-*/
-
 
 // image struct for 2D convolution
 typedef struct 
