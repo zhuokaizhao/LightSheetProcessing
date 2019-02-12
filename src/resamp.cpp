@@ -248,7 +248,7 @@ static int isEven (uint x)
 
 // ********************** end of static helper functions *********************
 
-void ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw) 
+void ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw, airArray* mop) 
 {
     // initialize output
     ctx2D->wpos[0] = xw;
@@ -393,7 +393,7 @@ Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm, ai
 
 }
 
-void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
+void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop)
 {
     // initialize output
     ctx3D->wpos[0] = xw;
@@ -530,7 +530,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 }
 
 // function that performs 3D resampling (convolution)
-void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
+void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
 {
     // input volume
     const lspVolume* volume = ctx3D->volume;
@@ -546,7 +546,7 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
         {
             for (int x = 0; x < sizeX; x++)
             {
-                newVolume[z*sizeZ + y*sizeY + x] = ConvoEval3D(ctx3D, x, y, z);
+                newVolume[z*sizeZ + y*sizeY + x] = ConvoEval3D(ctx3D, x, y, z, mop);
             }
         }
     }
@@ -576,9 +576,6 @@ void Resamp::main()
         airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
         lspVolumeFromNrrd(volume, nin_permuted);
 
-        // get box kernel
-        // lspKernel* box = lspKernelBox;
-
         // put both volume and box kernel into the Ctx3D
         lspCtx3D* ctxBox = lspCtx3DNew(volume, nrrdKernelBox, NULL /* imm */);
 
@@ -589,8 +586,6 @@ void Resamp::main()
         nrrdResample3D(volume_box, ctxBox);
 
         // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
-        // lspKernel* ctmr = lspKernelCtmr;
-        
         // put both volume_box and ctmr kernel into the Ctx3D
         lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, nrrdKernelCatmullRom, NULL /* imm */);
 

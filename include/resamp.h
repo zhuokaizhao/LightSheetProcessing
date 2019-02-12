@@ -52,10 +52,10 @@ struct resampOptions {
 void setup_resamp(CLI::App &app);
 
 // evaluate 2D convolution between image and kernel
-void ConvoEval2D(lspCtx2D* ctx, double xw, double yw);
+void ConvoEval2D(lspCtx2D* ctx, double xw, double yw, airArray* mop);
 
 // evaluate 3D convolution between volume and kernel
-void ConvoEval3D(lspCtx3D* ctx, double xw, double yw, double zw);
+void ConvoEval3D(lspCtx3D* ctx, double xw, double yw, double zw, airArray* mop);
 
 class Resamp {
     public:
