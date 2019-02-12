@@ -605,13 +605,12 @@ void Resamp::main()
         nrrdProject(projNrrd, nout, 3, nrrdMeasureMax, nrrdTypeDouble);
         
         // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
-        Nrrd* slice_0 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        Nrrd* slice_1 = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        Nrrd* slices[2] = {slice_0, slice_1};
+        Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
+                            safe_nrrd_new(mop, (airMopper)nrrdNuke)};
 
         // quantized
         Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-                           safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+                                safe_nrrd_new(mop, (airMopper)nrrdNuke)};
 
         // range during quantizing
         auto range = nrrdRangeNew(lspNan(0), lspNan(0));
@@ -626,7 +625,7 @@ void Resamp::main()
 
         // Join the two channel
         Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        nrrdJoin(finalJoined, quantized, 2, 0, 1)
+        nrrdJoin(finalJoined, quantized, 2, 0, 1);
 
         // save the final nrrd as image
         if (nrrdSave(opt.out_path.c_str(), finalJoined, NULL)) 
