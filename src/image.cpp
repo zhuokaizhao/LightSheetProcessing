@@ -50,8 +50,8 @@ static lspType typeNRRDtoLSP(int ntype)
         case nrrdTypeDouble: // one of these is nrrdTypeDouble
             ret = lspTypeDouble;
             break;
-        case nrrdTypeShort:
-            ret = lspTypeShort;
+        case nrrdTypeUShort:
+            ret = lspTypeUShort;
         default: 
             ret = lspTypeUnknown;
     }
