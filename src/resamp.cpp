@@ -248,7 +248,7 @@ static int isEven (uint x)
 
 // ********************** end of static helper functions *********************
 
-void Resamp::ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw) 
+ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw) 
 {
     // initialize output
     ctx2D->wpos[0] = xw;
@@ -393,7 +393,7 @@ Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm, ai
 
 }
 
-void Resamp::ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
+ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 {
     // initialize output
     ctx3D->wpos[0] = xw;
@@ -546,7 +546,7 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
         {
             for (int x = 0; x < sizeX; x++)
             {
-                newVolume[z*sizeZ + y*sizeY + x] = Resamp::ConvoEval3D(ctx3D, x, y, z);
+                newVolume[z*sizeZ + y*sizeY + x] = ConvoEval3D(ctx3D, x, y, z);
             }
         }
     }
