@@ -446,7 +446,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                     {
                         continue;
                     }
-                    
+
                     // we are inside!
                     // compute data index
                     uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
@@ -476,14 +476,14 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
     uint sizeZ = ctx3D->boundaries[2];
 
     // evaluate at each world-space position
-    for (int zi = 0; zi < sizeZ; zi++)
+    for (uint zi = 0; zi < sizeZ; zi++)
     {
-        for (int yi = 0; yi < sizeY; yi++)
+        for (uint yi = 0; yi < sizeY; yi++)
         {
-            for (int xi = 0; xi < sizeX; xi++)
+            for (uint xi = 0; xi < sizeX; xi++)
             {
                 // convert the new-volume index space to world
-                double new_ipos[4] = {xi, yi, zi, 1.0};
+                uint new_ipos[4] = {xi, yi, zi, 1.0};
                 double wpos[4];
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
                 ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
