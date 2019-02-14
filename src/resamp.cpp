@@ -522,7 +522,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
     for (uint zi = 0; zi < sizeZ; zi++)
     {
         double percentage = 100.0*(double)zi/(double)sizeZ;
-        cout << percentage << "percents of the volume have been done" << endl;
+        cout << percentage << " percents of the volume have been done" << endl;
         for (uint yi = 0; yi < sizeY; yi++)
         {
             for (uint xi = 0; xi < sizeX; xi++)
