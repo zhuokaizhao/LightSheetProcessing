@@ -355,7 +355,8 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     ctx3D->wpos[0] = xw;
     ctx3D->wpos[1] = yw;
     ctx3D->wpos[2] = zw;
-    ctx3D->value = {lspNan(0), lspNan(0)};
+    ctx3D->value[0] = lspNan(0);
+    ctx3D->value[1] = lspNan(0);
 
     // first convert wpos to ipos, where ipos are x1, x2 and x3 as in FSV
     // MV4_MUL only takes 4-vector
@@ -470,7 +471,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         }
 
         // if no outside, assign value
-        ctx3D->value = sum;
+        for (int c = 0; c < ctx3D->volume->channel; c++)
+        {
+            ctx3D->value[c] = sum[c];
+        }
+
     }
 
     return; 
