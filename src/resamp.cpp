@@ -504,6 +504,7 @@ void Resamp::main()
         string nhdr_name = opt.nhdr_path;
         // load the nhdr header
         Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
+        cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
 
         // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
         unsigned int permute[4] = {2, 0, 1, 3};
@@ -511,20 +512,24 @@ void Resamp::main()
         // do the permutation
         Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         nrrdAxesPermute(nin_permuted, nin, permute);
+        cout << "Finished permutation" << endl;
 
         // put Nrrd data into lspVolume
         lspVolume* volume = lspVolumeNew();
         airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
         lspVolumeFromNrrd(volume, nin_permuted);
+        cout << "Finished converting Nrrd data to lspVolume" << endl;
 
         // put both volume and box kernel into the Ctx3D
-        lspCtx3D* ctxBox = lspCtx3DNew(volume, opt.grid_path, nrrdKernelBox, NULL /* imm */);
+        lspCtx3D* ctxBox = lspCtx3DNew(volume, opt.grid_path, nrrdKernelBox, NULL);
+        cout << "Finished generating ctxBox container" << endl;
 
         // perform the 3D sampling (convolution)
         // resulting volume_box
         lspVolume* volume_new = lspVolumeNew();
         airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
         nrrdResample3D(volume_new, ctxBox, mop);
+        cout << "Finished resampling with Box kernel" << endl;
 
         // // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
         // // put both volume_box and ctmr kernel into the Ctx3D
@@ -539,14 +544,17 @@ void Resamp::main()
         // change the volume back to Nrrd file for projection
         Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         lspNrrdFromVolume(nout, volume_new);
+        cout << "Finished converting resulting volume back to Nrrd data" << endl;
 
         // Project the volume alone z axis using MIP
         Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         nrrdProject(projNrrd, nout, 3, nrrdMeasureMax, nrrdTypeDouble);
+        cout << "Finished projecting Nrrd data alone z-axis" << endl;
         
         // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
         Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+        cout << "Finished slicing the data based on its channel (GFP and RFP)" << endl;
 
         // quantized
         Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
@@ -562,23 +570,27 @@ void Resamp::main()
             nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true);
             nrrdQuantize(quantized[i], slices[i], range, 8);
         }
+        cout << "Finished quantizing to 8-bit" << endl;
 
         // Join the two channel
         Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         nrrdJoin(finalJoined, quantized, 2, 0, 1);
+        cout << "Fnished joining the 2 channels" << endl;
 
         // save the final nrrd as image
         if (nrrdSave(opt.out_path.c_str(), finalJoined, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
-            return;
         }
+
+        cout << "Finished saving image at " << opt.out_path << endl;
 
     }
     
         
     airMopOkay(mop);
+    return;
 
 
 }
