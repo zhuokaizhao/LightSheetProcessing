@@ -414,6 +414,10 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         upper = (support - 1) / 2;
     }
 
+    cout << "n1 is " << n1 << endl;
+    cout << "n2 is " << n2 << endl;
+    cout << "n3 is " << n3 << endl;
+
     // calculate alpha based on n1, n2 and n3
     double alpha1, alpha2, alpha3;
     alpha1 = ctx3D->ipos[0] - n1;
@@ -438,6 +442,10 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     }
     cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
 
+    cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
+    cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
+    cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
+
     // compute via three nested loops over the 3D-kernel support
     // make sure volume is not empty
     if (ctx3D->volume != NULL)
@@ -461,7 +469,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                     for (int c = 0; c < ctx3D->volume->channel; c++)
                     {
                         // compute data index
-                        uint data_index = (i3+n3)*(ctx3D->volume->size[2]*ctx3D->volume->size[1]) + (i2+n2)*(ctx3D->volume->size[0]) + n1 + i1 + c;
+                        uint data_index = (i3+n3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (i2+n2)*(ctx3D->volume->size[0]) + n1 + i1 + c;
                         cout << "current data_index is " << data_index << endl;
 
                         sum[c] = sum[c] + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
