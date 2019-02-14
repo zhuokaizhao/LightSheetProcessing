@@ -228,13 +228,14 @@ static int lspNrrdDataCheck(const Nrrd *nin)
         return 1;
     }
 
-    if (nin->space != nrrdSpaceRightUp) 
-    {
-        printf("%s: array space %s not expected as %s\n", __func__,
-                 airEnumStr(nrrdSpace, nin->space),
-                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
-        return 1;
-    }
+    // from skim we set it to 3D-right-handed
+    // if (nin->space != nrrdSpaceRightUp) 
+    // {
+    //     printf("%s: array space %s not expected as %s\n", __func__,
+    //              airEnumStr(nrrdSpace, nin->space),
+    //              airEnumStr(nrrdSpace, nrrdSpaceRightUp));
+    //     return 1;
+    // }
 
     // set the homogeneous transformation from volume index-space to world-space
     // check if the loaded Nrrd data can give us the correct Itow

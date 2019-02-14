@@ -36,6 +36,7 @@
         "memory": "cpp",
         "chrono": "cpp",
         "ostream": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "ios": "cpp"
     }
 }
