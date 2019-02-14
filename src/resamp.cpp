@@ -473,6 +473,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                         cout << "current data_index is " << data_index << endl;
 
                         sum[c] = sum[c] + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        cout << "sum is " << sum[c] << endl;
                     }
                 }
             }
