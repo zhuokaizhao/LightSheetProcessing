@@ -355,7 +355,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     ctx3D->wpos[0] = xw;
     ctx3D->wpos[1] = yw;
     ctx3D->wpos[2] = zw;
-    ctx3D->outside = 0;
     ctx3D->value = lspNan(0);
 
     // first convert wpos to ipos, where ipos are x1, x2 and x3 as in FSV
@@ -434,51 +433,31 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // make sure volume is not empty
     if (ctx3D->volume != NULL)
     {
-        // check for potential outside
-        // Notice that both direction should be checked separately
-        for (int i1 = lower; i1 <= upper; i1++)
-        {
-            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx3D->volume->size[0] )
-            {
-                ctx3D->outside += 1;
-            }
-        }
-        for (int i2 = lower; i2 <= upper; i2++)
-        {
-            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx3D->volume->size[1] )
-            {
-                ctx3D->outside += 1;
-            }
-        }
+        // faster axis first (i1 fast)
         for (int i3 = lower; i3 <= upper; i3++)
         {
-            if ( i3 + n3 < 0 || i3 + n3 >= (int)ctx3D->volume->size[2] )
+            for (int i2 = lower; i2 <= upper; i2++)
             {
-                ctx3D->outside += 1;
-            }
-        }
-
-        // no outside found
-        if (ctx3D->outside == 0)
-        {
-            // faster axis first (i1 fast)
-            for (int i3 = lower; i3 <= upper; i3++)
-            {
-                for (int i2 = lower; i2 <= upper; i2++)
+                for (int i1 = lower; i1 <= upper; i1++)
                 {
-                    for (int i1 = lower; i1 <= upper; i1++)
+                    if ( (i1 + n1 < 0 || i1 + n1 >= (int)ctx3D->volume->size[0])
+                        || (i2 + n2 < 0 || i2 + n2 >= (int)ctx3D->volume->size[1])
+                        || (i3 + n3 < 0 || i3 + n3 >= (int)ctx3D->volume->size[2]) )
                     {
-                        // compute data index
-                        uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
-                        // not outside
-                        sum = sum + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        continue;
                     }
+                    
+                    // we are inside!
+                    // compute data index
+                    uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
+                    // not outside
+                    sum = sum + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
                 }
             }
-
-            // if no outside, assign value
-            ctx3D->value = sum;
         }
+
+        // if no outside, assign value
+        ctx3D->value = sum;
     }
 
     return; 
@@ -598,66 +577,8 @@ void Resamp::main()
 
     }
     
-    
-    
-    
-    // // the number of images
-    // int imageNum = opt.imageNum;
-
-    // // if imageNum == -1, single image mode
-    // if (imageNum == -1)
-    // {
-    //     // load the image first
-    //     lspImage* image = lspImageNew();
-    //     airMopAdd(mop, image, (airMopper)lspImageNix, airMopAlways);
         
-    //     int loadImageFail = lspImageLoad(image, opt.image_path.c_str());
-        
-    //     if (loadImageFail)
-    //     {
-    //         cout << "Error loading image with path " << opt.image_path << endl;
-    //         return;
-    //     }
-    //     else
-    //     {
-    //         cout << "Image " << opt.image_path << " has been loaded successfully." << endl;
-    //     }
+    airMopOkay(mop);
 
-    //     // load the kernel
 
-    //     // save the output image
-    //     int saveImageFail = lspImageSave(opt.out_path.c_str(), image);
-
-    //     if (saveImageFail)
-    //     {
-    //         cout << "Error saving image to path " << opt.out_path << endl;
-    //         return;
-    //     }
-    //     else
-    //     {
-    //         cout << "Image has been saved to " << opt.out_path << " successfully." << endl;
-    //     }
-
-        // // load the image as nrrd
-        // Nrrd *nin = nrrdNew();
-        // airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
-        // if (nrrdLoad(nin, opt.image_path.c_str(), NULL)) 
-        // {
-        //     printf("%s: trouble reading file\n", __func__);
-        //     airMopError(mop);
-        //     return;
-        // }
-
-        // // save the nrrd
-        // Nrrd *nout = nin;
-        // airMopAdd(mop, nout, (airMopper)nrrdNuke, airMopAlways);
-        // if (nrrdSave(opt.out_path.c_str(), nout, NULL)) 
-        // {
-        //     printf("%s: trouble saving output\n", __func__);
-        //     airMopError(mop);
-        //     return;
-        // }
-        
-        airMopOkay(mop);
-        // lspCtx* ctx = mprCtxNew(lspImg, mprKernelBox);
 }
