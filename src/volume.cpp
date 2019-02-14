@@ -27,8 +27,8 @@ const char *lspVolBiffKey = "lspVol";
    integers (C enum values) and strings */
 static const airEnum _lspType_ae = 
 {
-    "pixel value type",
-    2,
+    "pixel value type", //name
+    4, // number of valid types
     (const char*[]) { "(unknown_type)", "uchar",      "short",      "unsigned short",   "double" },
     (int [])        {lspTypeUnknown,    lspTypeUChar, lspTypeShort, lspTypeUShort,      lspTypeDouble},
     (const char*[]) {
@@ -39,7 +39,7 @@ static const airEnum _lspType_ae =
         "double"
     },
     NULL, NULL,
-    AIR_FALSE
+    AIR_FALSE // if require case matching on strings
 };
 const airEnum *const lspType_ae = &_lspType_ae;
 
@@ -258,17 +258,17 @@ static int lspNrrdDataCheck(const Nrrd *nin)
 // check the data content
 static int metaDataCheck(uint channel, uint size0, uint size1, uint size2, const double *ItoW, lspType dtype) 
 {
-    if ( !(channel == 2) ) 
+    if ( channel != 2 ) 
     {
         printf("%s: invalid channel value %u, Nrrd data should have 2 channels\n", __func__, channel);
         return 1;
     }
-    if ( !( size0>0 && size1>0 && size2>0) ) 
+    if ( ( size0<=0 && size1<=0 && size2<=0) ) 
     {
         printf("%s: invalid volume sizes (%u, %u, %u)\n", __func__, size0, size1, size2);
         return 1;
     }
-    if (airEnumValCheck(lspType_ae, dtype)) 
+    if ( airEnumValCheck(lspType_ae, dtype) ) 
     {
         printf("%s: invalid type %d\n", __func__, dtype);
         return 1;
@@ -278,6 +278,8 @@ static int metaDataCheck(uint channel, uint size0, uint size1, uint size2, const
         printf("%s: problem with ItoW matrix\n", __func__);
         return 1;
     }
+
+    // looks good
     return 0;
 }
 

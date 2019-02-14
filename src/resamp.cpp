@@ -506,18 +506,23 @@ void Resamp::main()
         Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
         cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
 
+        // do the permutation
         // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
         unsigned int permute[4] = {2, 0, 1, 3};
-
-        // do the permutation
         Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        nrrdAxesPermute(nin_permuted, nin, permute);
+        if ( nrrdAxesPermute(nin_permuted, nin, permute) )
+        {
+            cout << "nrrdAxesPermute failed, program stops" << endl;
+        }
         cout << "Finished permutation" << endl;
 
         // put Nrrd data into lspVolume
         lspVolume* volume = lspVolumeNew();
         airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
-        lspVolumeFromNrrd(volume, nin_permuted);
+        if ( lspVolumeFromNrrd(volume, nin_permuted) )
+        {
+            cout << "lspVolumeFromNrrd failed, program stops" << endl;
+        }
         cout << "Finished converting Nrrd data to lspVolume" << endl;
 
         // put both volume and box kernel into the Ctx3D
