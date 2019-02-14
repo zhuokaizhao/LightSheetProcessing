@@ -592,6 +592,12 @@ void Resamp::main()
         // resulting volume_box
         lspVolume* volume_new = lspVolumeNew();
         airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+        // allocate memory for the new volume, with sizes being the region of interest sizes
+        if (lspVolumeAlloc(volume_new, volume->channel, ctxBox->boundaries[0], ctxBox->boundaries[1], ctxBox->boundaries[2], volume->dtype)) 
+        {
+            printf("%s: trouble allocating volume\n", __func__);
+            return 1;
+        }
         nrrdResample3D(volume_new, ctxBox, mop);
         cout << "Finished resampling with Box kernel" << endl;
 
