@@ -7,10 +7,6 @@
 #include "lsp_math.h"
 #include <assert.h> // for assert()
 
-// #ifdef __cplusplus
-// extern "C" {
-// #endif
-
 // identifies this library in biff error messages
 const char *lspBiffKey = "lsp";
 #define LSP lspBiffKey
@@ -20,7 +16,8 @@ const char *lspBiffKey = "lsp";
 
 /* an airEnum is a gadget for managing identifications between
    integers (C enum values) and strings */
-static const airEnum _lspType_ae = {
+static const airEnum _lspType_ae = 
+{
     "pixel value type",
     2,
     (const char*[]) { "(unknown_type)", "uchar",      "double" },

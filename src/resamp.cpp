@@ -490,20 +490,25 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
 {
     // input volume
     const lspVolume* volume = ctx3D->volume;
+    
     // sizes in x, y and z directions
-    uint sizeX = volume->size[0];
-    uint sizeY = volume->size[1];
-    uint sizeZ = volume->size[2];
+    uint sizeX = ctx3D->boundaries[0];
+    uint sizeY = ctx3D->boundaries[1];
+    uint sizeZ = ctx3D->boundaries[2];
 
     // evaluate at each world-space position
-    for (int z = 0; z < sizeZ; z++)
+    for (int zi = 0; zi < sizeZ; zi++)
     {
-        for (int y = 0; y < sizeY; y++)
+        for (int yi = 0; yi < sizeY; yi++)
         {
-            for (int x = 0; x < sizeX; x++)
+            for (int xi = 0; xi < sizeX; xi++)
             {
-                ConvoEval3D(ctx3D, x, y, z, mop);
-                newVolume->data.dl[z*sizeZ + y*sizeY + x] = ctx3D->value;
+                // convert the new-volume index space to world
+                double new_ipos[4] = {xi, yi, zi, 1.0};
+                double wpos[4];
+                MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
+                ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
+                newVolume->data.dl[zi*sizeZ + yi*sizeY + xi] = ctx3D->value;
             }
         }
     }
@@ -538,23 +543,23 @@ void Resamp::main()
 
         // perform the 3D sampling (convolution)
         // resulting volume_box
-        lspVolume* volume_box = lspVolumeNew();
-        airMopAdd(mop, volume_box, (airMopper)lspVolumeNix, airMopAlways);
-        nrrdResample3D(volume_box, ctxBox, mop);
+        lspVolume* volume_new = lspVolumeNew();
+        airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+        nrrdResample3D(volume_new, ctxBox, mop);
 
-        // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
-        // put both volume_box and ctmr kernel into the Ctx3D
-        lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, nrrdKernelCatmullRom, NULL /* imm */);
+        // // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
+        // // put both volume_box and ctmr kernel into the Ctx3D
+        // lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, nrrdKernelCatmullRom, NULL /* imm */);
 
-        // perform the 3D sampling (convolution)
-        // resulting volume_ctmr
-        lspVolume* volume_ctmr = lspVolumeNew();
-        airMopAdd(mop, volume_ctmr, (airMopper)lspVolumeNix, airMopAlways);
-        nrrdResample3D(volume_ctmr, ctxCtmr, mop);
+        // // perform the 3D sampling (convolution)
+        // // resulting volume_ctmr
+        // lspVolume* volume_new = lspVolumeNew();
+        // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+        // nrrdResample3D(volume_new, ctxCtmr, mop);
 
         // change the volume back to Nrrd file for projection
         Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        lspVolumeNrrdWrap(nout, volume_ctmr);
+        lspVolumeNrrdWrap(nout, volume_new);
 
         // Project the volume alone z axis using MIP
         Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);

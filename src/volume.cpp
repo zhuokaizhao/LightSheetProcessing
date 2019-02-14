@@ -7,10 +7,14 @@
 #include "lsp_math.h"
 #include "image.h"
 #include <assert.h> // for assert()
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <sstream>
 
-// #ifdef __cplusplus
-// extern "C" {
-// #endif
+using namespace std;
 
 // identifies this library in biff error messages
 const char *lspVolBiffKey = "lspVol";
@@ -21,14 +25,17 @@ const char *lspVolBiffKey = "lspVol";
 
 /* an airEnum is a gadget for managing identifications between
    integers (C enum values) and strings */
-static const airEnum _lspType_ae = {
+static const airEnum _lspType_ae = 
+{
     "pixel value type",
     2,
-    (const char*[]) { "(unknown_type)", "uchar",      "double" },
-    (int [])        {lspTypeUnknown,    lspTypeUChar, lspTypeDouble},
+    (const char*[]) { "(unknown_type)", "uchar",      "short",      "unsigned short",   "double" },
+    (int [])        {lspTypeUnknown,    lspTypeUChar, lspTypeShort, lspTypeUShort,      lspTypeDouble},
     (const char*[]) {
         "unknown type",
         "unsigned char",
+        "short",
+        "unsigned short",
         "double"
     },
     NULL, NULL,
@@ -48,17 +55,43 @@ static lspType typeNRRDtoLSP(int ntype)
     {
         case nrrdTypeUChar: ret = lspTypeUChar;
             break;
-        case nrrdTypeDouble: // one of these is nrrdTypeDouble
-            ret = lspTypeDouble;
+        case nrrdTypeShort: ret = lspTypeShort;
             break;
-        default: ret = lspTypeUnknown;
+        case nrrdTypeUShort: ret = lspTypeUShort;
+            break;
+        case nrrdTypeDouble: ret = lspTypeDouble;
+            break;
+        default: 
+            ret = lspTypeUnknown;
+    }
+
+    return ret;
+}
+
+// convert from lsptype to nrrd type
+static int typeLSPtoNRRD(lspType ltype) 
+{
+    int ret;
+    
+    switch (ltype) 
+    {
+        case lspTypeUChar: ret = nrrdTypeUChar;
+            break;
+        case lspTypeShort: ret = nrrdTypeShort;
+            break;
+        case lspTypeUShort: ret = nrrdTypeUShort;
+            break;
+        case lspTypeDouble: ret = nrrdTypeDouble;
+            break;
+        default: 
+            ret = nrrdTypeUnknown;
     }
 
     return ret;
 }
 
 // set values as 3x3 ItoW matrix
-static void setItoW3D(double *ItoW, const Nrrd *nin, uint bidx) 
+static void setItoW3D(double *ItoW, const Nrrd *nin) 
 {
     /* 0  1  2  3
        4  5  6  7
@@ -66,21 +99,21 @@ static void setItoW3D(double *ItoW, const Nrrd *nin, uint bidx)
        12 13 14 15 */
 
     // first column
-    ItoW[0] = (double)(nin->axis[bidx+0].spaceDirection[0]);
-    ItoW[4] = (double)(nin->axis[bidx+0].spaceDirection[1]);
-    ItoW[8] = (double)(nin->axis[bidx+0].spaceDirection[2]);
+    ItoW[0] = (double)(nin->axis[0].spaceDirection[0]);
+    ItoW[4] = (double)(nin->axis[0].spaceDirection[1]);
+    ItoW[8] = (double)(nin->axis[0].spaceDirection[2]);
     ItoW[12] = 0;
 
     // second column
-    ItoW[1] = (double)(nin->axis[bidx+1].spaceDirection[0]);
-    ItoW[5] = (double)(nin->axis[bidx+1].spaceDirection[1]);
-    ItoW[9] = (double)(nin->axis[bidx+1].spaceDirection[2]);
+    ItoW[1] = (double)(nin->axis[1].spaceDirection[0]);
+    ItoW[5] = (double)(nin->axis[1].spaceDirection[1]);
+    ItoW[9] = (double)(nin->axis[1].spaceDirection[2]);
     ItoW[13] = 0;
 
     // third column
-    ItoW[2] = (double)(nin->axis[bidx+2].spaceDirection[0]);
-    ItoW[6] = (double)(nin->axis[bidx+2].spaceDirection[1]);
-    ItoW[10] = (double)(nin->axis[bidx+2].spaceDirection[2]);
+    ItoW[2] = (double)(nin->axis[2].spaceDirection[0]);
+    ItoW[6] = (double)(nin->axis[2].spaceDirection[1]);
+    ItoW[10] = (double)(nin->axis[2].spaceDirection[2]);
     ItoW[14] = 0;
 
     // fourth column
@@ -133,131 +166,115 @@ static int ItoW3DCheck(const double *ItoW)
 }
 
 // get the size of a type
-static size_t typeSize(lspType dtype) 
+static size_t lsptypeSize(lspType dtype) 
 {
     size_t ret;
     switch (dtype) 
     {
         case lspTypeUChar: ret = sizeof(unsigned char);
             break;
+        case lspTypeUShort: ret = sizeof(unsigned short);
+            break;
+        case lspTypeShort: ret = sizeof(short);
+            break;
         case lspTypeDouble: ret = sizeof(double);
             break;
+        // unknown case
         default: ret = 0;
     }
     return ret;
 }
 
-/* static because even if this is generally useful;
-   it is only needed inside this file */
-static int lspNrrdVolumeCheck(const Nrrd *nin) 
+// check if the loaded Nrrd data is legit
+static int lspNrrdDataCheck(const Nrrd *nin) 
 {
     if (nrrdCheck(nin)) 
     {
         printf("%s: problem with nrrd itself\n", __func__);
-        biffMovef(VOL, NRRD, "%s: problem with nrrd itself", __func__);
         return 1;
     }
     // the type should at least fall into one
-    if (!( nrrdTypeUChar == nin->type ||
-           nrrdTypeFloat == nin->type ||
-           nrrdTypeUShort == nin->type ||
-           nrrdTypeDouble == nin->type )) 
+    if (!( nrrdTypeUChar == nin->type 
+          || nrrdTypeShort == nin->type 
+          || nrrdTypeUShort == nin->type 
+          || nrrdTypeDouble == nin->type )) 
     {
         printf("%s: can't handle nrrd type %s (need %s, %s, %s or %s)\n", __func__, airEnumStr(nrrdType, nin->type),
                  airEnumStr(nrrdType, nrrdTypeUChar),
+                 airEnumStr(nrrdType, nrrdTypeShort),
                  airEnumStr(nrrdType, nrrdTypeUShort),
-                 airEnumStr(nrrdType, nrrdTypeFloat),
                  airEnumStr(nrrdType, nrrdTypeDouble));
-        biffAddf(VOL, "%s: can't handle nrrd type %s (need %s, %s, %s or %s)",
-                 __func__, airEnumStr(nrrdType, nin->type),
-                 airEnumStr(nrrdType, nrrdTypeUChar),
-                 airEnumStr(nrrdType, nrrdTypeUShort),
-                 airEnumStr(nrrdType, nrrdTypeFloat),
-                 airEnumStr(nrrdType, nrrdTypeDouble));
+        
         return 1;
     }
 
-    if (!( 3 == nin->dim || 4 == nin->dim )) 
+    if (!( nin->dim == 4 )) 
     {
-        printf("%s: got dimension %u, not 3 or 4\n", __func__, nin->dim);
-        biffAddf(VOL, "%s: got dimension %u, not 3 or 4", __func__, nin->dim);
+        printf("%s: got dimension %u, not 4\n", __func__, nin->dim);
         return 1;
     }
 
-    uint bidx;
-    if (4 == nin->dim) 
+    // It should be 2-channel data (GFP and RFP)
+    if ( nin->axis[0].size != 2 )
     {
-        bidx = 1;
-        // check the number of channels
-        if (!( 1 <= nin->axis[0].size && nin->axis[0].size <= 3 ))
-        {
-            printf("%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)\n", __func__, (uint)(nin->axis[0].size));
-            biffAddf(VOL, "%s: for 3D array, axis[0] needs size 1, 2, or 3 (not %u)",
-                     __func__, (uint)(nin->axis[0].size));
-            return 1;
-        }
-    } 
-    else 
-    {
-        bidx = 0;
+        printf("%s: the data loaded is now two-channel data, instead its channel is %u\n", __func__, (uint)(nin->axis[0].size));
+        return 1;
     }
     
-    // for some reasons this cannot be passed
-    // if (airEnumValCheck(nrrdSpace, nin->space)) 
-    // {
-    //     printf("%s: array space %u not set or known\n", __func__, nin->space);
-    //     biffAddf(LSP, "%s: array space %u not set or known", __func__, nin->space);
-    //     return 1;
-    // }
+    // check the space of the loaded nrrd data
+    if (airEnumValCheck(nrrdSpace, nin->space)) 
+    {
+        printf("%s: array space %u not set or known\n", __func__, nin->space);
+        return 1;
+    }
 
-    // if (nin->space != nrrdSpaceRightUp) 
-    // {
-    //     printf("%s: array space %s not expected %s\n", __func__,
-    //              airEnumStr(nrrdSpace, nin->space),
-    //              airEnumStr(nrrdSpace, nrrdSpaceRightUp));
-    //     biffAddf(LSP, "%s: array space %s not expected %s", __func__,
-    //              airEnumStr(nrrdSpace, nin->space),
-    //              airEnumStr(nrrdSpace, nrrdSpaceRightUp));
-    //     return 1;
-    // }
+    if (nin->space != nrrdSpaceRightUp) 
+    {
+        printf("%s: array space %s not expected as %s\n", __func__,
+                 airEnumStr(nrrdSpace, nin->space),
+                 airEnumStr(nrrdSpace, nrrdSpaceRightUp));
+        return 1;
+    }
 
+    // set the homogeneous transformation from volume index-space to world-space
+    // check if the loaded Nrrd data can give us the correct Itow
     double ItoW[16];
-
-    setItoW3D(ItoW, nin, bidx);
-
+    setItoW3D(ItoW, nin);
     if (ItoW3DCheck(ItoW)) 
     {
         printf("%s: problem with ItoW\n", __func__);
-        biffAddf(VOL, "%s: problem with ItoW", __func__);
         return 1;
     }
 
-    if (!( nrrdCenterCell == nin->axis[bidx+0].center
-           && nrrdCenterCell == nin->axis[bidx+1].center )) 
+    // make sure that all the sampling are center sampling
+    // axis 1 2 3 are the three spatial axis (axis 0 is the channel)
+    if (!( nin->axis[1].center == nrrdCenterCell
+           && nin->axis[2].center == nrrdCenterCell
+           && nin->axis[3].center == nrrdCenterCell ))
     {
-        printf("%s: axis[%u,%u] centering not both %s", __func__,
-                 bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
-        biffAddf(VOL, "%s: axis[%u,%u] centering not both %s", __func__,
-                 bidx+0, bidx+1, airEnumStr(nrrdCenter, nrrdCenterCell));
+        printf("%s: axis[%u, %u, %u] centering not all %s", __func__,
+                 1, 2, 3, airEnumStr(nrrdCenter, nrrdCenterCell));
         return 1;
     }
+
+    // no problem
     return 0;
 }
 
+// check the data content
 static int metaDataCheck(uint channel,
                uint size0, uint size1, uint size2,
                const double *ItoW,
                lspType dtype) 
 {
-    if (!( 0 < channel && channel <= 3 )) 
+    if ( !(channel == 2) ) 
     {
-        biffAddf(VOL, "%s: invalid channel value %u", __func__, channel);
+        printf("%s: invalid channel value %u, Nrrd data should have 2 channels", __func__, channel);
         return 1;
     }
-    if (!( 0 < size0 && 0 < size1 && 0 < size2)) 
+    if ( !( size0>0 && size1>0 && size2>0) ) 
     {
-        biffAddf(VOL, "%s: invalid volume sizes (%u,%u,%u)",
-                 __func__, size0, size1, size2);
+        printf("%s: invalid volume sizes (%u,%u,%u)", __func__, size0, size1, size2);
         return 1;
     }
     if (airEnumValCheck(lspType_ae, dtype)) 
@@ -273,6 +290,94 @@ static int metaDataCheck(uint channel,
     return 0;
 }
 
+// helper function that loads the grid txt file and generate 4x4 NewItoW transformation
+static int processGrid (double* NewItoW, uint* boundaries, const std::string gridPath)
+{
+    // get the input stream reading the file
+    ifstream gridStream(gridPath);
+    string curLine;
+    // all the numbers we read from txt file
+    vector<double> allNumbers;
+
+    if (gridStream.is_open())
+    {
+        while (getline(gridStream, curLine))
+        {
+            // make the current string line a stream
+            istringstream curStream(curLine);
+
+            // parse the line into doubles
+            for (string s; curStream >> s;)
+            {
+                allNumbers.push_back(stod(s));
+            }
+        }
+    }
+    else
+    {
+        cout << "Unable to open file" << endl;
+        return 1;
+    }
+
+    // we should have 16 numbers
+    if (allNumbers.size() != 16)
+    {
+        cout << "Did not read 16 numbers from grid txt file, something was wrong" << endl;
+        return 1;
+    }
+    for (size_t i = 0; i < allNumbers.size(); i++)
+    {
+        cout << allNumbers[i] << " ";
+        if ((i+1)%4 == 0)
+        {
+            cout << endl;
+        }
+    }
+
+    // construct NewItoW
+    /*
+    general form from grid file (index in paranthesis)
+      3(0)     ox(1)     oy(2)    oz(3)
+    sz0(4)    e0x(5)    e0y(6)   e0z(7)
+    sz1(8)    e1x(9)    e1y(10)  e1z(11)
+    sz2(12)   e2x(13)   e2y(14)  e2z(15)
+
+    the index-to-world (index in the resampling grid index-space) transform：
+    e0x  e1x  e2x  ox
+    e0y  e1y  e2y  oy
+    e0z  e1z  e2z  oz
+    0    0   0    1
+    */
+    NewItoW[0] = allNumbers[5];
+    NewItoW[1] = allNumbers[9];
+    NewItoW[2] = allNumbers[13];
+    NewItoW[3] = allNumbers[1];
+
+    NewItoW[4] = allNumbers[6];
+    NewItoW[5] = allNumbers[10];
+    NewItoW[6] = allNumbers[14];
+    NewItoW[7] = allNumbers[2];
+
+    NewItoW[8] = allNumbers[7];
+    NewItoW[9] = allNumbers[11];
+    NewItoW[10] = allNumbers[15];
+    NewItoW[11] = allNumbers[3];
+
+    NewItoW[12] = 0.;
+    NewItoW[13] = 0.;
+    NewItoW[14] = 0.;
+    NewItoW[15] = 0.;
+
+    // get the boundary information
+    boundaries[0] = (uint)allNumbers[4];
+    boundaries[1] = (uint)allNumbers[8];
+    boundaries[2] = (uint)allNumbers[12];
+
+
+    return 0;
+    
+}
+
 // *************************** End of static functions ******************
 
 // initialize a new volume
@@ -281,7 +386,7 @@ lspVolume* lspVolumeNew()
     lspVolume *ret = MALLOC(1, lspVolume);
     assert(ret);
     ret->content = NULL;
-    ret->channel = ret->size[0] = ret->size[1] = 0;
+    ret->channel = ret->size[0] = ret->size[1] = ret->size[2] = 0;
     M4_SET_NAN(ret->ItoW);
     ret->dtype = lspTypeUnknown;
     ret->data.vd = NULL;
@@ -316,44 +421,49 @@ int lspVolumeAlloc(lspVolume *vol, uint channel,
     // some error handlings
     if (!vol) 
     {
-        biffAddf(VOL, "%s: got NULL pointer", __func__);
+        printf("%s: got NULL pointer", __func__);
         return 1;
     }
 
     if (metaDataCheck(channel, size0, size1, size2, NULL, dtype)) 
     {
-        biffAddf(VOL, "%s: problem with meta-data", __func__);
+        printf("%s: problem with meta-data", __func__);
         return 1;
     }
 
+    // if true, means that we need to allocate new memory, no re-use applicable
     int doalloc;
     if (!(vol->data.vd)) 
     {
-        // NULL data; definitely not already allocated
         doalloc = 1;
-    } 
+    }
+    // already allocated, but not the right size/type
     else if (vol->channel != channel
                || vol->size[0] != size0
                || vol->size[1] != size1
                || vol->size[2] != size2
                || vol->dtype != dtype) 
     {
-        // already allocated, but not the right size/type
+        // we know that vol->data.vd is not NULL, safely free it
         free(vol->data.vd);
         doalloc = 1;
     } 
-    else 
+    // re-use existing allocating
+    else
     {
-        // cool; re-use existing allocating
         doalloc = 0;
     }
+
+    // allocate new
     if (doalloc) 
     {
-        vol->data.vd = calloc(channel*size0*size1*size2, typeSize(dtype));
+        vol->data.vd = calloc(channel*size0*size1*size2, lsptypeSize(dtype));
+
+        // a little check
         if (!vol->data.vd) 
         {
-            biffAddf(VOL, "%s: failed to allocate %u * %u * %u %s", __func__,
-                     channel, size0, size1, airEnumStr(lspType_ae, dtype));
+            printf("%s: failed to allocate %u * %u * %u * %u %s", __func__,
+                     channel, size0, size1, size2, airEnumStr(lspType_ae, dtype));
             return 1;
         }
     }
@@ -364,6 +474,7 @@ int lspVolumeAlloc(lspVolume *vol, uint channel,
     vol->size[1] = size1;
     vol->size[2] = size2;
     vol->dtype = dtype;
+
     return 0;
 }
 
@@ -372,47 +483,36 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
 {
     if (!(vol && nin)) 
     {
-        printf("%s: got NULL pointer (%p,%p)\n", __func__, (void*)vol, (void*)nin);
-        biffAddf(VOL, "%s: got NULL pointer (%p,%p)\n", __func__,
-                 (void*)vol, (void*)nin);
+        printf("%s: got NULL pointer (%p, %p)\n", __func__, (void*)vol, (void*)nin);
         return 1;
     }
 
-    // check loaded images
-    if (lspNrrdVolumeCheck(nin)) 
+    // check loaded Nrrd data, see if it would fit into a volume
+    if (lspNrrdDataCheck(nin)) 
     {
-        printf("%s: given array doesn't conform to a lsp image\n", __func__);
-        biffAddf(VOL, "%s: given array doesn't conform to a lsp image", __func__);
+        printf("%s: given array doesn't conform to a lsp volume\n", __func__);
         return 1;
     }
     
-    uint dim, bidx;
-    if (nin->dim == 3) 
-    {
-        dim = 3;
-        bidx = 0;
-    } 
-    else 
-    {
-        dim = 4;
-        bidx = 1;
-    }
+    uint dim;
 
+    // change Nrrd type to lsp type
     lspType ltype = typeNRRDtoLSP(nin->type);
-    if (lspVolumeAlloc(vol, (3 == dim ? nin->axis[0].size : 1),
-                      nin->axis[bidx+0].size, nin->axis[bidx+1].size, nin->axis[bidx+2].size,
-                      ltype)) 
+    
+    // allocate memory for volume
+    if (lspVolumeAlloc(vol, nin->axis[0].size, nin->axis[1].size, nin->axis[2].size, nin->axis[3].size, ltype)) 
     {
         printf("%s: trouble allocating volume\n", __func__);
-        biffAddf(VOL, "%s: trouble allocating volume", __func__);
         return 1;
     }
 
+    // convert content (description)
     if (nin->content) 
     {
         vol->content = airStrdup(nin->content);
     }
 
+    // convert actual data
     uint elSize = (uint)nrrdElementSize(nin);
     uint elNum = (uint)nrrdElementNumber(nin);
 
@@ -430,44 +530,34 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
         }
     }
 
-    setItoW3D(vol->ItoW, nin, bidx);
+    // set the ItoW matrix
+    setItoW3D(vol->ItoW, nin);
 
     return 0;
 }
 
-// wrapping image into Nrrd
-int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol) 
+// converts volume into Nrrd
+int lspNrrdFromVolume(Nrrd *nout, const lspVolume *vol) 
 {
     if (!(nout && vol)) 
     {
-        biffAddf(VOL, "%s: got NULL pointer (%p,%p)\n", __func__,
-                 (void*)nout, (void*)vol);
+        printf("%s: got NULL pointer (%p, %p)\n", __func__, (void*)nout, (void*)vol);
         return 1;
     }
 
-    uint ndim, bidx;
-    size_t size[3];
-    
-    if (1 == vol->channel) 
+    if ( vol->channel != 2) 
     {
-        ndim = 3;
-        bidx = 0;
-    } 
-    else 
-    {
-        ndim = 4;
-        size[0] = vol->channel;
-        bidx = 1;
+        printf("%s: volume should have 2 channels, instead got %u\n", __func__, vol->channel);
+        return 1;
     }
 
-    size[bidx+0] = vol->size[1];
-    size[bidx+1] = vol->size[2];
-    size[bidx+2] = vol->size[3];
+    // channel + 3 spatial axis is 4 dimemsion
+    uint ndim = 4;
+    size_t size[4] = {vol->channel, vol->size[0], vol->size[1], vol->size[2]};
     
-    if (nrrdWrap_nva(nout, vol->data.vd, typeNRRDtoLSP(vol->dtype),
-                     ndim, size)) 
+    if ( nrrdWrap_nva(nout, vol->data.vd, typeLSPtoNRRD(vol->dtype), ndim, size) ) 
     {
-        biffMovef(VOL, NRRD, "%s: trouble wrapping data in nrrd", __func__);
+        printf("%s: trouble wrapping data in nrrd", __func__);
         return 1;
     }
 
@@ -484,17 +574,17 @@ int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol)
 
     // direction
     // x-direction
-    nout->axis[bidx+0].spaceDirection[0] = vol->ItoW[0];
-    nout->axis[bidx+0].spaceDirection[1] = vol->ItoW[4];
-    nout->axis[bidx+0].spaceDirection[2] = vol->ItoW[8];
+    nout->axis[1].spaceDirection[0] = vol->ItoW[0];
+    nout->axis[1].spaceDirection[1] = vol->ItoW[4];
+    nout->axis[1].spaceDirection[2] = vol->ItoW[8];
     // y-direction
-    nout->axis[bidx+1].spaceDirection[0] = vol->ItoW[1];
-    nout->axis[bidx+1].spaceDirection[1] = vol->ItoW[5];
-    nout->axis[bidx+1].spaceDirection[2] = vol->ItoW[9];
+    nout->axis[2].spaceDirection[0] = vol->ItoW[1];
+    nout->axis[2].spaceDirection[1] = vol->ItoW[5];
+    nout->axis[2].spaceDirection[2] = vol->ItoW[9];
     // z-direction
-    nout->axis[bidx+2].spaceDirection[0] = vol->ItoW[2];
-    nout->axis[bidx+2].spaceDirection[1] = vol->ItoW[6];
-    nout->axis[bidx+2].spaceDirection[2] = vol->ItoW[10];
+    nout->axis[2].spaceDirection[0] = vol->ItoW[2];
+    nout->axis[2].spaceDirection[1] = vol->ItoW[6];
+    nout->axis[2].spaceDirection[2] = vol->ItoW[10];
 
     // origin
     nout->spaceOrigin[0] = vol->ItoW[3];
@@ -502,9 +592,9 @@ int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol)
     nout->spaceOrigin[2] = vol->ItoW[11];
     
     // sampling method
-    nout->axis[bidx+0].center = nrrdCenterCell;
-    nout->axis[bidx+1].center = nrrdCenterCell;
-    nout->axis[bidx+2].center = nrrdCenterCell;
+    nout->axis[1].center = nrrdCenterCell;
+    nout->axis[2].center = nrrdCenterCell;
+    nout->axis[3].center = nrrdCenterCell;
 
     return 0;
 }
@@ -514,43 +604,43 @@ int lspVolumeNrrdWrap(Nrrd *nout, const lspVolume *vol)
   associated with 2D convolution, which is computing on a given volume "vol", 
   and a reconstruction kernel "kernel"
 */
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, /*const lspKernel* kern,*/const NrrdKernel* kernel, const double* vmm) 
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm) 
 {
     // some error checks
     if (!(vol && kernel)) 
     {
-        biffAddf(VOL, "%s: got NULL pointer (%p,%p)", __func__,
-                 (void*)vol, (void*)kernel);
+        printf("%s: got NULL pointer (%p,%p)", __func__, (void*)vol, (void*)kernel);
         return NULL;
     }
-    if (1 != vol->channel) 
+    if ( vol->channel != 2) 
     {
-        biffAddf(VOL, "%s: only works on scalar (not %u-channel) images",
-                 __func__, vol->channel);
+        printf("%s: only works on 2-channel (not %u-channel) volumes", __func__, vol->channel);
         return NULL;
     }
     
-    lspCtx3D *ctx = MALLOC(1, lspCtx3D);
-    assert(ctx);
-    ctx->verbose = 0;
-    ctx->volume = vol;
-    ctx->kern = kernel;
-    ctx->volMinMax[0] = vmm ? vmm[0] : lspNan(0);
-    ctx->volMinMax[1] = vmm ? vmm[1] : lspNan(0);
-    ctx->volMinMax[2] = vmm ? vmm[2] : lspNan(0);
+    // allocate memory
+    lspCtx3D *ctx3D = MALLOC(1, lspCtx3D);
+    assert(ctx3D);
+    ctx3D->verbose = 0;
+    ctx3D->volume = vol;
+    ctx3D->kern = kernel;
+    ctx3D->volMinMax[0] = vmm ? vmm[0] : lspNan(0);
+    ctx3D->volMinMax[1] = vmm ? vmm[1] : lspNan(0);
+    ctx3D->volMinMax[2] = vmm ? vmm[2] : lspNan(0);
 
 
-    // copy image->ItoW for consistancy
-    M4_COPY(ctx->ItoW, ctx->volume->ItoW);
+    // copy vol->ItoW for easier access and consistancy
+    M4_COPY(ctx3D->ItoW, ctx3D->volume->ItoW);
+
     // convert wpos to index-space
     // sets 4x4 WtoI to inverse of 4x4 ctx->image->ItoW, using tmp variable TMP
     double TMP;
-    M4_INVERSE(ctx->WtoI, ctx->volume->ItoW, TMP);
+    M4_INVERSE(ctx3D->WtoI, ctx3D->volume->ItoW, TMP);
 
-    // change gradient sum from index to world space (Equation 4.82 in FSV)
-    //M23_INVERSE_TRANSPOSE(ctx->ItoW_d, ctx->image->ItoW, TMP);
+    // read the grid.txt and fill in NewItoW, which is the transformation from cropped index space to world
+    processGrid(ctx3D->NewItoW, ctx3D->boundaries, gridPath);
 
-    return ctx;
+    return ctx3D;
 }
 
 // free a lspCtx3D
@@ -563,7 +653,3 @@ lspCtx3D* lspCtx3DNix(lspCtx3D* ctx)
     }
     return NULL;
 }
-
-// #ifdef __cplusplus
-// }
-// #endif

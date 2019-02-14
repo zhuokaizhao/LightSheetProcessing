@@ -22,10 +22,11 @@
 */
 typedef enum 
 {
-    lspTypeUnknown=0, // (0) (no type known)
-    lspTypeUChar,     // (1) 1-byte unsigned char
-    lspTypeDouble,    // (2)
-    lspTypeUShort      // (3)
+    lspTypeUnknown=0,   // (0) (no type known)
+    lspTypeUChar,       // (1) 1-byte unsigned char
+    lspTypeShort,       // (2)
+    lspTypeUShort,      // (3)
+    lspTypeDouble       // (4)
 } lspType;
 
 /*
