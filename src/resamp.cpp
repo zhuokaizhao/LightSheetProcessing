@@ -534,8 +534,19 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
                 {
-                    // 
-                    newVolume->data.dl[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
+                    if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
+                    {
+                        newVolume->data.s[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
+                    }
+                    else if (ctx3D->volume->dtype == lspTypeDouble)
+                    {
+                        newVolume->data.dl[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
+                    }
+                    else
+                    {
+                        cout << "nrrdResample3D: error assigning convolution result to the new volume, unknown data type" << endl;
+                        return;
+                    }
                 }
             }
         }
