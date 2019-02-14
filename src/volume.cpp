@@ -129,7 +129,6 @@ static int ItoW3DCheck(const double *ItoW)
     if (!ItoW) 
     {
         printf("%s: got NULL pointer\n", __func__);
-        biffAddf(VOL, "%s: got NULL pointer", __func__);
         return 1;
     }
     
@@ -141,11 +140,7 @@ static int ItoW3DCheck(const double *ItoW)
                  ItoW[4], ItoW[5], ItoW[6], ItoW[7],
                  ItoW[8], ItoW[9], ItoW[10], ItoW[11],
                  ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
-        biffAddf(VOL, "%s: matrix is not all set: [%g,%g,%g,%g; %g,%g,%g,%g; %g,%g,%g,%g; %g,%g,%g,%g]\n", __func__,
-                 ItoW[0], ItoW[1], ItoW[2], ItoW[3],
-                 ItoW[4], ItoW[5], ItoW[6], ItoW[7],
-                 ItoW[8], ItoW[9], ItoW[10], ItoW[11],
-                 ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
+
         return 1;
     }
 
@@ -156,8 +151,6 @@ static int ItoW3DCheck(const double *ItoW)
            1 == ItoW[15] )) 
     {
         printf("%s: ItoW matrix last row [%g,%g,%g, %g] not [0,0,0,1]\n", __func__, ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
-        biffAddf(VOL, "%s: ItoW matrix last row [%g,%g,%g,%g] not [0,0,0,1]",
-                 __func__, ItoW[12], ItoW[13], ItoW[14], ItoW[15]);
         return 1;
     }
 
@@ -263,10 +256,7 @@ static int lspNrrdDataCheck(const Nrrd *nin)
 }
 
 // check the data content
-static int metaDataCheck(uint channel,
-               uint size0, uint size1, uint size2,
-               const double *ItoW,
-               lspType dtype) 
+static int metaDataCheck(uint channel, uint size0, uint size1, uint size2, const double *ItoW, lspType dtype) 
 {
     if ( !(channel == 2) ) 
     {
@@ -280,12 +270,12 @@ static int metaDataCheck(uint channel,
     }
     if (airEnumValCheck(lspType_ae, dtype)) 
     {
-        biffAddf(VOL, "%s: invalid type %d", __func__, dtype);
+        printf("%s: invalid type %d", __func__, dtype);
         return 1;
     }
     if (ItoW && ItoW3DCheck(ItoW)) 
     { // only call ItoWCheck() on non-NULL ItoW
-        biffAddf(VOL, "%s: problem with ItoW matrix", __func__);
+        printf("%s: problem with ItoW matrix", __func__);
         return 1;
     }
     return 0;
@@ -415,20 +405,18 @@ lspVolume* lspVolumeNix(lspVolume* vol)
   Allocates a volume. Re-uses an existing data allocation when
   possible.  Returns 1 and sets a biff message in case of problems
 */
-int lspVolumeAlloc(lspVolume *vol, uint channel,
-              uint size0, uint size1, uint size2,
-              lspType dtype) 
+int lspVolumeAlloc(lspVolume *vol, uint channel, uint size0, uint size1, uint size2, lspType dtype) 
 {
     // some error handlings
     if (!vol) 
     {
-        printf("%s: got NULL pointer", __func__);
+        printf("%s: got NULL pointer\n", __func__);
         return 1;
     }
 
     if (metaDataCheck(channel, size0, size1, size2, NULL, dtype)) 
     {
-        printf("%s: problem with meta-data", __func__);
+        printf("%s: problem with meta-data\n", __func__);
         return 1;
     }
 
