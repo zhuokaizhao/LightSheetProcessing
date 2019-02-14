@@ -65,8 +65,8 @@ typedef struct
     // copy of world-space pos passed to lspConvoEval
     double wpos[3], ipos[3];   
 
-    // convolution result
-    double value;       
+    // convolution result (2 channel)
+    double value[2];       
 
     // homogeneous coordinate mapping from world-space to old volume index space
     double ItoW[16];

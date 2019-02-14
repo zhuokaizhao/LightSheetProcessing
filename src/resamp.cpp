@@ -457,7 +457,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                     }
                     
                     // // we are inside, and we have two channels
-                    for (int c = 0; c < ctx->volume->channel; c++)
+                    for (int c = 0; c < ctx3D->volume->channel; c++)
                     {
                         // compute data index
                         uint data_index = (i3+n3)*(ctx3D->volume->size[2]*ctx3D->volume->size[1]) + (i2+n2)*(ctx3D->volume->size[0]) + n1 + i1 + c;
