@@ -503,24 +503,29 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
     {
         vol->content = airStrdup(nin->content);
     }
+    else
+    {
+        printf("%s: Input Nrrd data does not have content\n", __func__);
+        return 1;
+    }
 
     // convert actual data
     uint elSize = (uint)nrrdElementSize(nin);
     uint elNum = (uint)nrrdElementNumber(nin);
 
-    if (lspTypeUChar == ltype || nrrdTypeDouble == nin->type) 
-    {
-        memcpy(vol->data.vd, nin->data, elSize*elNum);
-    }
-    // else not uchar, so double, and have to check it matches nrrd
-    else 
-    {
+    // if (lspTypeUChar == ltype || nrrdTypeDouble == nin->type) 
+    // {
+    //     memcpy(vol->data.vd, nin->data, elSize*elNum);
+    // }
+    // // else not uchar, so double, and have to check it matches nrrd
+    // else 
+    // {
         double (*lup)(const void *, size_t) = nrrdDLookup[nin->type];
-        for (uint ii=0; ii<elNum; ii++) 
+        for (uint i = 0; i < elNum; i++) 
         {
-            vol->data.dl[ii] = lup(nin->data, ii);
+            vol->data.dl[i] = lup(nin->data, i);
         }
-    }
+    // }
 
     // set the ItoW matrix
     setItoW3D(vol->ItoW, nin);
