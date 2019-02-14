@@ -596,7 +596,7 @@ void Resamp::main()
         if (lspVolumeAlloc(volume_new, volume->channel, ctxBox->boundaries[0], ctxBox->boundaries[1], ctxBox->boundaries[2], volume->dtype)) 
         {
             printf("%s: trouble allocating volume\n", __func__);
-            return 1;
+            return;
         }
         nrrdResample3D(volume_new, ctxBox, mop);
         cout << "Finished resampling with Box kernel" << endl;
