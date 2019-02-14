@@ -516,6 +516,7 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
                 cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
                 ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
+                cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
                 {
                     newVolume->data.dl[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
