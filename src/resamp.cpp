@@ -472,7 +472,22 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                         uint data_index = (i3+n3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (i2+n2)*(ctx3D->volume->size[0]) + n1 + i1 + c;
                         cout << "current data_index is " << data_index << endl;
 
-                        sum[c] = sum[c] + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        // we do have different types of inputs
+                        if (ctx3D->volume->dtype == lspTypeUShort)
+                        {
+                            sum[c] = sum[c] + ctx3D->volume->data.us[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        }
+                        // we converted unsigned short to short
+                        else if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
+                        {
+                            sum[c] = sum[c] + ctx3D->volume->data.s[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        }
+                        else if ()
+                        {
+                            sum[c] = sum[c] + ctx3D->volume->data.us[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        }
+                        else if ()
+                        
                         cout << "sum is " << sum[c] << endl;
                     }
                 }
@@ -519,12 +534,12 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
                 {
+                    // 
                     newVolume->data.dl[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
                 }
             }
         }
     }
-
 }
 
 // main function

@@ -545,21 +545,23 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
     // cout << "Nrrd data element size is " << elSize << endl;
     // cout << "Nrrd data element number is " << elNum << endl;
 
-    if (lspTypeUChar == ltype 
-        || nrrdTypeShort == nin->type 
-        || nrrdTypeUShort == nin->type
-        || nrrdTypeDouble == nin->type) 
+    if (ltype == lspTypeUChar) 
     {
         memcpy(vol->data.vd, nin->data, elSize*elNum);
     }
-    // else not uchar, so double, and have to check it matches nrrd
-    else 
+    // we want to have unsigned short become short since negativity would be useful later
+    else if (ltype == lspTypeUShort || ltype == lspTypeShort)
     {
-        double (*lup)(const void *, size_t) = nrrdDLookup[nin->type];
-        for (uint i = 0; i < elNum; i++) 
-        {
-            vol->data.dl[i] = lup(nin->data, i);
-        }
+        memcpy(vol->data.s, nin->data, elSize*elNum);
+    }
+    else if (ltype == lspTypeDouble)
+    {
+        memcpy(vol->data.dl, nin->data, elSize*elNum);
+    }
+    else
+    {
+        cout << "lspVolumeFromNrrd: Unknown data type" << endl;
+        return 1;
     }
 
     // set the ItoW matrix

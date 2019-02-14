@@ -43,7 +43,7 @@ typedef struct
     {
         void *vd;
         unsigned char *uc;
-        unsigned short *us;
+        //unsigned short *us; we don't want unsigned short as data type, would be converted to signed short
         short *s;
         double *dl;
     } data;
