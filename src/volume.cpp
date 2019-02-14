@@ -512,20 +512,26 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
     // convert actual data
     uint elSize = (uint)nrrdElementSize(nin);
     uint elNum = (uint)nrrdElementNumber(nin);
+    cout << "Nrrd data element size is " << elSize << endl;
+    cout << "Nrrd data element number is " << elNum << endl;
 
-    // if (lspTypeUChar == ltype || nrrdTypeDouble == nin->type) 
-    // {
-    //     memcpy(vol->data.vd, nin->data, elSize*elNum);
-    // }
-    // // else not uchar, so double, and have to check it matches nrrd
-    // else 
-    // {
+    if (lspTypeUChar == ltype 
+        || nrrdTypeShort == nin->type 
+        || nrrdTypeUShort == nin->type
+        || nrrdTypeDouble == nin->type) 
+    {
+        cout << 1 << endl;
+        memcpy(vol->data.vd, nin->data, elSize*elNum);
+    }
+    // else not uchar, so double, and have to check it matches nrrd
+    else 
+    {
         double (*lup)(const void *, size_t) = nrrdDLookup[nin->type];
         for (uint i = 0; i < elNum; i++) 
         {
             vol->data.dl[i] = lup(nin->data, i);
         }
-    // }
+    }
 
     // set the ItoW matrix
     setItoW3D(vol->ItoW, nin);
