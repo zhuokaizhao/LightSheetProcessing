@@ -99,21 +99,21 @@ static void setItoW3D(double *ItoW, const Nrrd *nin)
        12 13 14 15 */
 
     // first column
-    ItoW[0] = (double)(nin->axis[0].spaceDirection[0]);
-    ItoW[4] = (double)(nin->axis[0].spaceDirection[1]);
-    ItoW[8] = (double)(nin->axis[0].spaceDirection[2]);
+    ItoW[0] = (double)(nin->axis[1].spaceDirection[0]);
+    ItoW[4] = (double)(nin->axis[1].spaceDirection[1]);
+    ItoW[8] = (double)(nin->axis[1].spaceDirection[2]);
     ItoW[12] = 0;
 
     // second column
-    ItoW[1] = (double)(nin->axis[1].spaceDirection[0]);
-    ItoW[5] = (double)(nin->axis[1].spaceDirection[1]);
-    ItoW[9] = (double)(nin->axis[1].spaceDirection[2]);
+    ItoW[1] = (double)(nin->axis[2].spaceDirection[0]);
+    ItoW[5] = (double)(nin->axis[2].spaceDirection[1]);
+    ItoW[9] = (double)(nin->axis[2].spaceDirection[2]);
     ItoW[13] = 0;
 
     // third column
-    ItoW[2] = (double)(nin->axis[2].spaceDirection[0]);
-    ItoW[6] = (double)(nin->axis[2].spaceDirection[1]);
-    ItoW[10] = (double)(nin->axis[2].spaceDirection[2]);
+    ItoW[2] = (double)(nin->axis[3].spaceDirection[0]);
+    ItoW[6] = (double)(nin->axis[3].spaceDirection[1]);
+    ItoW[10] = (double)(nin->axis[3].spaceDirection[2]);
     ItoW[14] = 0;
 
     // fourth column
@@ -246,7 +246,7 @@ static int lspNrrdDataCheck(const Nrrd *nin)
         printf("%s: problem with ItoW\n", __func__);
         return 1;
     }
-
+    
     // make sure that all the sampling are center sampling
     // axis 1 2 3 are the three spatial axis (axis 0 is the channel)
     if (!( nin->axis[1].center == nrrdCenterCell
