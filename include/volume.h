@@ -6,6 +6,7 @@
 #define LSP_VOLUME_H
 
 #include <stdio.h>
+#include <string>
 #include <teem/air.h>
 #include <teem/biff.h>
 #include <teem/hest.h>
