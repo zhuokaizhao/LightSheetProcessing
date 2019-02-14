@@ -521,13 +521,15 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
     // evaluate at each world-space position
     for (uint zi = 0; zi < sizeZ; zi++)
     {
+        double percentage = 100.0*(double)zi/(double)sizeZ;
+        cout << percentage << "percents of the volume have been done" << endl;
         for (uint yi = 0; yi < sizeY; yi++)
         {
             for (uint xi = 0; xi < sizeX; xi++)
             {
                 // convert the new-volume index space to world
                 uint new_ipos[4] = {xi, yi, zi, 1};
-                cout << "Current newVolume index space is (" << xi << ", " << yi << ", " << zi << ")" << endl;
+                // cout << "Current newVolume index space is (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 double wpos[4];
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
                 // cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
@@ -603,6 +605,8 @@ void Resamp::main()
             printf("%s: trouble allocating volume\n", __func__);
             return;
         }
+
+        // start 3D convolution
         if ( nrrdResample3D(volume_new, ctxBox, mop) )
         {
             printf("%s: trouble computing 3D convolution\n", __func__);
