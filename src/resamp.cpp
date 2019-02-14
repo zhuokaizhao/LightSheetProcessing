@@ -423,7 +423,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     cout << "alpha3 is " << alpha3 << endl;
 
     // separable convolution
-    double sum = 0;
+    double sum[2] = {0, 0};
 
     // initialize kernels
     double k1[support], k2[support], k3[support];
@@ -455,13 +455,16 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                         cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
                         continue;
                     }
+                    
+                    // // we are inside, and we have two channels
+                    for (int c = 0; c < ctx->volume->channel; c++)
+                    {
+                        // compute data index
+                        uint data_index = (i3+n3)*(ctx3D->volume->size[2]*ctx3D->volume->size[1]) + (i2+n2)*(ctx3D->volume->size[0]) + n1 + i1 + c;
+                        cout << "current data_index is " << data_index << endl;
 
-                    // we are inside!
-                    // compute data index
-                    uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
-                    cout << "current data_index is " << data_index << endl;
-
-                    sum = sum + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                        sum[c] = sum[c] + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
+                    }
                 }
             }
         }
