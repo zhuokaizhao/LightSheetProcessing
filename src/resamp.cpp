@@ -384,10 +384,12 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 
     // get the support of kernel
     int support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
+    cout << "Kernel support is " << support << endl;
 
     // even kernel
     if ( isEven(support) )
     {
+        cout << "Even support" << endl;
         // n1 = floor(x1), n2 = floor(x2), n3 = floor(n3)
         n1 = floor(ctx3D->ipos[0]);
         n2 = floor(ctx3D->ipos[1]);
@@ -400,6 +402,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // odd kernel
     else
     {
+        cout << "Odd support" << endl;
         // n1 = floor(x1+0.5), n2 = floor(x2+0.5), n3 = floor(x3+0.5)
         n1 = floor(ctx3D->ipos[0] + 0.5);
         n2 = floor(ctx3D->ipos[1] + 0.5);
@@ -415,6 +418,9 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     alpha1 = ctx3D->ipos[0] - n1;
     alpha2 = ctx3D->ipos[1] - n2;
     alpha3 = ctx3D->ipos[2] - n3;
+    cout << "alpha1 is " << alpha1 << endl;
+    cout << "alpha2 is " << alpha2 << endl;
+    cout << "alpha3 is " << alpha3 << endl;
 
     // separable convolution
     double sum = 0;
@@ -422,13 +428,14 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // initialize kernels
     double k1[support], k2[support], k3[support];
 
-    // precompute two vectors of kernel evaluations to save time
+    // precompute three vectors of kernel evaluations to save time
     for (int i = lower; i <= upper; i++)
     {
         k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
         k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
         k3[i - lower] = kernelSpec->kernel->eval1_d(alpha3 - i, kernelSpec->parm);
     }
+    cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
 
     // compute via three nested loops over the 3D-kernel support
     // make sure volume is not empty
@@ -445,13 +452,15 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                         || (i2 + n2 < 0 || i2 + n2 >= (int)ctx3D->volume->size[1])
                         || (i3 + n3 < 0 || i3 + n3 >= (int)ctx3D->volume->size[2]) )
                     {
+                        cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
                         continue;
                     }
 
                     // we are inside!
                     // compute data index
                     uint data_index = (n3+i3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (n2+i2)*(ctx3D->volume->size[0]) + n1 + i1;
-                    // not outside
+                    cout << "current data_index is " << data_index << endl;
+
                     sum = sum + ctx3D->volume->data.dl[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
                 }
             }
