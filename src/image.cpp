@@ -18,17 +18,19 @@ const char *lspBiffKey = "lsp";
    integers (C enum values) and strings */
 static const airEnum _lspType_ae = 
 {
-    "pixel value type",
-    2,
-    (const char*[]) { "(unknown_type)", "uchar",      "double" },
-    (int [])        {lspTypeUnknown,    lspTypeUChar, lspTypeDouble},
+    "pixel value type", //name
+    4, // number of valid types
+    (const char*[]) { "(unknown_type)", "uchar",      "short",      "unsigned short",   "double" },
+    (int [])        {lspTypeUnknown,    lspTypeUChar, lspTypeShort, lspTypeUShort,      lspTypeDouble},
     (const char*[]) {
         "unknown type",
         "unsigned char",
+        "short",
+        "unsigned short",
         "double"
     },
     NULL, NULL,
-    AIR_FALSE
+    AIR_FALSE // if require case matching on strings
 };
 const airEnum *const lspType_ae = &_lspType_ae;
 

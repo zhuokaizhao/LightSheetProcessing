@@ -496,6 +496,7 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
         printf("%s: trouble allocating volume\n", __func__);
         return 1;
     }
+    cout << "Volume allocated successfully" << endl;
 
     // convert content (description)
     if (nin->content) 
