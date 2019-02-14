@@ -374,6 +374,33 @@ static int processGrid (double* NewItoW, uint* boundaries, const std::string gri
     
 }
 
+static void m4_affine_inv(double inv[16], const double mat[16]) 
+{
+    // get the 3x3 matrix R to be the upper diagonal 3x3 sub-matrix of 4x4 matrix mat
+    double R[9];
+    M34_UPPER(R, mat);
+    // get 3-vector t from mat
+    double t[3];
+    V3_SET(t, mat[3], mat[7], mat[11]);
+
+    // take the inverse of R
+    double R_inv[9];
+    double TMP;
+    M3_INVERSE(R_inv, R, TMP);
+    // compute the 3-vector R_inv * t
+    double R_invT[3];
+    MV3_MUL(R_invT, R_inv, t);
+
+    // now we assemble the output
+    M4_SET(inv, R_inv[0], R_inv[1], R_inv[2], -R_invT[0],
+                R_inv[3], R_inv[4], R_inv[5], -R_invT[1],
+                R_inv[6], R_inv[7], R_inv[8], -R_invT[2],
+                0, 0, 0, 1);
+
+    // ^'^'^'^'^'^'^'^'^'^'^'^'^'^'^  end student code (10L in ref)
+    return;
+}
+
 // *************************** End of static functions ******************
 
 // initialize a new volume
@@ -638,9 +665,8 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const Nr
     M4_COPY(ctx3D->ItoW, ctx3D->volume->ItoW);
 
     // convert wpos to index-space
-    // sets 4x4 WtoI to inverse of 4x4 ctx->image->ItoW, using tmp variable TMP
-    double TMP;
-    M4_INVERSE(ctx3D->WtoI, ctx3D->volume->ItoW, TMP);
+    // sets 4x4 WtoI to inverse of 4x4 ctx->ItoW
+    m4_affine_inv(ctx3D->WtoI, ctx3D->ItoW);
 
     // read the grid.txt and fill in NewItoW, which is the transformation from cropped index space to world
     processGrid(ctx3D->NewItoW, ctx3D->boundaries, gridPath);
