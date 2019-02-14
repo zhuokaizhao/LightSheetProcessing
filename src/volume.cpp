@@ -268,11 +268,11 @@ static int metaDataCheck(uint channel, uint size0, uint size1, uint size2, const
         printf("%s: invalid volume sizes (%u, %u, %u)\n", __func__, size0, size1, size2);
         return 1;
     }
-    // if (airEnumValCheck(lspType_ae, dtype)) 
-    // {
-    //     printf("%s: invalid type %d\n", __func__, dtype);
-    //     return 1;
-    // }
+    if (airEnumValCheck(lspType_ae, dtype)) 
+    {
+        printf("%s: invalid type %d\n", __func__, dtype);
+        return 1;
+    }
     if (ItoW && ItoW3DCheck(ItoW)) 
     { // only call ItoWCheck() on non-NULL ItoW
         printf("%s: problem with ItoW matrix\n", __func__);
