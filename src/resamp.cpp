@@ -473,12 +473,8 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                         cout << "current data_index is " << data_index << endl;
 
                         // we do have different types of inputs
-                        if (ctx3D->volume->dtype == lspTypeUShort)
-                        {
-                            sum[c] = sum[c] + ctx3D->volume->data.us[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
-                        }
                         // we converted unsigned short to short
-                        else if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
+                        if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                         {
                             sum[c] = sum[c] + ctx3D->volume->data.s[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
                         }
