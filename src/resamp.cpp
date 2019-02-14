@@ -33,6 +33,7 @@ void setup_resamp(CLI::App &app)
     sub->add_option("-g, --kernel", opt->grid_path, "Path that includes the grid file")->required();
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
+    sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
 
     sub->set_callback([opt]() 
     { 
@@ -365,7 +366,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 
     // 4-vector ipos = 4x4 matrix WtoI * 4-vector wpos
     MV4_MUL(ipos, ctx3D->WtoI, wpos);
-    cout << "Corresponding index space in old Volume is (" << ipos[0] << ", " << ipos[1] << ", " << ipos[2] << ")" << endl;
+    // cout << "Corresponding index space in old Volume is (" << ipos[0] << ", " << ipos[1] << ", " << ipos[2] << ")" << endl;
 
     // set this to ctx
     ctx3D->ipos[0] = ipos[0];
@@ -385,12 +386,12 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 
     // get the support of kernel
     int support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
-    cout << "Kernel support is " << support << endl;
+    // cout << "Kernel support is " << support << endl;
 
     // even kernel
     if ( isEven(support) )
     {
-        cout << "Even support" << endl;
+        // cout << "Even support" << endl;
         // n1 = floor(x1), n2 = floor(x2), n3 = floor(n3)
         n1 = floor(ctx3D->ipos[0]);
         n2 = floor(ctx3D->ipos[1]);
@@ -403,7 +404,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // odd kernel
     else
     {
-        cout << "Odd support" << endl;
+        // cout << "Odd support" << endl;
         // n1 = floor(x1+0.5), n2 = floor(x2+0.5), n3 = floor(x3+0.5)
         n1 = floor(ctx3D->ipos[0] + 0.5);
         n2 = floor(ctx3D->ipos[1] + 0.5);
@@ -414,18 +415,18 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         upper = (support - 1) / 2;
     }
 
-    cout << "n1 is " << n1 << endl;
-    cout << "n2 is " << n2 << endl;
-    cout << "n3 is " << n3 << endl;
+    // cout << "n1 is " << n1 << endl;
+    // cout << "n2 is " << n2 << endl;
+    // cout << "n3 is " << n3 << endl;
 
     // calculate alpha based on n1, n2 and n3
     double alpha1, alpha2, alpha3;
     alpha1 = ctx3D->ipos[0] - n1;
     alpha2 = ctx3D->ipos[1] - n2;
     alpha3 = ctx3D->ipos[2] - n3;
-    cout << "alpha1 is " << alpha1 << endl;
-    cout << "alpha2 is " << alpha2 << endl;
-    cout << "alpha3 is " << alpha3 << endl;
+    // cout << "alpha1 is " << alpha1 << endl;
+    // cout << "alpha2 is " << alpha2 << endl;
+    // cout << "alpha3 is " << alpha3 << endl;
 
     // separable convolution
     double sum[2] = {0, 0};
@@ -440,11 +441,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
         k3[i - lower] = kernelSpec->kernel->eval1_d(alpha3 - i, kernelSpec->parm);
     }
-    cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
+    // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
 
-    cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
-    cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
-    cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
+    // cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
+    // cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
+    // cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
 
     // compute via three nested loops over the 3D-kernel support
     // make sure volume is not empty
@@ -461,7 +462,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                         || (i2 + n2 < 0 || i2 + n2 >= (int)ctx3D->volume->size[1])
                         || (i3 + n3 < 0 || i3 + n3 >= (int)ctx3D->volume->size[2]) )
                     {
-                        cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
+                        // cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
                         continue;
                     }
                     
@@ -470,7 +471,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                     {
                         // compute data index
                         uint data_index = (i3+n3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]) + (i2+n2)*(ctx3D->volume->size[0]) + n1 + i1 + c;
-                        cout << "current data_index is " << data_index << endl;
+                        // cout << "current data_index is " << data_index << endl;
 
                         // we do have different types of inputs
                         // we converted unsigned short to short
@@ -488,7 +489,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                             return;
                         }
                         
-                        cout << "sum is " << sum[c] << endl;
+                        // cout << "sum is " << sum[c] << endl;
                     }
                 }
             }
@@ -507,7 +508,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 }
 
 // function that performs 3D resampling (convolution)
-void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
+int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
 {
     // input volume
     const lspVolume* volume = ctx3D->volume;
@@ -529,9 +530,9 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 cout << "Current newVolume index space is (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 double wpos[4];
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
-                cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
+                // cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
                 ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
-                cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
+                // cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
                 {
                     if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
@@ -545,12 +546,14 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                     else
                     {
                         cout << "nrrdResample3D: error assigning convolution result to the new volume, unknown data type" << endl;
-                        return;
+                        return 1;
                     }
                 }
             }
         }
     }
+
+    return 0;
 }
 
 // main function
@@ -572,6 +575,7 @@ void Resamp::main()
         if ( nrrdAxesPermute(nin_permuted, nin, permute) )
         {
             cout << "nrrdAxesPermute failed, program stops" << endl;
+            return;
         }
         cout << "Finished permutation" << endl;
 
@@ -581,6 +585,7 @@ void Resamp::main()
         if ( lspVolumeFromNrrd(volume, nin_permuted) )
         {
             cout << "lspVolumeFromNrrd failed, program stops" << endl;
+            return;
         }
         cout << "Finished converting Nrrd data to lspVolume" << endl;
 
@@ -598,7 +603,11 @@ void Resamp::main()
             printf("%s: trouble allocating volume\n", __func__);
             return;
         }
-        nrrdResample3D(volume_new, ctxBox, mop);
+        if ( nrrdResample3D(volume_new, ctxBox, mop) )
+        {
+            printf("%s: trouble computing 3D convolution\n", __func__);
+            return;
+        }
         cout << "Finished resampling with Box kernel" << endl;
 
         // // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
@@ -608,8 +617,19 @@ void Resamp::main()
         // // perform the 3D sampling (convolution)
         // // resulting volume_ctmr
         // lspVolume* volume_new = lspVolumeNew();
+        // allocate memory for the new volume, with sizes being the region of interest sizes
+        // if (lspVolumeAlloc(volume_new, volume->channel, ctxCtmr->boundaries[0], ctxCtmr->boundaries[1], ctxCtmr->boundaries[2], volume->dtype)) 
+        // {
+        //     printf("%s: trouble allocating volume\n", __func__);
+        //     return;
+        // }
         // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
-        // nrrdResample3D(volume_new, ctxCtmr, mop);
+        // if ( nrrdResample3D(volume_new, ctxCtmr, mop) )
+        // {
+        //     printf("%s: trouble computing 3D convolution\n", __func__);
+        //     return;
+        // }
+        // cout << "Finished resampling with CatmullRom kernel" << endl;
 
         // change the volume back to Nrrd file for projection
         Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
