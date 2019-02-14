@@ -355,7 +355,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     ctx3D->wpos[0] = xw;
     ctx3D->wpos[1] = yw;
     ctx3D->wpos[2] = zw;
-    ctx3D->value = lspNan(0);
+    ctx3D->value = {lspNan(0), lspNan(0)};
 
     // first convert wpos to ipos, where ipos are x1, x2 and x3 as in FSV
     // MV4_MUL only takes 4-vector
@@ -502,7 +502,10 @@ void nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
                 cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
                 ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
-                newVolume->data.dl[zi*sizeZ + yi*sizeY + xi] = ctx3D->value;
+                for (int c = 0; c < ctx3D->volume->channel; c++)
+                {
+                    newVolume->data.dl[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
+                }
             }
         }
     }
