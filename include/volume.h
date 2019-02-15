@@ -34,6 +34,9 @@ typedef struct
     
     // type of the data; determines which of the union members below to use
     lspType dtype;
+
+    // check if convolution is inside
+    int inside = 1;
     
     // union for the pointer to the image data
     // the pointer values are all the same; this is just to avoid casting

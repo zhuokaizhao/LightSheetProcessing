@@ -415,57 +415,60 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         upper = (support - 1) / 2;
     }
 
+    for (int i = lower; i <= upper; i++)
+    {
+        if ( (i + n1 < 0 || i + n1 >= (int)ctx3D->volume->size[0])
+            || (i + n2 < 0 || i + n2 >= (int)ctx3D->volume->size[1])
+            || (i + n3 < 0 || i + n3 >= (int)ctx3D->volume->size[2]) )
+        {
+            // cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
+            ctx3D->inside = 0;
+            cout << "outside" << endl;
+        }
+    }
+
     // cout << "n1 is " << n1 << endl;
     // cout << "n2 is " << n2 << endl;
     // cout << "n3 is " << n3 << endl;
 
-    // calculate alpha based on n1, n2 and n3
-    double alpha1, alpha2, alpha3;
-    alpha1 = ctx3D->ipos[0] - n1;
-    alpha2 = ctx3D->ipos[1] - n2;
-    alpha3 = ctx3D->ipos[2] - n3;
-    // cout << "alpha1 is " << alpha1 << endl;
-    // cout << "alpha2 is " << alpha2 << endl;
-    // cout << "alpha3 is " << alpha3 << endl;
-
-    // separable convolution
-    double sum[2] = {0, 0};
-
-    // initialize kernels
-    double k1[support], k2[support], k3[support];
-
-    // precompute three vectors of kernel evaluations to save time
-    for (int i = lower; i <= upper; i++)
+    // do all these only when inside
+    if ( ctx3D->volume != NULL && ctx3D->inside == 1 )
     {
-        k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
-        k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
-        k3[i - lower] = kernelSpec->kernel->eval1_d(alpha3 - i, kernelSpec->parm);
-    }
-    // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
+        // calculate alpha based on n1, n2 and n3
+        double alpha1, alpha2, alpha3;
+        alpha1 = ctx3D->ipos[0] - n1;
+        alpha2 = ctx3D->ipos[1] - n2;
+        alpha3 = ctx3D->ipos[2] - n3;
+        // cout << "alpha1 is " << alpha1 << endl;
+        // cout << "alpha2 is " << alpha2 << endl;
+        // cout << "alpha3 is " << alpha3 << endl;
 
-    // cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
-    // cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
-    // cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
+        // separable convolution
+        double sum[2] = {0, 0};
 
-    // compute via three nested loops over the 3D-kernel support
-    // make sure volume is not empty
-    if (ctx3D->volume != NULL)
-    {
+        // initialize kernels
+        double k1[support], k2[support], k3[support];
+
+        // precompute three vectors of kernel evaluations to save time
+        for (int i = lower; i <= upper; i++)
+        {
+            k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
+            k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
+            k3[i - lower] = kernelSpec->kernel->eval1_d(alpha3 - i, kernelSpec->parm);
+        }
+        // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
+        // cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
+        // cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
+        // cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
+
+        // compute via three nested loops over the 3D-kernel support
         // faster axis first (i1 fast)
         for (int i3 = lower; i3 <= upper; i3++)
         {
             for (int i2 = lower; i2 <= upper; i2++)
             {
                 for (int i1 = lower; i1 <= upper; i1++)
-                {
-                    if ( (i1 + n1 < 0 || i1 + n1 >= (int)ctx3D->volume->size[0])
-                        || (i2 + n2 < 0 || i2 + n2 >= (int)ctx3D->volume->size[1])
-                        || (i3 + n3 < 0 || i3 + n3 >= (int)ctx3D->volume->size[2]) )
-                    {
-                        // cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
-                        continue;
-                    }
-                    
+                {   
                     // // we are inside, and we have two channels
                     for (int c = 0; c < ctx3D->volume->channel; c++)
                     {
@@ -500,7 +503,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         {
             ctx3D->value[c] = sum[c];
         }
-
     }
 
     return; 
