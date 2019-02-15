@@ -34,9 +34,6 @@ typedef struct
     
     // type of the data; determines which of the union members below to use
     lspType dtype;
-
-    // check if convolution is inside
-    int inside = 1;
     
     // union for the pointer to the image data
     // the pointer values are all the same; this is just to avoid casting
@@ -77,6 +74,10 @@ typedef struct
 
     // boundaries of the region of interests
     uint boundaries[3];
+
+    // check if convolution is inside
+    int inside = 1;
+    
     // homogeneous coordinate mapping from new volume index space (read from grid.txt)
     double NewItoW[16];
 
