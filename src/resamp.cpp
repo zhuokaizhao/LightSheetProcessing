@@ -373,11 +373,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     ctx3D->ipos[1] = ipos[1];
     ctx3D->ipos[2] = ipos[2];
 
-    // determine different n1, n2 and n3 for even and odd kernels
-    int n1, n2, n3;
-    // determine lower and upper bounds for later convolution
-    int lower, upper;
-
     // parse the kernel
     NrrdKernelSpec* kernelSpec;
     kernelSpec = nrrdKernelSpecNew();
@@ -387,6 +382,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // get the support of kernel
     int support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
     // cout << "Kernel support is " << support << endl;
+
+    // determine different n1, n2 and n3 for even and odd kernels
+    int n1, n2, n3;
+    // determine lower and upper bounds for later convolution
+    int lower, upper;
 
     // even kernel
     if ( isEven(support) )
@@ -430,6 +430,8 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // cout << "n1 is " << n1 << endl;
     // cout << "n2 is " << n2 << endl;
     // cout << "n3 is " << n3 << endl;
+    cout << "lower is " << lower << endl;
+    cout << "upper is " << upper << endl;
 
     // do all these only when inside
     if ( ctx3D->volume != NULL && ctx3D->inside == 1 )
