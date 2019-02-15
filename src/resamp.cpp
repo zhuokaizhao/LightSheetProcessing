@@ -430,8 +430,8 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     // cout << "n1 is " << n1 << endl;
     // cout << "n2 is " << n2 << endl;
     // cout << "n3 is " << n3 << endl;
-    cout << "lower is " << lower << endl;
-    cout << "upper is " << upper << endl;
+    // cout << "lower is " << lower << endl;
+    // cout << "upper is " << upper << endl;
 
     // do all these only when inside
     if ( ctx3D->volume != NULL && ctx3D->inside == 1 )
@@ -445,8 +445,8 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         // cout << "alpha2 is " << alpha2 << endl;
         // cout << "alpha3 is " << alpha3 << endl;
 
-        // separable convolution
-        double sum[2] = {0, 0};
+        // separable convolution for each channel, initialize to be all 0
+        double sum[ctx3D->volume->channel] = {0};
 
         // initialize kernels
         double k1[support], k2[support], k3[support];
@@ -500,7 +500,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
             }
         }
 
-        // if no outside, assign value
+        // assign value
         for (int c = 0; c < ctx3D->volume->channel; c++)
         {
             ctx3D->value[c] = sum[c];
@@ -513,16 +513,13 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 
 // function that performs 3D resampling (convolution)
 int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
-{
-    // input volume
-    const lspVolume* volume = ctx3D->volume;
-    
+{   
     // sizes in x, y and z directions
     uint sizeX = ctx3D->boundaries[0];
     uint sizeY = ctx3D->boundaries[1];
     uint sizeZ = ctx3D->boundaries[2];
 
-    // evaluate at each world-space position
+    // evaluate at each new volume index-space position
     for (uint zi = 0; zi < sizeZ; zi++)
     {
         double percentage = 100.0*(double)zi/(double)sizeZ;
@@ -543,11 +540,11 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 {
                     if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                     {
-                        newVolume->data.s[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
+                        newVolume->data.s[c + ctx3D->volume->channel*(xi + sizeX*(yi + sizeY*zi))] = ctx3D->value[c];
                     }
                     else if (ctx3D->volume->dtype == lspTypeDouble)
                     {
-                        newVolume->data.dl[zi*sizeZ + yi*sizeY + xi + c] = ctx3D->value[c];
+                        newVolume->data.dl[c + ctx3D->volume->channel*(xi + sizeX*(yi + sizeY*zi))] = ctx3D->value[c];
                     }
                     else
                     {
