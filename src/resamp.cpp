@@ -465,6 +465,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 
         // compute via three nested loops over the 3D-kernel support
         // faster axis first (i1 fast)
+        uint channel = ctx3D->volume->channel;
+        uint sizeX = ctx3D->volume->size[0];
+        uint sizeY = ctx3D->volume->size[1];
+        uint sizeZ = ctx3D->volume->size[2];
+
         for (int i3 = lower; i3 <= upper; i3++)
         {
             for (int i2 = lower; i2 <= upper; i2++)
@@ -472,10 +477,10 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
                 for (int i1 = lower; i1 <= upper; i1++)
                 {   
                     // // we are inside, and we have two channels
-                    for (int c = 0; c < ctx3D->volume->channel; c++)
+                    for (int c = 0; c < channel; c++)
                     {
-                        // compute data index
-                        uint data_index = (i3+n3)*(ctx3D->volume->size[1]*ctx3D->volume->size[0]*ctx3D->volume->channel) + (i2+n2)*(ctx3D->volume->size[0]*ctx3D->volume->channel) + (i1+n1)*(ctx3D->volume->channel) + c;
+                        // compute data index (4D stripe)
+                        uint data_index = c + channel * ( (n1+i1) + sizeX * ( (n2+i2) + sizeY * (n3+i3) ) );
                         // cout << "current data_index is " << data_index << endl;
 
                         // we do have different types of inputs
@@ -501,7 +506,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
         }
 
         // assign value
-        for (int c = 0; c < ctx3D->volume->channel; c++)
+        for (int c = 0; c < channel; c++)
         {
             ctx3D->value[c] = sum[c];
         }
@@ -515,6 +520,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
 int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
 {   
     // sizes in x, y and z directions
+    uint channel = ctx3D->volume->channel;
     uint sizeX = ctx3D->boundaries[0];
     uint sizeY = ctx3D->boundaries[1];
     uint sizeZ = ctx3D->boundaries[2];
@@ -538,13 +544,15 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                 // cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
                 {
+                    uint data_index = c + channel * ( xi + sizeX * ( yi + sizeY * zi ) );
+
                     if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                     {
-                        newVolume->data.s[c + ctx3D->volume->channel*(xi + sizeX*(yi + sizeY*zi))] = ctx3D->value[c];
+                        newVolume->data.s[data_index] = ctx3D->value[c];
                     }
                     else if (ctx3D->volume->dtype == lspTypeDouble)
                     {
-                        newVolume->data.dl[c + ctx3D->volume->channel*(xi + sizeX*(yi + sizeY*zi))] = ctx3D->value[c];
+                        newVolume->data.dl[data_index] = ctx3D->value[c];
                     }
                     else
                     {
