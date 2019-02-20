@@ -509,7 +509,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 }
 
 // function that performs 3D resampling (convolution)
-int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
+int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 {   
     // sizes in x, y and z directions
     uint channel = ctx3D->volume->channel;
