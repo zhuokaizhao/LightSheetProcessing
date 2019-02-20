@@ -707,8 +707,15 @@ void Resamp::main()
         nrrdJoin(finalJoined, quantized, 2, 0, 1);
         cout << "Fnished joining the 2 channels" << endl;
 
+        // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
+        // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
+        Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        ptrdiff_t min[3] = {-1, 0, 0};
+        ptrdiff_t max[3] = {finalJoined.axis[1].size, finalJoined.axis[2].size, finalJoined.axis[3].size};
+        nrrdPad_va(finalPaded, finalJointed, min, max, 0);
+
         // save the final nrrd as image
-        if (nrrdSave(opt.out_path.c_str(), finalJoined, NULL)) 
+        if (nrrdSave(opt.out_path.c_str(), finalPaded, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
