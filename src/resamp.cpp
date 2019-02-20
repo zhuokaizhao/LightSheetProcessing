@@ -665,18 +665,25 @@ void Resamp::main()
 
         // change the volume back to Nrrd file for projection
         Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        lspNrrdFromVolume(nout, volume_new);
+        if (lspNrrdFromVolume(nout, volume_new))
+        {
+            printf("%s: trouble converting Volume to Nrrd data\n", __func__);
+            return;
+        }
         cout << "Finished converting resulting volume back to Nrrd data" << endl;
 
         // Project the volume alone z axis using MIP
         Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        nrrdProject(projNrrd, nout, 3, nrrdMeasureMax, nrrdTypeDouble);
+        if (nrrdProject(projNrrd, nout, 3, nrrdMeasureMax, nrrdTypeDouble))
+        {
+            printf("%s: trouble projecting Nrrd data alone z-axis using MIP\n", __func__);
+            return;
+        }
         cout << "Finished projecting Nrrd data alone z-axis" << endl;
         
         // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
         Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-        cout << "Finished slicing the data based on its channel (GFP and RFP)" << endl;
 
         // quantized
         Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
@@ -692,6 +699,7 @@ void Resamp::main()
             nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true);
             nrrdQuantize(quantized[i], slices[i], range, 8);
         }
+        cout << "Finished slicing the data based on its channel (GFP and RFP)" << endl;
         cout << "Finished quantizing to 8-bit" << endl;
 
         // Join the two channel
@@ -705,7 +713,6 @@ void Resamp::main()
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
         }
-
         cout << "Finished saving image at " << opt.out_path << endl;
 
     }
