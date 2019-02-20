@@ -375,7 +375,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 
     // cout << "Kernel support is " << ctx3d->support << endl;
     int support = (int)(ctx3D->kernelSpec->kernel->support(ctx3D->kernelSpec->parm));
-    cout << "support is " << support << endl;
+    // cout << "support is " << support << endl;
     // determine different n1, n2 and n3 for even and odd kernels
     int n1, n2, n3;
     // determine lower and upper bounds for later convolution
