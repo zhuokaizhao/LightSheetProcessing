@@ -658,6 +658,7 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const Nr
     ctx3D->verbose = 0;
     ctx3D->volume = vol;
     ctx3D->kern = kernel;
+    ctx3D->inside = 1;
     ctx3D->volMinMax[0] = vmm ? vmm[0] : lspNan(0);
     ctx3D->volMinMax[1] = vmm ? vmm[1] : lspNan(0);
     ctx3D->volMinMax[2] = vmm ? vmm[2] : lspNan(0);
