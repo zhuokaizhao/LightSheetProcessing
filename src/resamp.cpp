@@ -712,7 +712,7 @@ void Resamp::main()
         Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         int min[3] = {-1, 0, 0};
         size_t max[3] = {finalJoined->axis[1].size, finalJoined->axis[2].size, finalJoined->axis[3].size};
-        nrrdPad_va(finalPaded, finalJointed, min, max, 0);
+        nrrdPad_va(finalPaded, finalJoined, min, max, 0);
 
         // save the final nrrd as image
         if (nrrdSave(opt.out_path.c_str(), finalPaded, NULL)) 
