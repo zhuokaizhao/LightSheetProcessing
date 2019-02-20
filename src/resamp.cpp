@@ -446,9 +446,9 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         // precompute three vectors of kernel evaluations to save time
         for (int i = lower; i <= upper; i++)
         {
-            k1[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
-            k2[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
-            k3[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha3 - i, kernelSpec->parm);
+            k1[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha1 - i, ctx3D->kernelSpec->parm);
+            k2[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha2 - i, ctx3D->kernelSpec->parm);
+            k3[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha3 - i, ctx3D->kernelSpec->parm);
         }
         // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
         // cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
