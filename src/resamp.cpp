@@ -553,13 +553,13 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                     {
                         newVolume->data.s[data_index] = ctx3D->value[c];
                         cout << "data index is " << data_index << endl;
-                        cout << "value is " << newVolume->data.s[data_index] << endl;
+                        cout << "value is " << ctx3D->value[c] << endl;
                     }
                     else if (ctx3D->volume->dtype == lspTypeDouble)
                     {
                         newVolume->data.dl[data_index] = ctx3D->value[c];
                         cout << "data index is " << data_index << endl;
-                        cout << "value is " << newVolume->data.s[data_index] << endl;
+                        cout << "value is " << ctx3D->value[c] << endl;
                     }
                     else
                     {
