@@ -420,11 +420,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         }
     }
 
-    // cout << "n1 is " << n1 << endl;
-    // cout << "n2 is " << n2 << endl;
-    // cout << "n3 is " << n3 << endl;
-    // cout << "lower is " << lower << endl;
-    // cout << "upper is " << upper << endl;
+    cout << "n1 is " << n1 << endl;
+    cout << "n2 is " << n2 << endl;
+    cout << "n3 is " << n3 << endl;
+    cout << "lower is " << lower << endl;
+    cout << "upper is " << upper << endl;
 
     // do all these only when inside
     if ( ctx3D->volume != NULL && ctx3D->inside == 1 )
@@ -434,9 +434,9 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         alpha1 = ctx3D->ipos[0] - n1;
         alpha2 = ctx3D->ipos[1] - n2;
         alpha3 = ctx3D->ipos[2] - n3;
-        // cout << "alpha1 is " << alpha1 << endl;
-        // cout << "alpha2 is " << alpha2 << endl;
-        // cout << "alpha3 is " << alpha3 << endl;
+        cout << "alpha1 is " << alpha1 << endl;
+        cout << "alpha2 is " << alpha2 << endl;
+        cout << "alpha3 is " << alpha3 << endl;
 
         // separable convolution for each channel, initialize to be all 0
         double sum[ctx3D->volume->channel] = {0};
@@ -451,10 +451,10 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
             k2[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha2 - i, ctx3D->kernelSpec->parm);
             k3[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha3 - i, ctx3D->kernelSpec->parm);
         }
-        // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
-        // cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
-        // cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
-        // cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
+        cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
+        cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
+        cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
+        cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
 
         // compute via three nested loops over the 3D-kernel support
         // faster axis first (i1 fast)
@@ -474,12 +474,16 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
                     {
                         // compute data index (4D stripe)
                         uint data_index = c + channel * ( (n1+i1) + sizeX * ( (n2+i2) + sizeY * (n3+i3) ) );
-                        // cout << "current data_index is " << data_index << endl;
+                        cout << "current data_index is " << data_index << endl;
 
                         // we do have different types of inputs
                         // we converted unsigned short to short
                         if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                         {
+                            cout << "volume data is " << ctx3D->volume->data.s[data_index] << endl;
+                            cout << "k1 value is " << k1[i1-lower] << endl;
+                            cout << "k2 value is " << k2[i2-lower] << endl;
+                            cout << "k3 value is " << k3[i3-lower] << endl;
                             sum[c] = sum[c] + ctx3D->volume->data.s[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
                         }
                         else if (ctx3D->volume->dtype == lspTypeDouble)
