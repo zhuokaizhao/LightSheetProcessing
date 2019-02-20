@@ -710,8 +710,8 @@ void Resamp::main()
         // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
         // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
         Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        int min[3] = {-1, 0, 0};
-        size_t max[3] = {finalJoined->axis[1].size, finalJoined->axis[2].size, finalJoined->axis[3].size};
+        ptrdiff_t min[3] = {-1, 0, 0};
+        ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[1].size, (ptrdiff_t)finalJoined->axis[2].size, (ptrdiff_t)finalJoined->axis[3].size};
         nrrdPad_va(finalPaded, finalJoined, min, max, 0);
 
         // save the final nrrd as image
