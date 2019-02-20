@@ -539,10 +539,10 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
             {
                 // convert the new-volume index space to world
                 uint new_ipos[4] = {xi, yi, zi, 1};
-                // cout << "Current newVolume index space is (" << xi << ", " << yi << ", " << zi << ")" << endl;
+                cout << "Current newVolume index space is (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 double wpos[4];
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
-                // cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
+                cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
                 ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
                 // cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
@@ -552,10 +552,14 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                     if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                     {
                         newVolume->data.s[data_index] = ctx3D->value[c];
+                        cout << "data index is " << data_index << endl;
+                        cout << "value is " << newVolume->data.s[data_index] << endl;
                     }
                     else if (ctx3D->volume->dtype == lspTypeDouble)
                     {
                         newVolume->data.dl[data_index] = ctx3D->value[c];
+                        cout << "data index is " << data_index << endl;
+                        cout << "value is " << newVolume->data.s[data_index] << endl;
                     }
                     else
                     {
