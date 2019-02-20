@@ -548,7 +548,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                     cout << "Current newVolume index space is (" << xi << ", " << yi << ", " << zi << ")" << endl;
                     cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
                 }
-                
+
                 ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
 
                 // cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
@@ -564,6 +564,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                             cout << "data index is " << data_index << endl;
                             cout << "short value is " << newVolume->data.s[data_index] << endl;
                         }
+                    }
                     else if (ctx3D->volume->dtype == lspTypeDouble)
                     {
                         newVolume->data.dl[data_index] = ctx3D->value[c];
