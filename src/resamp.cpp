@@ -711,7 +711,7 @@ void Resamp::main()
         // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
         Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
         ptrdiff_t min[3] = {-1, 0, 0};
-        ptrdiff_t max[3] = {finalJoined.axis[1].size, finalJoined.axis[2].size, finalJoined.axis[3].size};
+        ptrdiff_t max[3] = {finalJoined->axis[1].size, finalJoined->axis[2].size, finalJoined->axis[3].size};
         nrrdPad_va(finalPaded, finalJointed, min, max, 0);
 
         // save the final nrrd as image
