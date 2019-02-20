@@ -524,6 +524,9 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
     uint sizeX = ctx3D->boundaries[0];
     uint sizeY = ctx3D->boundaries[1];
     uint sizeZ = ctx3D->boundaries[2];
+    cout << "sizeX is " << sizeX << endl;
+    cout << "sizeY is " << sizeY << endl;
+    cout << "sizeZ is " << sizeZ << endl;
 
     // evaluate at each new volume index-space position
     for (uint zi = 0; zi < sizeZ; zi++)
