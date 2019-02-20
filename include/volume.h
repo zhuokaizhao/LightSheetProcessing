@@ -60,8 +60,8 @@ typedef struct
 
     // const NrrdKernel *kern;
     const NrrdKernel *kern;
-    // kernel support
-    int support;
+    // kernel spec
+    NrrdKernelSpec* kernelSpec;
 
     // output fields set by lspConvoEval
     // copy of world-space pos passed to lspConvoEval
