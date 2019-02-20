@@ -635,7 +635,7 @@ int lspNrrdFromVolume(Nrrd *nout, const lspVolume *vol)
 
 /*
   lspCtx3DNew creates the context to contain all resources and state
-  associated with 2D convolution, which is computing on a given volume "vol", 
+  associated with 3D convolution, which is computing on a given volume "vol", 
   and a reconstruction kernel "kernel"
 */
 lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm) 
@@ -661,6 +661,15 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const Nr
     ctx3D->volMinMax[0] = vmm ? vmm[0] : lspNan(0);
     ctx3D->volMinMax[1] = vmm ? vmm[1] : lspNan(0);
     ctx3D->volMinMax[2] = vmm ? vmm[2] : lspNan(0);
+
+    // parse the kernel
+    NrrdKernelSpec* kernelSpec;
+    kernelSpec = nrrdKernelSpecNew();
+    airArray* mop;
+    airMopAdd(mop, kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
+    nrrdKernelParse(&(kernelSpec->kernel), kernelSpec->parm, ctx3D->kern->name);
+    // save the kernel support
+    ctx3D->support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
 
 
     // copy vol->ItoW for easier access and consistancy

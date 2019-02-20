@@ -350,7 +350,7 @@ Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm, ai
 
 }
 
-void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop)
+void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 {
     // initialize output
     ctx3D->wpos[0] = xw;
@@ -373,15 +373,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw, airArray* mop
     ctx3D->ipos[1] = ipos[1];
     ctx3D->ipos[2] = ipos[2];
 
-    // parse the kernel
-    NrrdKernelSpec* kernelSpec;
-    kernelSpec = nrrdKernelSpecNew();
-    airMopAdd(mop, kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
-    nrrdKernelParse(&(kernelSpec->kernel), kernelSpec->parm, ctx3D->kern->name);
-
-    // get the support of kernel
-    int support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
-    // cout << "Kernel support is " << support << endl;
+    // cout << "Kernel support is " << ctx3d->support << endl;
 
     // determine different n1, n2 and n3 for even and odd kernels
     int n1, n2, n3;
@@ -549,7 +541,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D, airArray* mop)
                     cout << "Corresponding world space is (" << wpos[0] << ", " << wpos[1] << ", " << wpos[2] << ")" << endl;
                 }
 
-                ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2], mop);
+                ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2]);
 
                 // cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
@@ -636,7 +628,7 @@ void Resamp::main()
         }
 
         // start 3D convolution
-        if ( nrrdResample3D(volume_new, ctxBox, mop) )
+        if ( nrrdResample3D(volume_new, ctxBox) )
         {
             printf("%s: trouble computing 3D convolution\n", __func__);
             return;
