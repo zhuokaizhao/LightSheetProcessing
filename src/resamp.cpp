@@ -552,20 +552,20 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
                     if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                     {
                         newVolume->data.s[data_index] = ctx3D->value[c];
-                        if (xi == yi && yi == zi)
-                        {
-                            cout << "data index is " << data_index << endl;
-                            cout << "short value is " << newVolume->data.s[data_index] << endl;
-                        }
+                        // if (xi == yi && yi == zi)
+                        // {
+                        //     cout << "data index is " << data_index << endl;
+                        //     cout << "short value is " << newVolume->data.s[data_index] << endl;
+                        // }
                     }
                     else if (ctx3D->volume->dtype == lspTypeDouble)
                     {
                         newVolume->data.dl[data_index] = ctx3D->value[c];
-                        if (xi == yi && yi == zi)
-                        {
-                            cout << "data index is " << data_index << endl;
-                            cout << "real value is " << newVolume->data.s[data_index] << endl;
-                        }
+                        // if (xi == yi && yi == zi)
+                        // {
+                        //     cout << "data index is " << data_index << endl;
+                        //     cout << "real value is " << newVolume->data.s[data_index] << endl;
+                        // }
                     }
                     else
                     {
