@@ -492,7 +492,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
                             return;
                         }
                         
-                        // cout << "sum is " << sum[c] << endl;
+                        cout << "sum is " << sum[c] << endl;
                     }
                 }
             }
