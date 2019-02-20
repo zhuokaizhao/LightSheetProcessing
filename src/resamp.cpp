@@ -420,11 +420,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         }
     }
 
-    cout << "n1 is " << n1 << endl;
-    cout << "n2 is " << n2 << endl;
-    cout << "n3 is " << n3 << endl;
-    cout << "lower is " << lower << endl;
-    cout << "upper is " << upper << endl;
+    // cout << "n1 is " << n1 << endl;
+    // cout << "n2 is " << n2 << endl;
+    // cout << "n3 is " << n3 << endl;
+    // cout << "lower is " << lower << endl;
+    // cout << "upper is " << upper << endl;
 
     // do all these only when inside
     if ( ctx3D->volume != NULL && ctx3D->inside == 1 )
@@ -434,9 +434,11 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         alpha1 = ctx3D->ipos[0] - n1;
         alpha2 = ctx3D->ipos[1] - n2;
         alpha3 = ctx3D->ipos[2] - n3;
-        cout << "alpha1 is " << alpha1 << endl;
-        cout << "alpha2 is " << alpha2 << endl;
-        cout << "alpha3 is " << alpha3 << endl;
+        // cout << "alpha1 is " << alpha1 << endl;
+        // cout << "alpha2 is " << alpha2 << endl;
+        // cout << "alpha3 is " << alpha3 << endl;
+        cout << "lower is " << lower << endl;
+        cout << "upper is " << upper << endl;
 
         // separable convolution for each channel, initialize to be all 0
         double sum[ctx3D->volume->channel] = {0};
@@ -451,7 +453,7 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
             k2[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha2 - i, ctx3D->kernelSpec->parm);
             k3[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha3 - i, ctx3D->kernelSpec->parm);
         }
-        cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
+        // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
         cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
         cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
         cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
