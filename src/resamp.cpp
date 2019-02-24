@@ -168,6 +168,7 @@ void setup_resamp(CLI::App &app)
                 {
                     auto start = chrono::high_resolution_clock::now();
                     Resamp(*opt).main();
+                    cout << "end main" << endl;
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
@@ -371,14 +372,18 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
     for (uint zi = 0; zi < sizeZ; zi++)
     {
         double percentage = 100.0*(double)zi/(double)sizeZ;
-        cout << percentage << " percents of the volume have been done" << endl;
+        if (opt.verbose)
+        {
+            cout << percentage << " percents of the volume have been done" << endl;
+        }
+
         for (uint yi = 0; yi < sizeY; yi++)
         {
             for (uint xi = 0; xi < sizeX; xi++)
             {
                 // convert the new-volume index space to world
                 uint new_ipos[4] = {xi, yi, zi, 1};
-                
+
                 double wpos[4];
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
 
