@@ -423,7 +423,7 @@ void Resamp::main()
     }
     else
     {
-        nhdr_name = opt.nhdr_path + opt.allValidFiles[curFileIndex] + ".nhdr";
+        nhdr_name = opt.nhdr_path + opt.allValidFiles[curFileIndex].second + ".nhdr";
     }
 
     // load the nhdr header
