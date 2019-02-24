@@ -425,6 +425,7 @@ void Resamp::main()
     {
         nhdr_name = opt.nhdr_path + opt.allValidFiles[curFileIndex].second + ".nhdr";
     }
+    cout << "Currently processing input file " << nhdr_name << endl;
 
     // load the nhdr header
     Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
@@ -522,7 +523,10 @@ void Resamp::main()
         }
         return;
     }
-    cout << "Finished converting resulting volume back to Nrrd data" << endl;
+    if (opt.verbose)
+    {
+        cout << "Finished converting resulting volume back to Nrrd data" << endl;
+    }
 
     // save this volume as nrrd
     string volumeOutPath;
