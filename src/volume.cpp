@@ -320,15 +320,15 @@ static int processGrid (double* NewItoW, uint* boundaries, const std::string gri
     }
 
     // print the loaded grid.txt
-    cout << "Loaded grid txt file at " << gridPath << " is:" << endl;
-    for (size_t i = 0; i < allNumbers.size(); i++)
-    {
-        cout << allNumbers[i] << " ";
-        if ((i+1)%4 == 0)
-        {
-            cout << endl;
-        }
-    }
+    // cout << "Loaded grid txt file at " << gridPath << " is:" << endl;
+    // for (size_t i = 0; i < allNumbers.size(); i++)
+    // {
+    //     cout << allNumbers[i] << " ";
+    //     if ((i+1)%4 == 0)
+    //     {
+    //         cout << endl;
+    //     }
+    // }
 
     // construct NewItoW
     /*
