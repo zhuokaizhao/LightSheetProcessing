@@ -532,7 +532,7 @@ void Resamp::main()
     }
     else
     {
-        volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex] + ".nhdr";
+        volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".nhdr";
     }
     
 
@@ -607,7 +607,7 @@ void Resamp::main()
     }
     else
     {
-        imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex] + ".png";
+        imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".png";
     }
 
     if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
