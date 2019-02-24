@@ -282,7 +282,7 @@ void convoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         {
             // cout << "(" << i1 << ", " << i2 << ", " << i3 << ")" << " is outside" << endl;
             ctx3D->inside = 0;
-            cout << "outside" << endl;
+            // cout << "outside" << endl;
         }
     }
 
@@ -624,6 +624,6 @@ void Resamp::main()
     }
 
     // airMopOkay(mop);
-    return;
+    // return;
 
 }
