@@ -121,13 +121,11 @@ void setup_resamp(CLI::App &app)
                 nhdrNum = stoi(opt->maxFileNum);
                 cout << "User restricts the total number of files to be processed as " << nhdrNum << endl;
             }
-                
-            // update file number
-            opt->file_number = nhdrNum;
-            cout << "Total number of .nhdr files that we are processing is: " << opt->tmax << endl << endl;
+            cout << "Total number of .nhdr files that we are processing is: " << nhdrNum << endl << endl;
 
             try
             {
+                cout << "First file name is " << opt->allValidFiles[0].second << endl;
                 // loop over all the current files
                 for (int i = 0; i < nhdrNum; i++)
                 {

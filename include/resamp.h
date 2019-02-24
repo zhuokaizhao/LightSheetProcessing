@@ -40,8 +40,6 @@ struct resampOptions {
     // the index of the file we are currently processing
     int curFileIndex;
 
-    uint tmax;
-
     vector< pair<int, string> > allValidFiles;
 
     uint verbose = 0;
