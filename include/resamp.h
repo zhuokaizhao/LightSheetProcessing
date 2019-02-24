@@ -34,6 +34,9 @@ struct resampOptions {
     // total number of files
     int file_number;
 
+    // if we are in single file mode
+    bool isSingleFile;
+
     uint tmax;
 
     vector< pair<int, string> > allValidFiles;
@@ -43,11 +46,11 @@ struct resampOptions {
 
 void setup_resamp(CLI::App &app);
 
-// evaluate 2D convolution between image and kernel
-void ConvoEval2D(lspCtx2D* ctx, double xw, double yw, airArray* mop);
+// function that performs 3D resampling (convolution)
+int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D);
 
 // evaluate 3D convolution between volume and kernel
-void ConvoEval3D(lspCtx3D* ctx, double xw, double yw, double zw, airArray* mop);
+void convoEval3D(lspCtx3D* ctx, double xw, double yw, double zw, airArray* mop);
 
 class Resamp {
     public:

@@ -41,6 +41,8 @@ void setup_resamp(CLI::App &app)
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
         {
+            opt->isSingleFile = false;
+
             cout << "nhdr input directory " << opt->nhdr_path << " is valid" << endl;
             
             // count the number of files
@@ -139,6 +141,8 @@ void setup_resamp(CLI::App &app)
         else
         {
             // the program also handles if input file is a single file
+            opt->isSingleFile = true;
+
             cout << opt->nhdr_path << " is not a directory, check if it is a valid .nhdr file" << endl;
             const string curFile = opt->nhdr_path;
 
@@ -156,16 +160,14 @@ void setup_resamp(CLI::App &app)
             {
                 cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
 
-                // update file number
-                opt->file_number = -1;    
-
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
+                    cout << "start time = " << start << endl;
                     Resamp(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                    cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
@@ -180,12 +182,15 @@ void setup_resamp(CLI::App &app)
 
 Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
 {
-    // create folder if it does not exist
-    // if (!checkIfDirectory(opt.out_path))
-    // {
-    //     boost::filesystem::create_directory(opt.out_path);
-    //     cout << "Image output path " << opt.out_path << " does not exits, but has been created" << endl;
-    // }
+    // create folder if it does not exist (only when it is not in single file mode)
+    if (!opt->isSingleFile)
+    {
+        if (!checkIfDirectory(opt.out_path))
+        {
+            boost::filesystem::create_directory(opt.out_path);
+            cout << "Image output path " << opt.out_path << " does not exits, but has been created" << endl;
+        }
+    }
 }
 
 Resamp::~Resamp()
@@ -206,152 +211,7 @@ static int isEven (uint x)
 
 // ********************** end of static helper functions *********************
 
-void ConvoEval2D(lspCtx2D *ctx2D, double xw, double yw, airArray* mop) 
-{
-    // initialize output
-    ctx2D->wpos[0] = xw;
-    ctx2D->wpos[1] = yw;
-    ctx2D->outside = 0;
-    ctx2D->value = lspNan(0);
-
-    // first convert wpos to ipos, where ipos are x1 and x2 as in FSV
-    // MV3_MUL only takes 3-vector
-    double ipos[3];
-    double wpos[3] = {ctx2D->wpos[0], ctx2D->wpos[1], 1};
-
-    // 3-vector ipos = 3x3 matrix WtoI * 3-vector wpos
-    MV3_MUL(ipos, ctx2D->WtoI, wpos);
-
-    // set this to ctx
-    ctx2D->ipos[0] = ipos[0];
-    ctx2D->ipos[1] = ipos[1];
-
-    // determine different n1, n2 for even and odd kernels
-    int n1, n2;
-    // determine lower and upper bounds for later convolution
-    int lower, upper;
-
-    NrrdKernelSpec* kernelSpec;
-    kernelSpec = nrrdKernelSpecNew();
-    airMopAdd(mop, kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
-    nrrdKernelParse(&(kernelSpec->kernel), kernelSpec->parm, ctx2D->kern->name);
-
-    // get the support of kernel
-    int support = (int)(kernelSpec->kernel->support(kernelSpec->parm));
-    
-    // even kernel
-    if ( isEven(support) )
-    {
-        // n1 = floor(x1), n2 = floor(x2)
-        n1 = floor(ctx2D->ipos[0]);
-        n2 = floor(ctx2D->ipos[1]);
-        // lower = 1 - support/2
-        lower = 1 - support / 2;
-        // upper = support/2
-        upper = support / 2;
-    }
-    // odd kernel
-    else
-    {
-        // n1 = floor(x1+0.5), n2 = floor(x2+0.5)
-        n1 = floor(ctx2D->ipos[0] + 0.5);
-        n2 = floor(ctx2D->ipos[1] + 0.5);
-        // lower = (1 - support)/2
-        lower = (1 - support) / 2;
-        // upper = (support - 1)/2
-        upper = (support - 1) / 2;
-    }
-
-    // calculate alpha based on n1, n2
-    double alpha1, alpha2;
-    alpha1 = ctx2D->ipos[0] - n1;
-    alpha2 = ctx2D->ipos[1] - n2;
-
-    // separable convolution
-    double sum = 0;
-
-    // initialize kernels
-    double k1[support], k2[support];
-
-    // precompute two vectors of kernel evaluations to save time
-    for (int i = lower; i <= upper; i++)
-    {
-        k1[i - lower] = kernelSpec->kernel->eval1_d(alpha1 - i, kernelSpec->parm);
-        k2[i - lower] = kernelSpec->kernel->eval1_d(alpha2 - i, kernelSpec->parm);
-    }
-
-    // compute via two nested loops over the 2D-kernel support
-    // make sure image is not empty
-    if (ctx2D->image != NULL)
-    {
-        // check for potential outside
-        // Notice that both direction should be checked separately
-        for (int i1 = lower; i1 <= upper; i1++)
-        {
-            if ( i1 + n1 < 0 || i1 + n1 >= (int)ctx2D->image->size[0] )
-            {
-                ctx2D->outside += 1;
-            }
-        }
-        for (int i2 = lower; i2 <= upper; i2++)
-        {
-            if ( i2 + n2 < 0 || i2 + n2 >= (int)ctx2D->image->size[1] )
-            {
-                ctx2D->outside += 1;
-            }
-        }
-
-        if (ctx2D->outside == 0)
-        {
-            // faster axis first (i1 fast)
-            for (int i2 = lower; i2 <= upper; i2++)
-            {
-                for (int i1 = lower; i1 <= upper; i1++)
-                {
-                    // not outside
-                    sum = sum + ctx2D->image->data.dl[ (n2+i2)*ctx2D->image->size[0] + n1 + i1 ] * k1[i1-lower] * k2[i2-lower];
-                }
-            }
-
-            // if no outside, assign value
-            ctx2D->value = sum;
-        }
-    }
-
-    return;
-}
-
-// function that performs 2D resampling
-Nrrd* nrrdResample2D(Nrrd* nin, uint axis, NrrdKernel* kernel, double* kparm, airArray* mop)
-{
-    // initialize the output result
-    Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-
-    // set input to resample context
-    NrrdResampleContext* resampContext = nrrdResampleContextNew();
-    airMopAdd(mop, resampContext, (airMopper)nrrdResampleContextNix, airMopAlways);
-    nrrdResampleInputSet(resampContext, nin);
-    
-    // get the sample ready
-    nrrdResampleSamplesSet(resampContext, axis, nin->axis[axis].size);
-    nrrdResampleRangeFullSet(resampContext, axis);
-    // nrrdBoundaryBleed: copy the last/first value out as needed
-    nrrdResampleBoundarySet(resampContext, nrrdBoundaryBleed);
-    
-    // set the kernel
-    nrrdResampleKernelSet(resampContext, axis, kernel, kparm);
-
-    // renormalizing
-    nrrdResampleRenormalizeSet(resampContext, AIR_TRUE);
-
-    // start the resampling
-    nrrdResampleExecute(resampContext, nout);
-
-    return nout;
-
-}
-
-void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
+void convoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
 {
     // initialize output
     ctx3D->wpos[0] = xw;
@@ -421,12 +281,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         }
     }
 
-    // cout << "n1 is " << n1 << endl;
-    // cout << "n2 is " << n2 << endl;
-    // cout << "n3 is " << n3 << endl;
-    // cout << "lower is " << lower << endl;
-    // cout << "upper is " << upper << endl;
-
     // do all these only when inside
     if ( ctx3D->volume != NULL && ctx3D->inside == 1 )
     {
@@ -435,11 +289,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
         alpha1 = ctx3D->ipos[0] - n1;
         alpha2 = ctx3D->ipos[1] - n2;
         alpha3 = ctx3D->ipos[2] - n3;
-        // cout << "alpha1 is " << alpha1 << endl;
-        // cout << "alpha2 is " << alpha2 << endl;
-        // cout << "alpha3 is " << alpha3 << endl;
-        // cout << "lower is " << lower << endl;
-        // cout << "upper is " << upper << endl;
 
         // separable convolution for each channel, initialize to be all 0
         double sum[ctx3D->volume->channel] = {0};
@@ -454,10 +303,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
             k2[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha2 - i, ctx3D->kernelSpec->parm);
             k3[i - lower] = ctx3D->kernelSpec->kernel->eval1_d(alpha3 - i, ctx3D->kernelSpec->parm);
         }
-        // cout << "kernel values between range " << lower << " and " << upper << " have been pre-computed" << endl;
-        // cout << "volume size 0 is " << ctx3D->volume->size[0] << endl;
-        // cout << "volume size 1 is " << ctx3D->volume->size[1] << endl;
-        // cout << "volume size 2 is " << ctx3D->volume->size[2] << endl;
 
         // compute via three nested loops over the 3D-kernel support
         // faster axis first (i1 fast)
@@ -483,10 +328,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
                         // we converted unsigned short to short
                         if (ctx3D->volume->dtype == lspTypeShort || ctx3D->volume->dtype == lspTypeUShort)
                         {
-                            // cout << "volume data is " << ctx3D->volume->data.s[data_index] << endl;
-                            // cout << "k1 value is " << k1[i1-lower] << endl;
-                            // cout << "k2 value is " << k2[i2-lower] << endl;
-                            // cout << "k3 value is " << k3[i3-lower] << endl;
                             sum[c] = sum[c] + ctx3D->volume->data.s[data_index] * k1[i1-lower] * k2[i2-lower] * k3[i3-lower];
                         }
                         else if (ctx3D->volume->dtype == lspTypeDouble)
@@ -498,8 +339,6 @@ void ConvoEval3D(lspCtx3D *ctx3D, double xw, double yw, double zw)
                             cout << "ConvoEval3D: unknown data type" << endl;
                             return;
                         }
-                        
-                        // cout << "sum is " << sum[c] << endl;
                     }
                 }
             }
@@ -540,9 +379,8 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
                 double wpos[4];
                 MV4_MUL(wpos, ctx3D->NewItoW, new_ipos);
 
-                ConvoEval3D(ctx3D, wpos[0], wpos[1], wpos[2]);
+                convoEval3D(ctx3D, wpos[0], wpos[1], wpos[2]);
 
-                // cout << "Finished evaluating at new volume index space (" << xi << ", " << yi << ", " << zi << ")" << endl;
                 for (int c = 0; c < ctx3D->volume->channel; c++)
                 {
                     uint data_index = c + channel * ( xi + sizeX * ( yi + sizeY * zi ) );
@@ -571,136 +409,183 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-    // single file mode
-    if (opt.file_number == -1)
+    // nhdr_path is just the nhdr file namae instead of a folder path
+    string nhdr_name = opt.nhdr_path;
+    // load the nhdr header
+    Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
+    if (opt.verbose)
     {
-        // nhdr_path is just the nhdr file namae instead of a folder path
-        string nhdr_name = opt.nhdr_path;
-        // load the nhdr header
-        Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
         cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
+    }
 
-        // do the permutation
-        // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
-        unsigned int permute[4] = {2, 0, 1, 3};
-        Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if ( nrrdAxesPermute(nin_permuted, nin, permute) )
+    // do the permutation
+    // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
+    unsigned int permute[4] = {2, 0, 1, 3};
+    Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    if ( nrrdAxesPermute(nin_permuted, nin, permute) )
+    {
+        if (opt.verbose)
         {
             cout << "nrrdAxesPermute failed, program stops" << endl;
-            return;
         }
+        return;
+    }
+    if (opt.verbose)
+    {
         cout << "Finished permutation" << endl;
+    }
 
-        // put Nrrd data into lspVolume
-        lspVolume* volume = lspVolumeNew();
-        airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
-        if ( lspVolumeFromNrrd(volume, nin_permuted) )
+    // put Nrrd data into lspVolume
+    lspVolume* volume = lspVolumeNew();
+    airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
+    if ( lspVolumeFromNrrd(volume, nin_permuted) )
+    {
+        if (opt.verbose)
         {
             cout << "lspVolumeFromNrrd failed, program stops" << endl;
-            return;
         }
+        return;
+    }
+    if (opt.verbose)
+    {
         cout << "Finished converting Nrrd data to lspVolume" << endl;
+    }
 
-        // put both volume and user-defined kernel into the Ctx3D
-        const NrrdKernel* kernel;
-        if (opt.kernel_name == "box")
-        {
-            kernel = nrrdKernelBox;
-        }
-        else if (opt.kernel_name == "ctml")
-        {
-            kernel = nrrdKernelCatmullRom;
-        }
+    // put both volume and user-defined kernel into the Ctx3D
+    const NrrdKernel* kernel;
+    if (opt.kernel_name == "box")
+    {
+        kernel = nrrdKernelBox;
+    }
+    else if (opt.kernel_name == "ctml")
+    {
+        kernel = nrrdKernelCatmullRom;
+    }
 
-        // get the container ready
-        lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
+    // get the container ready
+    lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
+    if (opt.verbose)
+    {
         cout << "Finished generating ctx container" << endl;
+    }
 
-        // perform the 3D sampling (convolution)
-        // resulting volume_box
-        lspVolume* volume_new = lspVolumeNew();
-        airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
-        // allocate memory for the new volume, with sizes being the region of interest sizes
-        if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
+    // perform the 3D sampling (convolution)
+    // resulting volume_box
+    lspVolume* volume_new = lspVolumeNew();
+    airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+    // allocate memory for the new volume, with sizes being the region of interest sizes
+    if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
+    {
+        if (opt.verbose)
         {
             printf("%s: trouble allocating volume\n", __func__);
-            return;
         }
+        return;
+    }
 
-        // start 3D convolution
-        if ( nrrdResample3D(volume_new, ctx) )
+    // start 3D convolution
+    if ( nrrdResample3D(volume_new, ctx) )
+    {
+        if (opt.verbose)
         {
             printf("%s: trouble computing 3D convolution\n", __func__);
-            return;
         }
+        return;
+    }
+    if (opt.verbose)
+    {
         cout << "Finished resampling with Box kernel" << endl;
+    }
 
-        // change the volume back to Nrrd file for projection
-        Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (lspNrrdFromVolume(nrrd_new, volume_new))
+    // change the volume back to Nrrd file for projection
+    Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    if (lspNrrdFromVolume(nrrd_new, volume_new))
+    {
+        if (opt.verbose)
         {
             printf("%s: trouble converting Volume to Nrrd data\n", __func__);
-            return;
         }
-        cout << "Finished converting resulting volume back to Nrrd data" << endl;
+        return;
+    }
+    cout << "Finished converting resulting volume back to Nrrd data" << endl;
 
-        // save this volume as nrrd
-        string volumeOutPath = opt.out_path+".nrrd";
-        if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
+    // save this volume as nrrd
+    string volumeOutPath = opt.out_path+".nrrd";
+    if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
+    {
+        if (opt.verbose)
         {
             printf("%s: trouble saving new volume as Nrrd file\n", __func__);
-            airMopError(mop);
         }
+        airMopError(mop);
+    }
 
-        // Project the volume (in nrrd format) alone z axis using MIP
-        Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (nrrdProject(projNrrd, nrrd_new, 3, nrrdMeasureMax, nrrdTypeDouble))
+    // Project the volume (in nrrd format) alone z axis using MIP
+    Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    if (nrrdProject(projNrrd, nrrd_new, 3, nrrdMeasureMax, nrrdTypeDouble))
+    {
+        if (opt.verbose)
         {
             printf("%s: trouble projecting Nrrd data alone z-axis using MIP\n", __func__);
-            return;
         }
+        return;
+    }
+    if (opt.verbose)
+    {
         cout << "Finished projecting Nrrd data alone z-axis" << endl;
-        
-        // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
-        Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
+    }
+
+    // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
+    Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
+                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+
+    // quantized
+    Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
 
-        // quantized
-        Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-                                safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+    // range during quantizing
+    auto range = nrrdRangeNew(lspNan(0), lspNan(0));
+    airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
 
-        // range during quantizing
-        auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-        airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-
-        for (int i = 0; i < 2; i++)
-        {
-            nrrdSlice(slices[i], projNrrd, 0, i);
-            nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true);
-            nrrdQuantize(quantized[i], slices[i], range, 8);
-        }
+    for (int i = 0; i < 2; i++)
+    {
+        nrrdSlice(slices[i], projNrrd, 0, i);
+        nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true);
+        nrrdQuantize(quantized[i], slices[i], range, 8);
+    }
+    if (opt.verbose)
+    {
         cout << "Finished slicing the data based on its channel (GFP and RFP)" << endl;
         cout << "Finished quantizing to 8-bit" << endl;
+    }
 
-        // Join the two channel
-        Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        nrrdJoin(finalJoined, quantized, 2, 0, 1);
+    // Join the two channel
+    Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    nrrdJoin(finalJoined, quantized, 2, 0, 1);
+    if (opt.verbose)
+    {
         cout << "Fnished joining the 2 channels" << endl;
+    }
 
-        // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
-        // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
-        Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        ptrdiff_t min[3] = {-1, 0, 0};
-        ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
-        nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
+    // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
+    // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
+    Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    ptrdiff_t min[3] = {-1, 0, 0};
+    ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
+    nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
 
-        // save the final nrrd as image
-        string imageOutPath = opt.out_path + ".png";
-        if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
+    // save the final nrrd as image
+    string imageOutPath = opt.out_path + ".png";
+    if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
+    {
+        if (opt.verbose)
         {
             printf("%s: trouble saving output\n", __func__);
-            airMopError(mop);
         }
+        airMopError(mop);
+    }
+    if (opt.verbose)
+    {
         cout << "Finished saving image at " << imageOutPath << endl;
     }
 
