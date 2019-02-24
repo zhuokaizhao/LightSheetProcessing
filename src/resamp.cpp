@@ -163,12 +163,12 @@ void setup_resamp(CLI::App &app)
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
-                    cout << "start time = " << chrono::duration_cast<chrono::seconds>(start).count() << endl;
+                    // cout << "start time = " << chrono::duration_cast<chrono::seconds>(start).count() << endl;
                     Resamp(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
-                    cout << "stop time = " << chrono::duration_cast<chrono::seconds>(stop).count() << endl;
+                    // cout << "stop time = " << chrono::duration_cast<chrono::seconds>(stop).count() << endl;
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
+                    // cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
