@@ -47,7 +47,7 @@ void setup_resamp(CLI::App &app)
             
             // count the number of files
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
-            
+
             // note that the number starts counting at 0
             int nhdrNum = 0;
             
@@ -73,7 +73,7 @@ void setup_resamp(CLI::App &app)
                     for (int i = 0; i < end; i++)
                     {
                         // we get the first position that zero padding ends
-                        if (curFile[i] != '0')
+                        if (curFileName[i] != '0')
                         {
                             start = i;
                             break;
@@ -119,6 +119,7 @@ void setup_resamp(CLI::App &app)
             if (!opt->maxFileNum.empty())
             {
                 nhdrNum = stoi(opt->maxFileNum);
+                cout << "User restricts the total number of files to be processed as " << nhdrNum << endl;
             }
                 
             // update file number
@@ -127,11 +128,16 @@ void setup_resamp(CLI::App &app)
 
             try
             {
-                auto start = chrono::high_resolution_clock::now();
-                Resamp(*opt).main();
-                auto stop = chrono::high_resolution_clock::now(); 
-                auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                // loop over all the current files
+                for (int i = 0; i < nhdrNum; i++)
+                {
+                    opt->curFileIndex = i;
+                    auto start = chrono::high_resolution_clock::now();
+                    Resamp(*opt).main();
+                    auto stop = chrono::high_resolution_clock::now(); 
+                    auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                }
             }
             catch(LSPException &e)
             {
@@ -163,12 +169,10 @@ void setup_resamp(CLI::App &app)
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
-                    // cout << "start time = " << chrono::duration_cast<chrono::seconds>(start).count() << endl;
                     Resamp(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
-                    // cout << "stop time = " << chrono::duration_cast<chrono::seconds>(stop).count() << endl;
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    // cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
+                    cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
                 }
                 catch(LSPException &e)
                 {
@@ -410,8 +414,18 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-    // nhdr_path is just the nhdr file namae instead of a folder path
-    string nhdr_name = opt.nhdr_path;
+    int curFileIndex;
+    string nhdr_name;
+    if (opt.isSingleFile)
+    {
+        // nhdr_path is just the nhdr file namae instead of a folder path
+        nhdr_name = opt.nhdr_path;
+    }
+    else
+    {
+        nhdr_name = opt.nhdr_path + opt.allValidFiles[curFileIndex] + ".nhdr";
+    }
+
     // load the nhdr header
     Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
     if (opt.verbose)
@@ -511,7 +525,17 @@ void Resamp::main()
     cout << "Finished converting resulting volume back to Nrrd data" << endl;
 
     // save this volume as nrrd
-    string volumeOutPath = opt.out_path+".nrrd";
+    string volumeOutPath;
+    if (opt.isSingleFile)
+    {
+        volumeOutPath = opt.out_path + ".nhdr";
+    }
+    else
+    {
+        volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex] + ".nhdr";
+    }
+    
+
     if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
     {
         if (opt.verbose)
@@ -576,7 +600,16 @@ void Resamp::main()
     nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
 
     // save the final nrrd as image
-    string imageOutPath = opt.out_path + ".png";
+    string imageOutPath;
+    if (opt.isSingleFile)
+    {
+        imageOutPath = opt.out_path + ".png";
+    }
+    else
+    {
+        imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex] + ".png";
+    }
+
     if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
     {
         if (opt.verbose)
@@ -590,7 +623,7 @@ void Resamp::main()
         cout << "Finished saving image at " << imageOutPath << endl;
     }
 
-    airMopOkay(mop);
+    // airMopOkay(mop);
     return;
 
 }
