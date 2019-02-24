@@ -165,6 +165,7 @@ void setup_resamp(CLI::App &app)
                     auto start = chrono::high_resolution_clock::now();
                     cout << "start time = " << start.count() << endl;
                     Resamp(*opt).main();
+                    cout << "ended main" << endl;
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
