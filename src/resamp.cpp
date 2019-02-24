@@ -163,7 +163,7 @@ void setup_resamp(CLI::App &app)
                 try
                 {
                     auto start = chrono::high_resolution_clock::now();
-                    cout << "start time = " << start << endl;
+                    cout << "start time = " << start.count() << endl;
                     Resamp(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -183,7 +183,7 @@ void setup_resamp(CLI::App &app)
 Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
 {
     // create folder if it does not exist (only when it is not in single file mode)
-    if (!opt->isSingleFile)
+    if (!opt.isSingleFile)
     {
         if (!checkIfDirectory(opt.out_path))
         {
