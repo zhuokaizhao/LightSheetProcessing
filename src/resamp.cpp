@@ -125,7 +125,7 @@ void setup_resamp(CLI::App &app)
 
             try
             {
-                cout << "First file name is " << opt->allValidFiles[0].second << endl;
+                // cout << "First file name is " << opt->allValidFiles[0].second << endl;
                 // loop over all the current files
                 for (int i = 0; i < nhdrNum; i++)
                 {
@@ -412,7 +412,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-    int curFileIndex;
+    int curFileIndex = opt.curFileIndex;
     string nhdr_name;
     if (opt.isSingleFile)
     {
@@ -625,7 +625,7 @@ void Resamp::main()
         cout << "Finished saving image at " << imageOutPath << endl;
     }
 
-    // airMopOkay(mop);
+    airMopOkay(mop);
     // return;
 
 }
