@@ -30,7 +30,8 @@ void setup_resamp(CLI::App &app)
     auto sub = app.add_subcommand("resamp", "Perform resampling on input images");
 
     sub->add_option("-i, --nhdr_path", opt->nhdr_path, "Path of input nrrd header files.")->required();
-    sub->add_option("-g, --kernel", opt->grid_path, "Path that includes the grid file")->required();
+    sub->add_option("-g, --grid", opt->grid_path, "Path that includes the grid file")->required();
+    sub->add_option("-k, --kernel", opt->kernel_name, "Name of the kernel. Currently support 'box' and 'ctml'.")->required();
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
     sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
@@ -600,62 +601,60 @@ void Resamp::main()
         }
         cout << "Finished converting Nrrd data to lspVolume" << endl;
 
-        // put both volume and box kernel into the Ctx3D
-        lspCtx3D* ctxBox = lspCtx3DNew(volume, opt.grid_path, nrrdKernelBox, NULL);
-        cout << "Finished generating ctxBox container" << endl;
+        // put both volume and user-defined kernel into the Ctx3D
+        const NrrdKernel* kernel;
+        if (opt.kernel_name == "box")
+        {
+            kernel = nrrdKernelBox;
+        }
+        else if (opt.kernel_name == "ctml")
+        {
+            kernel = nrrdKernelCatmullRom;
+        }
+
+        // get the container ready
+        lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
+        cout << "Finished generating ctx container" << endl;
 
         // perform the 3D sampling (convolution)
         // resulting volume_box
         lspVolume* volume_new = lspVolumeNew();
         airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
         // allocate memory for the new volume, with sizes being the region of interest sizes
-        if (lspVolumeAlloc(volume_new, volume->channel, ctxBox->boundaries[0], ctxBox->boundaries[1], ctxBox->boundaries[2], volume->dtype)) 
+        if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
         {
             printf("%s: trouble allocating volume\n", __func__);
             return;
         }
 
         // start 3D convolution
-        if ( nrrdResample3D(volume_new, ctxBox) )
+        if ( nrrdResample3D(volume_new, ctx) )
         {
             printf("%s: trouble computing 3D convolution\n", __func__);
             return;
         }
         cout << "Finished resampling with Box kernel" << endl;
 
-        // // Catmull-Rom kernel, which has 4 sample support and is 2-accurate
-        // // put both volume_box and ctmr kernel into the Ctx3D
-        // lspCtx3D* ctxCtmr = lspCtx3DNew(volume_box, opt.grid_path, nrrdKernelCatmullRom, NULL /* imm */);
-
-        // // perform the 3D sampling (convolution)
-        // // resulting volume_ctmr
-        // lspVolume* volume_new = lspVolumeNew();
-        // allocate memory for the new volume, with sizes being the region of interest sizes
-        // if (lspVolumeAlloc(volume_new, volume->channel, ctxCtmr->boundaries[0], ctxCtmr->boundaries[1], ctxCtmr->boundaries[2], volume->dtype)) 
-        // {
-        //     printf("%s: trouble allocating volume\n", __func__);
-        //     return;
-        // }
-        // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
-        // if ( nrrdResample3D(volume_new, ctxCtmr, mop) )
-        // {
-        //     printf("%s: trouble computing 3D convolution\n", __func__);
-        //     return;
-        // }
-        // cout << "Finished resampling with CatmullRom kernel" << endl;
-
         // change the volume back to Nrrd file for projection
-        Nrrd* nout = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (lspNrrdFromVolume(nout, volume_new))
+        Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        if (lspNrrdFromVolume(nrrd_new, volume_new))
         {
             printf("%s: trouble converting Volume to Nrrd data\n", __func__);
             return;
         }
         cout << "Finished converting resulting volume back to Nrrd data" << endl;
 
-        // Project the volume alone z axis using MIP
+        // save this volume as nrrd
+        string volumeOutPath = opt.out_path+".nrrd";
+        if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
+        {
+            printf("%s: trouble saving new volume as Nrrd file\n", __func__);
+            airMopError(mop);
+        }
+
+        // Project the volume (in nrrd format) alone z axis using MIP
         Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (nrrdProject(projNrrd, nout, 3, nrrdMeasureMax, nrrdTypeDouble))
+        if (nrrdProject(projNrrd, nrrd_new, 3, nrrdMeasureMax, nrrdTypeDouble))
         {
             printf("%s: trouble projecting Nrrd data alone z-axis using MIP\n", __func__);
             return;
@@ -696,18 +695,16 @@ void Resamp::main()
         nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
 
         // save the final nrrd as image
-        if (nrrdSave(opt.out_path.c_str(), finalPaded, NULL)) 
+        string imageOutPath = opt.out_path + ".png";
+        if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
         {
             printf("%s: trouble saving output\n", __func__);
             airMopError(mop);
         }
-        cout << "Finished saving image at " << opt.out_path << endl;
-
+        cout << "Finished saving image at " << imageOutPath << endl;
     }
-    
-        
+
     airMopOkay(mop);
     return;
-
 
 }

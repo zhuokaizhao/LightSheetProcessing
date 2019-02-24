@@ -18,6 +18,15 @@ struct resampOptions {
 
     // path that includes all the nhdr headers
     string nhdr_path;
+
+    // path of the grid file
+    string grid_path;
+
+    // name of the kernel
+    string kernel_name;
+
+    // path that includes all the output images
+    string out_path;
     
     // restrict the number of files that we processed
     string maxFileNum;
@@ -28,12 +37,6 @@ struct resampOptions {
     uint tmax;
 
     vector< pair<int, string> > allValidFiles;
-
-    // path that includes all the output images
-    string out_path;
-
-    // path of the grid file
-    string grid_path;
 
     uint verbose = 0;
 };
