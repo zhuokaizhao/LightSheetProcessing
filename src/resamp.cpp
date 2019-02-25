@@ -518,7 +518,7 @@ void Resamp::main()
     }
 
     // get the container ready
-    lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL, mop);
+    lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
     if (opt.verbose)
     {
         cout << "Finished generating ctx container" << endl;

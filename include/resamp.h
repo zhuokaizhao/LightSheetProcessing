@@ -57,7 +57,7 @@ void setup_resamp(CLI::App &app);
 int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D);
 
 // evaluate 3D convolution between volume and kernel
-void convoEval3D(lspCtx3D* ctx, double xw, double yw, double zw, airArray* mop);
+void convoEval3D(lspCtx3D* ctx, double xw, double yw, double zw);
 
 class Resamp {
     public:
