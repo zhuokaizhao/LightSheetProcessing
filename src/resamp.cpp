@@ -121,7 +121,8 @@ void setup_resamp(CLI::App &app)
                 nhdrNum = stoi(opt->maxFileNum);
                 cout << "User restricts the total number of files to be processed as " << nhdrNum << endl;
             }
-            cout << "Total number of .nhdr files that we are processing is: " << nhdrNum << endl << endl;
+            opt->numFiles = nhdrNum;
+            cout << "Total number of .nhdr files that we are processing is: " << opt->numFiles << endl << endl;
 
             try
             {
@@ -134,8 +135,10 @@ void setup_resamp(CLI::App &app)
                     Resamp(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                    cout << endl << "Processing took " << duration.count() << " seconds" << endl << endl; 
+                    cout << endl << "Processed " << opt->allValidFiles[i].second << " took " << duration.count() << " seconds" << endl << endl; 
                 }
+                // make video
+                Resamp(*opt).makeVideo();
             }
             catch(LSPException &e)
             {
@@ -627,8 +630,58 @@ void Resamp::main()
     {
         cout << "Finished saving image at " << imageOutPath << endl;
     }
-    cout << "line 628" << endl;
+    // cout << "line 628" << endl;
     // airMopOkay(mop);
     // return;
 
+}
+
+// generate videos, only when not in the single file mode
+void Resamp::makeVideo()
+{
+    int numFiles = opt.numFiles;
+
+    // get the size by reading the first frame image
+    cv::Size s = cv::imread(opt.out_path + "001.png").size();
+    
+    string out_file;
+    if (opt.maxFileNum != "")
+        out_file = opt.out_path + "result_" + opt.maxFileNum + ".avi";
+    else
+        out_file = opt.out_path + "/result.avi";
+
+
+    // when output already exists, skip this iteration
+    // if (fs::exists(out_file))
+    // {
+    //     cout << out_file << " exists, continue to next." << endl;
+    //     continue;
+    // }
+
+    if (opt.maxFileNum != "")
+        cout << "===================== " + "result_" + opt.maxFileNum + ".avi =====================" << std::endl;
+    else
+        cout << "===================== " + "result.avi =====================" << std::endl;
+        
+
+    // write the images to video with opencv video writer
+    // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
+    //cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), opt.fps, s, true);
+    // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
+    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
+    
+    if(!vw.isOpened()) 
+        std::cout << "cannot open videoWriter." << std::endl;
+    
+    for(int i = 0; i < numFiles; i++)
+    {
+        string frameNum = opt.allValidFiles[i].second;
+        std::string name = opt.out_path + "/" + i + ".png";
+        cv::Mat curImage = cv::imread(name);
+        // put white text indicating frame number on the bottom left cornor of images
+        // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
+        putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+        vw << curImage;
+    }
+    vw.release();
 }

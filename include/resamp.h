@@ -28,11 +28,11 @@ struct resampOptions {
     // path that includes all the output images
     string out_path;
     
-    // restrict the number of files that we processed
+    // restrict the number of files that we processed (coule be empty, which means all files)
     string maxFileNum;
 
-    // total number of files
-    int file_number;
+    // the number of files we are processing
+    int numFiles;
 
     // if we are in single file mode
     bool isSingleFile;
@@ -59,6 +59,8 @@ class Resamp {
         ~Resamp();
 
         void main();
+
+        void makeVideo();
     
     private:
         resampOptions const opt;
