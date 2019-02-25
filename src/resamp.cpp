@@ -626,7 +626,7 @@ void Resamp::main()
     {
         cout << "Finished saving image at " << imageOutPath << endl;
     }
-
+    cout << "line 629" << endl;
     airMopOkay(mop);
     // return;
 
