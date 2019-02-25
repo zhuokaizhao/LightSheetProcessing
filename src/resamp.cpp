@@ -200,7 +200,6 @@ void setup_resamp(CLI::App &app)
                     // we are computing these files
                     auto start = chrono::high_resolution_clock::now();
                     Resamp(*opt).main();
-                    cout << "end main" << endl;
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     cout << endl << "Processed " << opt->nhdr_path << " took " << duration.count() << " seconds" << endl << endl; 
@@ -535,7 +534,7 @@ void Resamp::main()
     }
 
     // get the container ready
-    lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
+    lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL, mop);
     if (opt.verbose)
     {
         cout << "Finished generating ctx container" << endl;

@@ -526,7 +526,6 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
         printf("%s: trouble allocating volume\n", __func__);
         return 1;
     }
-    cout << "Volume allocated successfully" << endl;
 
     // convert content (description)
     if (nin->content) 
@@ -542,8 +541,6 @@ int lspVolumeFromNrrd(lspVolume *vol, const Nrrd* nin)
     // convert actual data
     uint elSize = (uint)nrrdElementSize(nin);
     uint elNum = (uint)nrrdElementNumber(nin);
-    // cout << "Nrrd data element size is " << elSize << endl;
-    // cout << "Nrrd data element number is " << elNum << endl;
 
     if (ltype == lspTypeUChar) 
     {
@@ -638,7 +635,7 @@ int lspNrrdFromVolume(Nrrd *nout, const lspVolume *vol)
   associated with 3D convolution, which is computing on a given volume "vol", 
   and a reconstruction kernel "kernel"
 */
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm) 
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm, airArray* mop) 
 {
     // some error checks
     if (!(vol && kernel)) 
@@ -665,8 +662,9 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const Nr
 
     // parse the kernel
     ctx3D->kernelSpec = nrrdKernelSpecNew();
+
     // airArray* mop;
-    // airMopAdd(mop, ctx3D->kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
+    airMopAdd(mop, ctx3D->kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
     nrrdKernelParse(&(ctx3D->kernelSpec->kernel), ctx3D->kernelSpec->parm, ctx3D->kern->name);
 
     // copy vol->ItoW for easier access and consistancy
@@ -688,7 +686,7 @@ lspCtx3D* lspCtx3DNix(lspCtx3D* ctx)
 
     if (ctx) 
     {
-        free(ctx->kernelSpec);
+        // free(ctx->kernelSpec);
         free(ctx);
     }
     return NULL;
