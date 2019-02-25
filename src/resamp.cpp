@@ -659,9 +659,9 @@ void Resamp::makeVideo()
     // }
 
     if (opt.maxFileNum != "")
-        cout << "===================== " + "result_" + opt.maxFileNum + ".avi =====================" << std::endl;
+        cout << "===================== result_" + opt.maxFileNum + ".avi =====================" << std::endl;
     else
-        cout << "===================== " + "result.avi =====================" << std::endl;
+        cout << "===================== result.avi =====================" << std::endl;
         
 
     // write the images to video with opencv video writer
@@ -676,7 +676,7 @@ void Resamp::makeVideo()
     for(int i = 0; i < numFiles; i++)
     {
         string frameNum = opt.allValidFiles[i].second;
-        std::string name = opt.out_path + "/" + i + ".png";
+        std::string name = opt.out_path + "/" + frameNum + ".png";
         cv::Mat curImage = cv::imread(name);
         // put white text indicating frame number on the bottom left cornor of images
         // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
