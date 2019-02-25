@@ -662,10 +662,13 @@ lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const Nr
 
     // parse the kernel
     ctx3D->kernelSpec = nrrdKernelSpecNew();
-
-    // airArray* mop;
-    airMopAdd(mop, ctx3D->kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
-    nrrdKernelParse(&(ctx3D->kernelSpec->kernel), ctx3D->kernelSpec->parm, ctx3D->kern->name);
+    ctx3D->mop_v = airMopNew();
+    airMopAdd(ctx3D->mop_v, ctx3D->kernelSpec, (airMopper)nrrdKernelSpecNix, airMopAlways);
+    if (nrrdKernelParse(&(ctx3D->kernelSpec->kernel), ctx3D->kernelSpec->parm, ctx3D->kern->name))
+    {
+        printf("%s: trouble parsing kernel\n", __func__);
+        airMopError(ctx3D->mop_v);
+    }
 
     // copy vol->ItoW for easier access and consistancy
     M4_COPY(ctx3D->ItoW, ctx3D->volume->ItoW);
@@ -687,6 +690,7 @@ lspCtx3D* lspCtx3DNix(lspCtx3D* ctx)
     if (ctx) 
     {
         // free(ctx->kernelSpec);
+        airMopOkay(ctx->mop_v);
         free(ctx);
     }
     return NULL;

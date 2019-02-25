@@ -83,6 +83,8 @@ typedef struct
     // homogeneous coordinate mapping from new volume index space (read from grid.txt)
     double NewItoW[16];
 
+    airArray* mop_v;
+
 } lspCtx3D;
 
 // initialize a new volume
@@ -102,7 +104,7 @@ int lspNrrdFromVolume(Nrrd *nout, const lspVolume *vol);
 
 // lspCtx3DNew creates the context to contain all resources and state
 // associated with 3D convolution, which is computing on a given volume "vol" and a reconstruction kernel "kern"
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm, airArray* mop);
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm);
 
 // free a lspCtx3D
 lspCtx3D* lspCtx3DNix(lspCtx3D* ctx);
