@@ -447,8 +447,6 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-    // airArray *mop;
-    // mop = airMopNew();
     int curFileIndex = opt.curFileIndex;
     string nhdr_name;
     if (opt.isSingleFile)
@@ -511,6 +509,7 @@ void Resamp::main()
     // put Nrrd data into lspVolume
     lspVolume* volume = lspVolumeNew();
     // airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
+
     if ( lspVolumeFromNrrd(volume, nin_permuted) )
     {
         if (opt.verbose)
@@ -543,9 +542,9 @@ void Resamp::main()
     }
 
     // perform the 3D sampling (convolution)
-    // resulting volume_box
     lspVolume* volume_new = lspVolumeNew();
     // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+
     // allocate memory for the new volume, with sizes being the region of interest sizes
     if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
     {
@@ -626,9 +625,23 @@ void Resamp::main()
 
     for (int i = 0; i < 2; i++)
     {
-        nrrdSlice(slices[i], projNrrd, 0, i);
-        nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true);
-        nrrdQuantize(quantized[i], slices[i], range, 8);
+        if (nrrdSlice(slices[i], projNrrd, 0, i))
+        {
+            if (opt.verbose)
+            {
+                printf("%s: trouble slicing into 2 channels\n", __func__);
+            }
+            airMopError(mop);
+        }
+        if (nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true)
+            || nrrdQuantize(quantized[i], slices[i], range, 8))
+        {
+            if (opt.verbose)
+            {
+                printf("%s: trouble quantizing to 8 bits\n", __func__);
+            }
+            airMopError(mop);
+        }
     }
     if (opt.verbose)
     {
@@ -640,7 +653,7 @@ void Resamp::main()
     Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     if (nrrdJoin(finalJoined, quantized, 2, 0, 1))
     {
-         if (opt.verbose)
+        if (opt.verbose)
         {
             printf("%s: trouble joining 2 channels\n", __func__);
         }
