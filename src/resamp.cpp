@@ -183,7 +183,6 @@ void setup_resamp(CLI::App &app)
     });
 }
 
-
 Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
 {
     // create folder if it does not exist (only when it is not in single file mode)
@@ -414,7 +413,6 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-    auto mop_t = airMopNew();
     int curFileIndex = opt.curFileIndex;
     string nhdr_name;
     if (opt.isSingleFile)
@@ -429,7 +427,7 @@ void Resamp::main()
     cout << "Currently processing input file " << nhdr_name << endl;
 
     // load the nhdr header
-    Nrrd* nin = safe_nrrd_load(mop_t, nhdr_name);
+    Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
     if (opt.verbose)
     {
         cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
@@ -438,7 +436,7 @@ void Resamp::main()
     // do the permutation
     // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
     unsigned int permute[4] = {2, 0, 1, 3};
-    Nrrd* nin_permuted = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+    Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     if ( nrrdAxesPermute(nin_permuted, nin, permute) )
     {
         if (opt.verbose)
@@ -454,7 +452,7 @@ void Resamp::main()
 
     // put Nrrd data into lspVolume
     lspVolume* volume = lspVolumeNew();
-    airMopAdd(mop_t, volume, (airMopper)lspVolumeNix, airMopAlways);
+    airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
     if ( lspVolumeFromNrrd(volume, nin_permuted) )
     {
         if (opt.verbose)
@@ -489,7 +487,7 @@ void Resamp::main()
     // perform the 3D sampling (convolution)
     // resulting volume_box
     lspVolume* volume_new = lspVolumeNew();
-    airMopAdd(mop_t, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+    airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
     // allocate memory for the new volume, with sizes being the region of interest sizes
     if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
     {
@@ -515,7 +513,7 @@ void Resamp::main()
     }
 
     // change the volume back to Nrrd file for projection
-    Nrrd* nrrd_new = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+    Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     if (lspNrrdFromVolume(nrrd_new, volume_new))
     {
         if (opt.verbose)
@@ -547,11 +545,11 @@ void Resamp::main()
         {
             printf("%s: trouble saving new volume as Nrrd file\n", __func__);
         }
-        airMopError(mop_t);
+        airMopError(mop);
     }
 
     // Project the volume (in nrrd format) alone z axis using MIP
-    Nrrd* projNrrd = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+    Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     if (nrrdProject(projNrrd, nrrd_new, 3, nrrdMeasureMax, nrrdTypeDouble))
     {
         if (opt.verbose)
@@ -566,16 +564,16 @@ void Resamp::main()
     }
 
     // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
-    Nrrd* slices[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke), 
-                        safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+    Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
+                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
 
     // quantized
-    Nrrd* quantized[2] = {safe_nrrd_new(mop_t, (airMopper)nrrdNuke),
-                            safe_nrrd_new(mop_t, (airMopper)nrrdNuke)};
+    Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                            safe_nrrd_new(mop, (airMopper)nrrdNuke)};
 
     // range during quantizing
     auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-    airMopAdd(mop_t, range, (airMopper)nrrdRangeNix, airMopAlways);
+    airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
 
     for (int i = 0; i < 2; i++)
     {
@@ -590,7 +588,7 @@ void Resamp::main()
     }
 
     // Join the two channel
-    Nrrd* finalJoined = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+    Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     nrrdJoin(finalJoined, quantized, 2, 0, 1);
     if (opt.verbose)
     {
@@ -599,7 +597,7 @@ void Resamp::main()
 
     // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
     // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
-    Nrrd* finalPaded = safe_nrrd_new(mop_t, (airMopper)nrrdNuke);
+    Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     ptrdiff_t min[3] = {-1, 0, 0};
     ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
     nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
@@ -621,14 +619,14 @@ void Resamp::main()
         {
             printf("%s: trouble saving output\n", __func__);
         }
-        airMopError(mop_t);
+        airMopError(mop);
     }
     if (opt.verbose)
     {
         cout << "Finished saving image at " << imageOutPath << endl;
     }
-    // cout << "line 629" << endl;
-    airMopOkay(mop_t);
+    cout << "line 628" << endl;
+    // airMopOkay(mop);
     // return;
 
 }
