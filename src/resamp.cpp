@@ -428,6 +428,8 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
+    // turn off nrrd warnings
+    nrrdStateVerboseIO = 0;
     if (!opt.isSingleFile)
     {
         // loop over all the current files
