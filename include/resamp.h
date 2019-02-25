@@ -67,7 +67,7 @@ class Resamp {
     
     private:
         resampOptions const opt;
-        // airArray* mop;
+        airArray* mop;
 };
 
 #endif //LSP_RESAMP_H
