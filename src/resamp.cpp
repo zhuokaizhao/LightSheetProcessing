@@ -129,6 +129,7 @@ void setup_resamp(CLI::App &app)
             {
                 // cout << "First file name is " << opt->allValidFiles[0].second << endl;
                 // loop over all the current files
+                Resamp(*opt);
                 for (int i = 0; i < nhdrNum; i++)
                 {
                     opt->curFileIndex = i;
@@ -147,7 +148,7 @@ void setup_resamp(CLI::App &app)
 
                     // we are generating these files
                     auto start = chrono::high_resolution_clock::now();
-                    Resamp(*opt).main();
+                    main();
                     auto stop = chrono::high_resolution_clock::now(); 
                     auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
                     cout << endl << "Processed " << opt->allValidFiles[i].second << " took " << duration.count() << " seconds" << endl << endl; 
