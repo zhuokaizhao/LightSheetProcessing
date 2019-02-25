@@ -591,6 +591,7 @@ void Resamp::main()
         }
         airMopError(mop);
     }
+    cout << "Finished saving new volume at " << volumeOutPath << endl;
 
     // Project the volume (in nrrd format) alone z axis using MIP
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -654,10 +655,7 @@ void Resamp::main()
         }
         airMopError(mop);
     }
-    if (opt.verbose)
-    {
-        cout << "Finished saving image at " << imageOutPath << endl;
-    }
+    cout << "Finished saving image at " << imageOutPath << endl;
     // cout << "line 628" << endl;
     // airMopOkay(mop);
     // return;
