@@ -432,6 +432,35 @@ void Resamp::main()
     }
     cout << "Currently processing input file " << nhdr_name << endl;
 
+    // save this volume as nrrd
+    string volumeOutPath;
+    if (opt.isSingleFile)
+    {
+        volumeOutPath = opt.out_path + ".nhdr";
+    }
+    else
+    {
+        volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".nhdr";
+    }
+
+    // save the final nrrd as image
+    string imageOutPath;
+    if (opt.isSingleFile)
+    {
+        imageOutPath = opt.out_path + ".png";
+    }
+    else
+    {
+        imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".png";
+    }
+
+    // when output already exists, skip this iteration
+    if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
+    {
+        cout << imageOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+        return;
+    }
+
     // load the nhdr header
     Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
     if (opt.verbose)
@@ -533,18 +562,6 @@ void Resamp::main()
         cout << "Finished converting resulting volume back to Nrrd data" << endl;
     }
 
-    // save this volume as nrrd
-    string volumeOutPath;
-    if (opt.isSingleFile)
-    {
-        volumeOutPath = opt.out_path + ".nhdr";
-    }
-    else
-    {
-        volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".nhdr";
-    }
-    
-
     if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
     {
         if (opt.verbose)
@@ -607,17 +624,6 @@ void Resamp::main()
     ptrdiff_t min[3] = {-1, 0, 0};
     ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
     nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
-
-    // save the final nrrd as image
-    string imageOutPath;
-    if (opt.isSingleFile)
-    {
-        imageOutPath = opt.out_path + ".png";
-    }
-    else
-    {
-        imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".png";
-    }
 
     if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
     {
