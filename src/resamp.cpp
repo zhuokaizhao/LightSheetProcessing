@@ -448,6 +448,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
+    airArray *mop;
     mop = airMopNew();
     int curFileIndex = opt.curFileIndex;
     string nhdr_name;
@@ -660,7 +661,7 @@ void Resamp::main()
     cout << "Finished saving image at " << imageOutPath << endl;
     // cout << "line 628" << endl;
     airMopOkay(mop);
-    // return;
+    return;
 
 }
 
@@ -678,14 +679,6 @@ void Resamp::makeVideo()
     else
         out_file = opt.out_path + "/result.avi";
 
-
-    // when output already exists, skip this iteration
-    // if (fs::exists(out_file))
-    // {
-    //     cout << out_file << " exists, continue to next." << endl;
-    //     continue;
-    // }
-
     if (opt.maxFileNum != "")
         cout << "===================== result_" + opt.maxFileNum + ".avi =====================" << std::endl;
     else
@@ -694,7 +687,6 @@ void Resamp::makeVideo()
 
     // write the images to video with opencv video writer
     // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
-    //cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('M','J','P','G'), opt.fps, s, true);
     // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
     cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
     
