@@ -40,9 +40,6 @@ struct resampOptions {
     // if we are in single file mode
     bool isSingleFile;
 
-    // the index of the file we are currently processing
-    int curFileIndex;
-
     vector< pair<int, string> > allValidFiles;
 
     uint verbose = 0;

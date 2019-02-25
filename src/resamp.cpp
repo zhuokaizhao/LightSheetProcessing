@@ -434,7 +434,6 @@ void Resamp::main()
         int nhdrNum = opt.numFiles;
         for (int i = 0; i < nhdrNum; i++)
         {
-            opt.curFileIndex = i;
             // we will save this volume as nrrd
             string volumeOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".nhdr";
 
@@ -448,7 +447,6 @@ void Resamp::main()
                 continue;
             }
 
-            int curFileIndex = opt.curFileIndex;
             string nhdr_name;
             if (opt.isSingleFile)
             {
@@ -457,7 +455,7 @@ void Resamp::main()
             }
             else
             {
-                nhdr_name = opt.nhdr_path + opt.allValidFiles[curFileIndex].second + ".nhdr";
+                nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
             }
             cout << "Currently processing input file " << nhdr_name << endl;
 
