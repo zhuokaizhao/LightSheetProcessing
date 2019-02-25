@@ -43,9 +43,6 @@ struct resampOptions {
     // the index of the file we are currently processing
     int curFileIndex;
 
-    // processed output paths
-    string volumeOutPath, imageOutPath;
-
     vector< pair<int, string> > allValidFiles;
 
     uint verbose = 0;

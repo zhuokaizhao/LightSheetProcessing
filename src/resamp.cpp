@@ -167,15 +167,15 @@ void setup_resamp(CLI::App &app)
                 try
                 {
                     // we will save this volume as nrrd
-                    opt->volumeOutPath = opt->out_path + ".nhdr";
+                    string volumeOutPath = opt->out_path + ".nhdr";
 
                     // we will save the final nrrd as image
-                    opt->imageOutPath = opt->out_path + ".png";
+                    string imageOutPath = opt->out_path + ".png";
 
                     // when output already exists, skip this
-                    if (fs::exists(opt->volumeOutPath) && fs::exists(opt->imageOutPath))
+                    if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
                     {
-                        cout << opt->volumeOutPath << " and " << opt->imageOutPath << " both exists, continue to next." << endl;
+                        cout << volumeOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
                         return;
                     }
 
@@ -436,15 +436,15 @@ void Resamp::main()
         {
             opt.curFileIndex = i;
             // we will save this volume as nrrd
-            opt.volumeOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".nhdr";
+            string volumeOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".nhdr";
 
             // we will save the final nrrd as image
-            opt.imageOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".png";
+            string imageOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".png";
 
             // when output already exists, skip this iteration
-            if (fs::exists(opt.volumeOutPath) && fs::exists(opt.imageOutPath))
+            if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
             {
-                cout << opt.volumeOutPath << " and " << opt.imageOutPath << " both exists, continue to next." << endl;
+                cout << volumeOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
                 continue;
             }
 
@@ -460,12 +460,6 @@ void Resamp::main()
                 nhdr_name = opt.nhdr_path + opt.allValidFiles[curFileIndex].second + ".nhdr";
             }
             cout << "Currently processing input file " << nhdr_name << endl;
-
-            // save this volume as nrrd
-            string volumeOutPath = opt.volumeOutPath;
-
-            // save the final nrrd as image
-            string imageOutPath = opt.imageOutPath;
 
             // load the nhdr header
             Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
