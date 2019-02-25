@@ -635,7 +635,7 @@ int lspNrrdFromVolume(Nrrd *nout, const lspVolume *vol)
   associated with 3D convolution, which is computing on a given volume "vol", 
   and a reconstruction kernel "kernel"
 */
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm, airArray* mop) 
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm) 
 {
     // some error checks
     if (!(vol && kernel)) 
