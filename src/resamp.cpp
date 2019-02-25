@@ -133,8 +133,7 @@ void setup_resamp(CLI::App &app)
                 Resamp(*opt).main();
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                cout << endl << "Processed " << opt->allValidFiles[i].second << " took " << duration.count() << " seconds" << endl << endl; 
-                }
+                cout << endl << "Processed " << nhdrNum << " files took " << duration.count() << " seconds" << endl << endl; 
                 // make video
                 Resamp(*opt).makeVideo();
             }
