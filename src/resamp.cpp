@@ -461,25 +461,9 @@ void Resamp::main()
 
     // save this volume as nrrd
     string volumeOutPath = opt.volumeOutPath;
-    // if (opt.isSingleFile)
-    // {
-    //     volumeOutPath = opt.out_path + ".nhdr";
-    // }
-    // else
-    // {
-    //     volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".nhdr";
-    // }
 
     // save the final nrrd as image
     string imageOutPath = opt.imageOutPath;
-    // if (opt.isSingleFile)
-    // {
-    //     imageOutPath = opt.out_path + ".png";
-    // }
-    // else
-    // {
-    //     imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".png";
-    // }
 
     // load the nhdr header
     Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
