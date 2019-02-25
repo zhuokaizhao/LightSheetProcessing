@@ -436,6 +436,7 @@ void Resamp::main()
         int nhdrNum = opt.numFiles;
         for (int i = 0; i < nhdrNum; i++)
         {
+            auto start = chrono::high_resolution_clock::now();
             // we will save this volume as nrrd
             string volumeOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".nhdr";
 
@@ -664,6 +665,10 @@ void Resamp::main()
             lspVolumeNix(volume);
             lspVolumeNix(volume_new);
             lspCtx3DNix(ctx);
+
+            auto stop = chrono::high_resolution_clock::now(); 
+            auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+            cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
         }
     }
     else
