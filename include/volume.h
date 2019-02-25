@@ -102,7 +102,7 @@ int lspNrrdFromVolume(Nrrd *nout, const lspVolume *vol);
 
 // lspCtx3DNew creates the context to contain all resources and state
 // associated with 3D convolution, which is computing on a given volume "vol" and a reconstruction kernel "kern"
-lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm);
+lspCtx3D* lspCtx3DNew(const lspVolume* vol, const std::string gridPath, const NrrdKernel* kernel, const double* vmm, airArray* mop);
 
 // free a lspCtx3D
 lspCtx3D* lspCtx3DNix(lspCtx3D* ctx);
