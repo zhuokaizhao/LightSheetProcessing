@@ -133,10 +133,10 @@ void setup_resamp(CLI::App &app)
                 {
                     opt->curFileIndex = i;
                     // we will save this volume as nrrd
-                    string volumeOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".nhdr";
+                    opt->volumeOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".nhdr";
 
                     // we will save the final nrrd as image
-                    string imageOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".png";
+                    opt->imageOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".png";
 
                     // when output already exists, skip this iteration
                     if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
@@ -185,12 +185,12 @@ void setup_resamp(CLI::App &app)
                 try
                 {
                     // we will save this volume as nrrd
-                    string volumeOutPath = opt->out_path + ".nhdr";
+                    opt->volumeOutPath = opt->out_path + ".nhdr";
 
                     // we will save the final nrrd as image
-                    string imageOutPath = opt->out_path + ".png";
+                    opt->imageOutPath = opt->out_path + ".png";
 
-                    // when output already exists, skip this iteration
+                    // when output already exists, skip this
                     if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
                     {
                         cout << imageOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
@@ -460,26 +460,26 @@ void Resamp::main()
     cout << "Currently processing input file " << nhdr_name << endl;
 
     // save this volume as nrrd
-    string volumeOutPath;
-    if (opt.isSingleFile)
-    {
-        volumeOutPath = opt.out_path + ".nhdr";
-    }
-    else
-    {
-        volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".nhdr";
-    }
+    string volumeOutPath = opt.volumeOutPath;
+    // if (opt.isSingleFile)
+    // {
+    //     volumeOutPath = opt.out_path + ".nhdr";
+    // }
+    // else
+    // {
+    //     volumeOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".nhdr";
+    // }
 
     // save the final nrrd as image
-    string imageOutPath;
-    if (opt.isSingleFile)
-    {
-        imageOutPath = opt.out_path + ".png";
-    }
-    else
-    {
-        imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".png";
-    }
+    string imageOutPath = opt.imageOutPath;
+    // if (opt.isSingleFile)
+    // {
+    //     imageOutPath = opt.out_path + ".png";
+    // }
+    // else
+    // {
+    //     imageOutPath = opt.out_path + "/" + opt.allValidFiles[curFileIndex].second + ".png";
+    // }
 
     // load the nhdr header
     Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
