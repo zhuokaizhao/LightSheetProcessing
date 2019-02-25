@@ -34,6 +34,7 @@ void setup_resamp(CLI::App &app)
     sub->add_option("-k, --kernel", opt->kernel_name, "Name of the kernel. Currently support 'box' and 'ctml'.")->required();
     sub->add_option("-o, --out_path", opt->out_path, "Path that includes all the output images")->required();
     sub->add_option("-n, --max_file_number", opt->maxFileNum, "The max number of files that we want to process");
+    sub->add_option("-f, --fps", opt->fps, "Frame per second (fps) of the generated .avi video. (Default: 10)");
     sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
 
     sub->set_callback([opt]() 

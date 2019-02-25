@@ -31,6 +31,9 @@ struct resampOptions {
     // restrict the number of files that we processed (coule be empty, which means all files)
     string maxFileNum;
 
+    // fps of the video
+    int fps = 10;
+
     // the number of files we are processing
     int numFiles;
 
