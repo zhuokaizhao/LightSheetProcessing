@@ -38,7 +38,7 @@ void setup_resamp(CLI::App &app)
     sub->add_option("-v, --verbose", opt->verbose, "Print processing message or not. (Default: 0(close))");
 
     sub->set_callback([opt]() 
-    { 
+    {
         // first determine if input nhdr_path is valid
         if (checkIfDirectory(opt->nhdr_path))
         {
@@ -132,6 +132,20 @@ void setup_resamp(CLI::App &app)
                 for (int i = 0; i < nhdrNum; i++)
                 {
                     opt->curFileIndex = i;
+                    // we will save this volume as nrrd
+                    string volumeOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".nhdr";
+
+                    // we will save the final nrrd as image
+                    string imageOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".png";
+
+                    // when output already exists, skip this iteration
+                    if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
+                    {
+                        cout << imageOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                        continue;
+                    }
+
+                    // we are generating these files
                     auto start = chrono::high_resolution_clock::now();
                     Resamp(*opt).main();
                     auto stop = chrono::high_resolution_clock::now(); 
@@ -170,6 +184,20 @@ void setup_resamp(CLI::App &app)
 
                 try
                 {
+                    // we will save this volume as nrrd
+                    string volumeOutPath = opt->out_path + ".nhdr";
+
+                    // we will save the final nrrd as image
+                    string imageOutPath = opt->out_path + ".png";
+
+                    // when output already exists, skip this iteration
+                    if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
+                    {
+                        cout << imageOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                        return;
+                    }
+
+                    // we are computing these files
                     auto start = chrono::high_resolution_clock::now();
                     Resamp(*opt).main();
                     cout << "end main" << endl;
@@ -638,7 +666,7 @@ void Resamp::main()
         cout << "Finished saving image at " << imageOutPath << endl;
     }
     // cout << "line 628" << endl;
-    // airMopOkay(mop);
+    airMopOkay(mop);
     // return;
 
 }
