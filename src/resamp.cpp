@@ -434,17 +434,17 @@ void Resamp::main()
         int nhdrNum = opt.numFiles;
         for (int i = 0; i < nhdrNum; i++)
         {
-            opt->curFileIndex = i;
+            opt.curFileIndex = i;
             // we will save this volume as nrrd
-            opt->volumeOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".nhdr";
+            opt.volumeOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".nhdr";
 
             // we will save the final nrrd as image
-            opt->imageOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".png";
+            opt.imageOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".png";
 
             // when output already exists, skip this iteration
-            if (fs::exists(opt->volumeOutPath) && fs::exists(opt->imageOutPath))
+            if (fs::exists(opt.volumeOutPath) && fs::exists(opt.imageOutPath))
             {
-                cout << opt->volumeOutPath << " and " << opt->imageOutPath << " both exists, continue to next." << endl;
+                cout << opt.volumeOutPath << " and " << opt.imageOutPath << " both exists, continue to next." << endl;
                 continue;
             }
 
