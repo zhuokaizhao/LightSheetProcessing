@@ -139,9 +139,9 @@ void setup_resamp(CLI::App &app)
                     opt->imageOutPath = opt->out_path + "/" + opt->allValidFiles[i].second + ".png";
 
                     // when output already exists, skip this iteration
-                    if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
+                    if (fs::exists(opt->volumeOutPath) && fs::exists(opt->imageOutPath))
                     {
-                        cout << imageOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                        cout << opt->volumeOutPath << " and " << opt->imageOutPath << " both exists, continue to next." << endl;
                         continue;
                     }
 
@@ -191,9 +191,9 @@ void setup_resamp(CLI::App &app)
                     opt->imageOutPath = opt->out_path + ".png";
 
                     // when output already exists, skip this
-                    if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
+                    if (fs::exists(opt->volumeOutPath) && fs::exists(opt->imageOutPath))
                     {
-                        cout << imageOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                        cout << opt->volumeOutPath << " and " << opt->imageOutPath << " both exists, continue to next." << endl;
                         return;
                     }
 
