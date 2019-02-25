@@ -215,8 +215,9 @@ void setup_resamp(CLI::App &app)
     });
 }
 
-Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
+Resamp::Resamp(resampOptions const &opt): opt(opt)/*, mop(airMopNew())*/
 {
+    // mop = airMopNew();
     // create folder if it does not exist (only when it is not in single file mode)
     if (!opt.isSingleFile)
     {
@@ -447,6 +448,7 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
+    mop = airMopNew();
     int curFileIndex = opt.curFileIndex;
     string nhdr_name;
     if (opt.isSingleFile)
@@ -657,7 +659,7 @@ void Resamp::main()
     }
     cout << "Finished saving image at " << imageOutPath << endl;
     // cout << "line 628" << endl;
-    // airMopOkay(mop);
+    airMopOkay(mop);
     // return;
 
 }
