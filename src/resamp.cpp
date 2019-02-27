@@ -690,7 +690,7 @@ void Resamp::makeVideo()
     
     string out_file;
     if (opt.maxFileNum != "")
-        out_file = opt.out_path + "result_" + opt.maxFileNum + ".avi";
+        out_file = opt.out_path + "/result_" + opt.maxFileNum + ".avi";
     else
         out_file = opt.out_path + "/result.avi";
 
