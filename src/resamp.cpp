@@ -671,9 +671,9 @@ void Resamp::main()
         // since it is single file mode, nhdr_path is now the file path
         const string nhdr_name = opt.nhdr_path;
         // get the name of the file only
-        int start = nhdr_name.rfind("/");
+        int startlocation = nhdr_name.rfind("/");
         int end = nhdr_name.rfind(".nhdr");
-        string curFileName = nhdr_name.substr(start, end);
+        string curFileName = nhdr_name.substr(startlocation, end);
 
         // we will save this new volume as nrrd
         string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
