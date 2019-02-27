@@ -686,7 +686,7 @@ void Resamp::makeVideo()
     int numFiles = opt.numFiles;
 
     // get the size by reading the first frame image
-    cv::Size s = cv::imread(opt.out_path + "001.png").size();
+    cv::Size s = cv::imread(opt.out_path + "/001.png").size();
     
     string out_file;
     if (opt.maxFileNum != "")
