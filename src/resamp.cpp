@@ -452,16 +452,7 @@ void Resamp::main()
                 continue;
             }
 
-            string nhdr_name;
-            if (opt.isSingleFile)
-            {
-                // nhdr_path is just the nhdr file namae instead of a folder path
-                nhdr_name = opt.nhdr_path;
-            }
-            else
-            {
-                nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
-            }
+            string nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
             cout << "Currently processing input file " << nhdr_name << endl;
 
             // load the nhdr header
@@ -685,9 +676,9 @@ void Resamp::main()
         string curFileName = nhdr_name.substr(start, end);
 
         // we will save this new volume as nrrd
-        string volumeOutPath = opt->out_path + "/" + curFileName + ".nhdr";
+        string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
         // we will save the final nrrd as image
-        string imageOutPath = opt->out_path + "/" + curFileName + ".png";
+        string imageOutPath = opt.out_path + "/" + curFileName + ".png";
 
         // load the nhdr header
         Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
