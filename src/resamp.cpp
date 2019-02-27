@@ -669,7 +669,7 @@ void Resamp::main()
         auto start = chrono::high_resolution_clock::now();
 
         // since it is single file mode, nhdr_path is now the file path
-        const string nhdr_name = opt->nhdr_path;
+        const string nhdr_name = opt.nhdr_path;
         // get the name of the file only
         int start = nhdr_name.rfind("/");
         int end = nhdr_name.rfind(".nhdr");
