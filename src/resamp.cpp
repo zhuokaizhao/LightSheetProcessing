@@ -211,9 +211,9 @@ Resamp::Resamp(resampOptions const &opt): opt(opt), mop(airMopNew())
 
 Resamp::~Resamp()
 {
-    cout << "Line 201" << endl;
+    // cout << "Line 201" << endl;
     airMopOkay(mop);
-    cout << "Line 203" << endl;
+    // cout << "Line 203" << endl;
 }
 
 // ********************** some static helper functions **********************
