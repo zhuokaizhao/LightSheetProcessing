@@ -673,7 +673,7 @@ void Resamp::main()
         // get the name of the file only
         int startlocation = nhdr_name.rfind("/");
         int end = nhdr_name.rfind(".nhdr");
-        string curFileName = nhdr_name.substr(startlocation, end);
+        string curFileName = nhdr_name.substr(startlocation+1, end);
 
         // we will save this new volume as nrrd
         string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
