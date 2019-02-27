@@ -2,7 +2,7 @@
 
 #SBATCH --time=01:00:00
 #SBATCH --partition=dali
-#SBATCH --ntasks=32
+#SBATCH --ntasks=1
 
 module load parallel
 
@@ -30,7 +30,7 @@ parallel="parallel --delay .2 -j $SLURM_NTASKS --joblog runtask.log --resume"
 # {1} is the first argument
 # as an example, the first job will run like this:
 # srun --exclusive -N1 -n1 ./runtask arg1:1 > runtask.1
-$parallel "$srun ./runtask arg1:{1} > runtask.{1}" ::: {1..128}
+$parallel "$srun lsp resamp arg1:{-i corr_nhdr/260.nhdr -g grid.txt -k box -o resamp -v 0} > runtask.{1}" #::: {1..128}
 
 # if your program does not take any input, use -n0 option to call the parallel
 # command as follows:
