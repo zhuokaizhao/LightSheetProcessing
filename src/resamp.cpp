@@ -162,7 +162,7 @@ void setup_resamp(CLI::App &app)
                 cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
                 // we want to actually learn the name of the file with .nhdr
                 int start = curFile.rfind("/");
-                int end = curFile.rfind(".nhdr");
+                int end = curFile.rfind(".nhdr")-5;
                 string curFileName = curFile.substr(start+1, end);
                 std::cout << "Current file name is: " << curFileName << endl;
 
