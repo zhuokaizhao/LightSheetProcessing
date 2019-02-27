@@ -162,8 +162,7 @@ void setup_resamp(CLI::App &app)
                 cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
                 // we want to actually learn the name of the file with .nhdr
                 int start = curFile.rfind("/");
-                int end = curFile.rfind(".nhdr");
-                string curFileName = curFile.substr(start+1, end-4);
+                string curFileName = curFile.substr(start+1, 3);
                 std::cout << "Current file name is: " << curFileName << endl;
 
                 try
@@ -672,8 +671,7 @@ void Resamp::main()
         const string nhdr_name = opt.nhdr_path;
         // get the name of the file only
         int startlocation = nhdr_name.rfind("/");
-        int end = nhdr_name.rfind(".nhdr");
-        string curFileName = nhdr_name.substr(startlocation+1, end);
+        string curFileName = nhdr_name.substr(startlocation+1, 3);
 
         // we will save this new volume as nrrd
         string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
