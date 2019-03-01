@@ -878,9 +878,9 @@ void Resamp::main()
         cout << "Finished saving image at " << imageOutPath << endl;
 
         // free memory
-        // lspVolumeNix(volume);
-        // lspVolumeNix(volume_new);
-        // lspCtx3DNix(ctx);
+        lspVolumeNix(volume);
+        lspVolumeNix(volume_new);
+        lspCtx3DNix(ctx);
 
         auto stop = chrono::high_resolution_clock::now(); 
         auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
