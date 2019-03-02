@@ -19,6 +19,9 @@ struct resampOptions {
     // path that includes all the nhdr headers
     string nhdr_path;
 
+    // mode, if we just want to get the video with the resampled NHDR data
+    string mode;
+
     // path of the grid file
     string grid_path;
 
