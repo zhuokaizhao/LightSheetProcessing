@@ -772,39 +772,40 @@ void Resamp::main()
             else
             {
                 // video only mode
-                cout << "Video only mode, found " << nhdrNum << " .nhdr files" << endl;
+                cout << "Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
 
-                // we will save the final nrrd as image
-                string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-
-                // z-projection
-                Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-
-                // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
-                Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
-                                    safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-
-                // quantized
-                Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-                                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-
-                // range
-                auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-
-                Nrrd* finalJoined_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-
+                // These variables are used for all three directions
                 // load the nhdr header
                 Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
                 if (opt.verbose)
                 {
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
+                // projected Nrrd dataset
+                Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+                // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
+                Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
+                                    safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+                // quantized
+                Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+                // range
+                auto range = nrrdRangeNew(lspNan(0), lspNan(0));
+                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+                // final joined 
+                Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                     
-                
+                // *********************** alone x-axis ******************************
+                string imageOutPath_xyleft = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
+                makeProjImage(projNrrd, nin, "x", range, slices, quantized, finalJoined, imageOutPath_z);
 
-                string imageOutPath_xyleft = opt.out_path + "/" + opt.allValidFiles[i].second + "_xyleft.png";
-                string imageOutPath_xyright = opt.out_path + "/" + opt.allValidFiles[i].second + "_xyright.png";
+                // *********************** alone y-axis ******************************
+                string imageOutPath_xyleft = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
+                makeProjImage(projNrrd, nin, "y", range, slices, quantized, finalJoined, imageOutPath_z);
+
+                // *********************** alone z-axis ******************************
+                string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
+                makeProjImage(projNrrd, nin, "z", range, slices, quantized, finalJoined, imageOutPath_z);
             }
         }
     }
