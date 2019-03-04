@@ -729,17 +729,17 @@ void Resamp::main()
                 }
 
                 // *********************** alone x-axis ******************************
-                string imageOutPath_x = opt.out_path + "/" + curFileName + "_x.png";
+                string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
                 Nrrd* finalPaded_x = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 makeProjImage(finalPaded_x, nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
 
                 // *********************** alone y-axis ******************************
-                string imageOutPath_y = opt.out_path + "/" + curFileName + "_y.png";
+                string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
                 Nrrd* finalPaded_y = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 makeProjImage(finalPaded_y, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
-                string imageOutPath_z = opt.out_path + "/" + curFileName + "_z.png";
+                string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
                 Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 makeProjImage(finalPaded_z, nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
             }
@@ -817,7 +817,7 @@ void Resamp::main()
             nrrdJoin(finalPaded_join, tmp_nout_array, 2, 1, 0);
             // save the joined image
             string imageOutPath_joined = opt.out_path + "/" + curFileName + "_joined.png";
-            nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), nout, nullptr), 
+            nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, nullptr), 
                         mop, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
         }
     }
