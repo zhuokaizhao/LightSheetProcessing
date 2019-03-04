@@ -795,13 +795,20 @@ void Resamp::main()
             {
                 cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
+
+            cout << "nin has dimension ( ";
+            for (int i = 0; i < 4; i++)
+            {
+                cout << nin->axis[i].size << " ";
+            }
+            cout << ")" << endl;
                 
             // *********************** alone x-axis ******************************
             string imageOutPath_x = opt.out_path + "/" + curFileName + "_x.png";
             Nrrd* finalPaded_x = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_x, nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
             cout << "finalPaded_x has dimension ( ";
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 cout << finalPaded_x->axis[i].size << " ";
             }
@@ -812,7 +819,7 @@ void Resamp::main()
             Nrrd* finalPaded_y = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_y, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
             cout << "finalPaded_y has dimension ( ";
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 cout << finalPaded_y->axis[i].size << " ";
             }
@@ -823,7 +830,7 @@ void Resamp::main()
             Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_z, nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
             cout << "finalPaded_z has dimension ( ";
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 cout << finalPaded_z->axis[i].size << " ";
             }
@@ -834,7 +841,7 @@ void Resamp::main()
             Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             nrrdJoin(finalPaded_join, tmp_nout_array, 2, 2, 0);
             cout << "finalPaded_join has dimension ( ";
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 cout << finalPaded_join->axis[i].size << " ";
             }
