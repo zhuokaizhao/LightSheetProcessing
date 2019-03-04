@@ -396,7 +396,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* finalPaded, Nrrd* nin, string axis, double percent, string imageOutPath, int verbose, airArray* mop)
+static void makeProjImage(Nrrd* nin, string axis, double percent, string imageOutPath, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -459,6 +459,7 @@ static void makeProjImage(Nrrd* finalPaded, Nrrd* nin, string axis, double perce
     // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
     ptrdiff_t min[3] = {-1, 0, 0};
     ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
+    Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
 
     if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
@@ -470,6 +471,12 @@ static void makeProjImage(Nrrd* finalPaded, Nrrd* nin, string axis, double perce
         airMopError(mop);
     }
     cout << "Finished saving image at " << imageOutPath << endl;
+    cout << imageOutPath << " has dimension ( ";
+    for (int i = 0; i < 3; i++)
+    {
+        cout << finalPaded->axis[i].size << " ";
+    }
+    cout << ")" << endl;
 }
 
 // ********************** end of static helper functions *********************
@@ -686,11 +693,12 @@ void Resamp::main()
             if (opt.mode.empty() || opt.mode != "VideoOnly")
             {
                 auto start = chrono::high_resolution_clock::now();
+                string common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
                 // we will save this volume as nrrd
-                string volumeOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".nhdr";
+                string volumeOutPath = common_prefix + ".nhdr";
 
                 // we will save the final nrrd as image
-                string imageOutPath = opt.out_path + "/" + opt.allValidFiles[i].second + ".png";
+                string imageOutPath = common_prefix + ".png";
 
                 // when output already exists, skip this iteration
                 if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
@@ -708,7 +716,7 @@ void Resamp::main()
 
                 // Project the volume (in nrrd format) alone z axis using MIP and save images
                 Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(finalPaded_z, nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
+                makeProjImage(nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -769,7 +777,6 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // Project the volume (in nrrd format) alone z axis using MIP
-            Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_z, nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
 
             auto stop = chrono::high_resolution_clock::now(); 
@@ -803,52 +810,38 @@ void Resamp::main()
             }
             cout << ")" << endl;
                 
+            // the final images's x and z component
+            string common_prefix = opt.out_path + "/" + curFileName;
+            
+            string ppm_zOutPath = common_prefix + "_z.ppm";
             // *********************** alone x-axis ******************************
-            string imageOutPath_x = opt.out_path + "/" + curFileName + "_x.png";
-            Nrrd* finalPaded_x = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            makeProjImage(finalPaded_x, nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
-            cout << "finalPaded_x has dimension ( ";
-            for (int i = 0; i < 3; i++)
-            {
-                cout << finalPaded_x->axis[i].size << " ";
-            }
-            cout << ")" << endl;
+            string imageOutPath_x = common_prefix + "_x.png";
+            makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
+            string ppmOutPath_x = common_prefix + "_x.ppm";
+            makeProjImage(nin, "x", 0.5, ppmOutPath_x, opt.verbose, mop);
+            
 
             // *********************** alone y-axis ******************************
-            string imageOutPath_y = opt.out_path + "/" + curFileName + "_y.png";
-            Nrrd* finalPaded_y = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+            string imageOutPath_y = common_prefix + "_y.png";
             makeProjImage(finalPaded_y, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
-            cout << "finalPaded_y has dimension ( ";
-            for (int i = 0; i < 3; i++)
-            {
-                cout << finalPaded_y->axis[i].size << " ";
-            }
-            cout << ")" << endl;
+            string ppmOutPath_y = common_prefix + "_y.ppm";
+            makeProjImage(nin, "y", 0.5, ppmOutPath_y, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
-            string imageOutPath_z = opt.out_path + "/" + curFileName + "_z.png";
-            Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+            string imageOutPath_z = common_prefix + "_z.png";
             makeProjImage(finalPaded_z, nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
-            cout << "finalPaded_z has dimension ( ";
-            for (int i = 0; i < 3; i++)
-            {
-                cout << finalPaded_z->axis[i].size << " ";
-            }
-            cout << ")" << endl;
+            string ppmOutPath_z = common_prefix + "_z.ppm";
+            makeProjImage(nin, "z", 0.5, ppmOutPath_z, opt.verbose, mop);
 
             // join the z and x
-            Nrrd *tmp_nout_array[2] = {finalPaded_z, finalPaded_y};
+            Nrrd *ppm_z = safe_nrrd_load(mop, common_prefix + "_z.ppm");
+            Nrrd *ppm_x = safe_nrrd_load(mop, common_prefix + "_x.ppm");
+            Nrrd *tmp_nout_array[2] = {ppm_z, ppm_x};
             Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 0, 0);
-            cout << "finalPaded_join has dimension ( ";
-            for (int i = 0; i < 3; i++)
-            {
-                cout << finalPaded_join->axis[i].size << " ";
-            }
-            cout << ")" << endl;
+            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 1, 0);
             
             // save the joined image
-            string imageOutPath_joined = opt.out_path + "/" + curFileName + "_joined.png";
+            string imageOutPath_joined = common_prefix + "_joined.png";
             nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, nullptr), 
                         mop, "Error saving png file:\n", "resamp.cpp", "Resamp::main()");
         }
