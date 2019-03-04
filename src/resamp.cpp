@@ -800,15 +800,15 @@ void Resamp::main()
                 
             // *********************** alone x-axis ******************************
             string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-            makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose, mop);
+            makeProjImage(projNrrd, nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
 
             // *********************** alone y-axis ******************************
             string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-            makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose, mop);
+            makeProjImage(projNrrd, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-            makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose, mop);
+            makeProjImage(projNrrd, nin, "z", 1., imageOutPath_z, opt.verbose, mop);
         }
     }
 
