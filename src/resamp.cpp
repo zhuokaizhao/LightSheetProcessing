@@ -728,18 +728,17 @@ void Resamp::main()
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
 
-                // initialize variables for later use
                 // *********************** alone x-axis ******************************
                 string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                makeProjImage(nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
 
                 // *********************** alone y-axis ******************************
                 string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                makeProjImage(nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose, mop);
+                makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 1., imageOutPath_z, opt.verbose, mop);
             }
         }
     }
