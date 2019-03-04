@@ -738,18 +738,15 @@ void Resamp::main()
 
                 // *********************** alone x-axis ******************************
                 string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                Nrrd* finalPaded_x = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(finalPaded_x, nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
 
                 // *********************** alone y-axis ******************************
                 string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                Nrrd* finalPaded_y = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(finalPaded_y, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
+                makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(finalPaded_z, nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
             }
         }
     }
@@ -777,7 +774,7 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // Project the volume (in nrrd format) alone z axis using MIP
-            makeProjImage(finalPaded_z, nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
 
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
