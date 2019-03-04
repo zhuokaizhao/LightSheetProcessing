@@ -803,7 +803,7 @@ void Resamp::main()
             cout << "finalPaded_x has dimension ( ";
             for (int i = 0; i < 4; i++)
             {
-                cout << finalPaded_x->axis[i].size() << " ";
+                cout << finalPaded_x->axis[i].size << " ";
             }
             cout << ")" << endl;
 
@@ -814,7 +814,7 @@ void Resamp::main()
             cout << "finalPaded_y has dimension ( ";
             for (int i = 0; i < 4; i++)
             {
-                cout << finalPaded_y->axis[i].size() << " ";
+                cout << finalPaded_y->axis[i].size << " ";
             }
             cout << ")" << endl;
 
@@ -825,7 +825,7 @@ void Resamp::main()
             cout << "finalPaded_z has dimension ( ";
             for (int i = 0; i < 4; i++)
             {
-                cout << finalPaded_z->axis[i].size() << " ";
+                cout << finalPaded_z->axis[i].size << " ";
             }
             cout << ")" << endl;
 
@@ -836,7 +836,7 @@ void Resamp::main()
             cout << "finalPaded_join has dimension ( ";
             for (int i = 0; i < 4; i++)
             {
-                cout << finalPaded_join->axis[i].size() << " ";
+                cout << finalPaded_join->axis[i].size << " ";
             }
             cout << ")" << endl;
             
