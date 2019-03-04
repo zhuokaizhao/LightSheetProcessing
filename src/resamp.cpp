@@ -254,7 +254,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent)
     // take the block (percent) of input data to become the new nin
     // get the size of the projection axis
     size_t size = nin->axis[axisNum].size;
-    nrrdReshape_nva(nin, nin, axisNum, size*percent);
+    nrrdReshape_nva(nin, nin, axisNum, (size_t)size*percent);
 
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
