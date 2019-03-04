@@ -230,7 +230,7 @@ static int isEven (uint x)
 }
 
 // function that project the "percent" of the loaded volume alone a specific axis
-static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, int verbose)
+static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, int verbose, airArray* mop)
 {
     int axisNum = lspNan(0);
     if (axis == "x")
@@ -273,7 +273,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath, int verbose)
+static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath, int verbose, airArray* mop)
 {
     // make the projection alone input axis
     projectData(projNrrd, nin, axis, percent, verbose);
@@ -804,15 +804,15 @@ void Resamp::main()
                     
                 // *********************** alone x-axis ******************************
                 string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose);
+                makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose, mop);
 
                 // *********************** alone y-axis ******************************
                 string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose);
+                makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose);
+                makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose, mop);
             }
         }
     }
