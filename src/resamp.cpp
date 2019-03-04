@@ -814,33 +814,56 @@ void Resamp::main()
             // *********************** alone x-axis ******************************
             string imageOutPath_x = common_prefix + "_x.png";
             makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
-            string ppmOutPath_x = common_prefix + "_x.ppm";
-            makeProjImage(nin, "x", 0.5, ppmOutPath_x, opt.verbose, mop);
+            // string ppmOutPath_x = common_prefix + "_x.ppm";
+            // makeProjImage(nin, "x", 0.5, ppmOutPath_x, opt.verbose, mop);
             
 
             // *********************** alone y-axis ******************************
             string imageOutPath_y = common_prefix + "_y.png";
             makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
-            string ppmOutPath_y = common_prefix + "_y.ppm";
-            makeProjImage(nin, "y", 0.5, ppmOutPath_y, opt.verbose, mop);
+            // string ppmOutPath_y = common_prefix + "_y.ppm";
+            // makeProjImage(nin, "y", 0.5, ppmOutPath_y, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = common_prefix + "_z.png";
             makeProjImage(nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
-            string ppmOutPath_z = common_prefix + "_z.ppm";
-            makeProjImage(nin, "z", 0.5, ppmOutPath_z, opt.verbose, mop);
+            // string ppmOutPath_z = common_prefix + "_z.ppm";
+            // makeProjImage(nin, "z", 0.5, ppmOutPath_z, opt.verbose, mop);
 
-            // join the z and x
-            Nrrd *ppm_z = safe_nrrd_load(mop, common_prefix + "_z.ppm");
-            Nrrd *ppm_y = safe_nrrd_load(mop, common_prefix + "_y.ppm");
-            Nrrd *tmp_nout_array[2] = {ppm_z, ppm_y};
-            Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 1, 0);
+
+            // use OpenCV to join two images
+            // Load images
+            cv::Mat3b img_z = cv::imread(imageOutPath_z);
+            cv::Mat3b img_x = cv::imread(imageOutPath_x);
+
+            // Get dimension of final image
+            // 616 rows (y direction top to bottom)
+            int rows = cv::max(img_z.rows, img_x.rows);
+            // 550+616 columes (x direction left to right)
+            int cols = img_z.cols + img_x.cols;
+
+            // Create a black image
+            cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
+
+            // Copy images in correct position
+            img_z.copyTo(res(Rect(0, 0, img_z.cols, img_z.rows)));
+            img_x.copyTo(res(Rect(img_z.cols, 0, img_x.cols, img_x.rows)));
+
+            // Show result
+            cv::imwrite(imageOutPath_z, res);
+
+
+            // // join the z and x
+            // Nrrd *ppm_z = safe_nrrd_load(mop, common_prefix + "_z.ppm");
+            // Nrrd *ppm_x = safe_nrrd_load(mop, common_prefix + "_x.ppm");
+            // Nrrd *tmp_nout_array[2] = {ppm_z, ppm_y};
+            // Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+            // nrrdJoin(finalPaded_join, tmp_nout_array, 2, , 0);
             
-            // save the joined image
-            string imageOutPath_joined = common_prefix + "_joined.png";
-            nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, nullptr), 
-                        mop, "Error saving png file:\n", "resamp.cpp", "Resamp::main");
+            // // save the joined image
+            // string imageOutPath_joined = common_prefix + "_joined.png";
+            // nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, nullptr), 
+            //             mop, "Error saving png file:\n", "resamp.cpp", "Resamp::main");
             // cout << "Finished saving image at " << imageOutPath_joined << endl;
             // cout << imageOutPath_joined << " has dimension ( ";
             // for (int i = 0; i < 3; i++)
