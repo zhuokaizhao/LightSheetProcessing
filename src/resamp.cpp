@@ -829,7 +829,8 @@ void Resamp::main()
             cv::Mat3b img_x = cv::imread(imageOutPath_x);
 
             // rotate x-projected image by 90 degrees
-            cv::rotate(img_x, img_x, cv::ROTATE_90_CLOCKWISE);
+            cv::Transpose(img_x, img_x);
+            cv::Flip(img_x, img_x, cv::flipMode=0);
 
             // Get dimension of final image
             // 616 rows (y direction top to bottom)
