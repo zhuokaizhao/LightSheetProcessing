@@ -738,14 +738,14 @@ void Resamp::main()
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(nin, "z", 0.5, imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 1., imageOutPath_z, opt.verbose, mop);
             }
         }
     }
     // single file mode
     else
     {
-        // non video only mode
+        // single file non video only mode
         if (opt.mode.empty() || opt.mode != "VideoOnly")
         {
             auto start = chrono::high_resolution_clock::now();
@@ -772,7 +772,7 @@ void Resamp::main()
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
             cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl;
         }
-        // video only mode
+        // single file video only mode
         else
         {
             // video only mode
@@ -802,7 +802,7 @@ void Resamp::main()
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = opt.out_path + "/" + curFileName + "_z.png";
-            makeProjImage(nin, "z", 1., imageOutPath_z, opt.verbose, mop);
+            makeProjImage(nin, "z", 0.5, imageOutPath_z, opt.verbose, mop);
         }
     }
 
