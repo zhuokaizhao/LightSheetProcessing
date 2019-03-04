@@ -229,8 +229,8 @@ static int isEven (uint x)
     return 0;
 }
 
-// function that project the loaded volume alone a specific axis
-static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis)
+// function that project the "percent" of the loaded volume alone a specific axis
+static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent)
 {
     int axisNum = lspNan(0);
     if (axis == "x")
@@ -251,6 +251,8 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis)
         return;
     }
 
+    // take the block (percent) of input data to become the new nin
+
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
     {
@@ -268,10 +270,10 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis)
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath)
+static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath)
 {
     // make the projection alone input axis
-    projectData(projNrrd, nin, axis);
+    projectData(projNrrd, nin, axis, percent);
 
     for (int i = 0; i < 2; i++)
     {
@@ -781,31 +783,33 @@ void Resamp::main()
                 {
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
+
+                // initialize variables for later use
                 // projected Nrrd dataset
                 Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
                 Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
                                     safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-                // quantized
+                // quantized to 8-bit
                 Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                                         safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-                // range
+                // range for quantization
                 auto range = nrrdRangeNew(lspNan(0), lspNan(0));
                 airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-                // final joined 
+                // final joined nrrd data file
                 Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                     
                 // *********************** alone x-axis ******************************
-                string imageOutPath_xyleft = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                makeProjImage(projNrrd, nin, "x", range, slices, quantized, finalJoined, imageOutPath_z);
+                string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
+                makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x);
 
                 // *********************** alone y-axis ******************************
-                string imageOutPath_xyleft = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                makeProjImage(projNrrd, nin, "y", range, slices, quantized, finalJoined, imageOutPath_z);
+                string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
+                makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(projNrrd, nin, "z", range, slices, quantized, finalJoined, imageOutPath_z);
+                makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z);
             }
         }
     }
