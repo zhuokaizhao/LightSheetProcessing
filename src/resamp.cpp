@@ -826,7 +826,10 @@ void Resamp::main()
             // use OpenCV to join two images
             // Load images
             cv::Mat3b img_z = cv::imread(imageOutPath_z);
-            cv::Mat3b img_x = cv::imread(imageOutPath_y);
+            cv::Mat3b img_x = cv::imread(imageOutPath_x);
+
+            // rotate x-projected image by 90 degrees
+            cv::rotate(img_x, img_x, cv::ROTATE_90_CLOCKWISE);
 
             // Get dimension of final image
             // 616 rows (y direction top to bottom)
