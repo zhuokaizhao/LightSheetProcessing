@@ -820,13 +820,13 @@ void Resamp::main()
 
             // *********************** alone y-axis ******************************
             string imageOutPath_y = common_prefix + "_y.png";
-            makeProjImage(finalPaded_y, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
+            makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
             string ppmOutPath_y = common_prefix + "_y.ppm";
             makeProjImage(nin, "y", 0.5, ppmOutPath_y, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = common_prefix + "_z.png";
-            makeProjImage(finalPaded_z, nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
+            makeProjImage(nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
             string ppmOutPath_z = common_prefix + "_z.ppm";
             makeProjImage(nin, "z", 0.5, ppmOutPath_z, opt.verbose, mop);
 
