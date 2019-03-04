@@ -255,7 +255,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
     // get the size of the projection axis
     size_t size = nin->axis[axisNum].size;
     size_t newSize = (size_t)floor(size*percent);
-    nrrdReshape_nva(nin, nin, axisNum, newSize);
+    nrrdReshape_nva(nin, nin, axisNum, const newSize);
 
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
@@ -321,10 +321,10 @@ static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent
 
     // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
     // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
-    Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-    ptrdiff_t min_z[3] = {-1, 0, 0};
-    ptrdiff_t max_z[3] = {(ptrdiff_t)finalJoined_z->axis[0].size-1, (ptrdiff_t)finalJoined_z->axis[1].size-1, (ptrdiff_t)finalJoined_z->axis[2].size-1};
-    nrrdPad_va(finalPaded_z, finalJoined_z, min_z, max_z, nrrdBoundaryWrap);
+    Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    ptrdiff_t min[3] = {-1, 0, 0};
+    ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
+    nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
 
     if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
     {
