@@ -800,25 +800,50 @@ void Resamp::main()
             string imageOutPath_x = opt.out_path + "/" + curFileName + "_x.png";
             Nrrd* finalPaded_x = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_x, nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
+            cout << "finalPaded_x has dimension ( ";
+            for (int i = 0; i < 4; i++)
+            {
+                cout << finalPaded_x->axis[i].size() << " ";
+            }
+            cout << ")" << endl;
 
             // *********************** alone y-axis ******************************
             string imageOutPath_y = opt.out_path + "/" + curFileName + "_y.png";
             Nrrd* finalPaded_y = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_y, nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
+            cout << "finalPaded_y has dimension ( ";
+            for (int i = 0; i < 4; i++)
+            {
+                cout << finalPaded_y->axis[i].size() << " ";
+            }
+            cout << ")" << endl;
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = opt.out_path + "/" + curFileName + "_z.png";
             Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             makeProjImage(finalPaded_z, nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
+            cout << "finalPaded_z has dimension ( ";
+            for (int i = 0; i < 4; i++)
+            {
+                cout << finalPaded_z->axis[i].size() << " ";
+            }
+            cout << ")" << endl;
 
             // join the z and x
             Nrrd *tmp_nout_array[2] = {finalPaded_z, finalPaded_x};
             Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 1, 0);
+            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 2, 0);
+            cout << "finalPaded_join has dimension ( ";
+            for (int i = 0; i < 4; i++)
+            {
+                cout << finalPaded_join->axis[i].size() << " ";
+            }
+            cout << ")" << endl;
+            
             // save the joined image
             string imageOutPath_joined = opt.out_path + "/" + curFileName + "_joined.png";
             nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, nullptr), 
-                        mop, "Error saving png file:\n", "anim.cpp", "Anim::build_png");
+                        mop, "Error saving png file:\n", "resamp.cpp", "Resamp::main()");
         }
     }
 
