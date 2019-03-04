@@ -846,8 +846,8 @@ void Resamp::main()
             cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
 
             // Copy images in correct position
-            img_z.copyTo(res(Rect(0, 0, img_z.cols, img_z.rows)));
-            img_x.copyTo(res(Rect(img_z.cols, 0, img_x.cols, img_x.rows)));
+            img_z.copyTo(res(cv::Rect(0, 0, img_z.cols, img_z.rows)));
+            img_x.copyTo(res(cv::Rect(img_z.cols, 0, img_x.cols, img_x.rows)));
 
             // Show result
             cv::imwrite(imageOutPath_z, res);
