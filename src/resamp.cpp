@@ -776,18 +776,13 @@ void Resamp::main()
         else
         {
             // video only mode
-            cout << "Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
+            cout << "Video only (single file) mode" << endl;
 
             // since it is single file mode, nhdr_path is now the file path
             const string nhdr_name = opt.nhdr_path;
             // get the name of the file only
             int startlocation = nhdr_name.rfind("/");
             string curFileName = nhdr_name.substr(startlocation+1, 3);
-
-            // we will save this new volume as nrrd
-            string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
-            // we will save the final nrrd as image
-            string imageOutPath = opt.out_path + "/" + curFileName + ".png";
 
             // These variables are used for all three directions
             // load the nhdr header
@@ -798,15 +793,15 @@ void Resamp::main()
             }
                 
             // *********************** alone x-axis ******************************
-            string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
+            string imageOutPath_x = opt.out_path + "/" + curFileName + "_x.png";
             makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
 
             // *********************** alone y-axis ******************************
-            string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
+            string imageOutPath_y = opt.out_path + "/" + curFileName + "_y.png";
             makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
-            string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
+            string imageOutPath_z = opt.out_path + "/" + curFileName + "_z.png";
             makeProjImage(nin, "z", 1., imageOutPath_z, opt.verbose, mop);
         }
     }
