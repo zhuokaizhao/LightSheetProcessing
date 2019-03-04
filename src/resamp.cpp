@@ -547,7 +547,7 @@ void Resamp::main()
         for (int i = 0; i < nhdrNum; i++)
         {
             // when we are not in VideoOnly mode
-            if (opt.mode == NULL || opt.mode != "VideoOnly")
+            if (opt.mode.empty() || opt.mode != "VideoOnly")
             {
                 auto start = chrono::high_resolution_clock::now();
                 // we will save this volume as nrrd
