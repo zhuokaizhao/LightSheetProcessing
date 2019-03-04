@@ -274,7 +274,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath, int verbose, airArray* mop)
+static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imageOutPath, int verbose, airArray* mop)
 {
     // make the projection alone input axis
     projectData(projNrrd, nin, axis, percent, verbose, mop);
@@ -547,7 +547,7 @@ void Resamp::main()
         for (int i = 0; i < nhdrNum; i++)
         {
             // when we are not in VideoOnly mode
-            if (!opt.mode || opt.mode != "VideoOnly")
+            if (opt.mode == NULL || opt.mode != "VideoOnly")
             {
                 auto start = chrono::high_resolution_clock::now();
                 // we will save this volume as nrrd
@@ -782,6 +782,7 @@ void Resamp::main()
 
                 // These variables are used for all three directions
                 // load the nhdr header
+                string nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
                 Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
                 if (opt.verbose)
                 {
