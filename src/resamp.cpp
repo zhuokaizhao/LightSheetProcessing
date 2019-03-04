@@ -377,7 +377,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
     // get the size of the projection axis
     size_t size = nin->axis[axisNum].size;
     size_t newSize = (size_t)floor(size*percent);
-    // nrrdReshape_nva(nin, nin, axisNum, &newSize);
+    nrrdReshape_nva(nin, nin, axisNum, &newSize);
 
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
@@ -738,7 +738,7 @@ void Resamp::main()
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(nin, "z", 1., imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 0.5., imageOutPath_z, opt.verbose, mop);
             }
         }
     }
