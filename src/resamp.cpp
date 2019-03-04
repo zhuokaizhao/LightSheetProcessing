@@ -254,7 +254,8 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
     // take the block (percent) of input data to become the new nin
     // get the size of the projection axis
     size_t size = nin->axis[axisNum].size;
-    nrrdReshape_nva(nin, nin, axisNum, (size_t)size*percent);
+    size_t newSize = (size_t)floor(size*percent);
+    nrrdReshape_nva(nin, nin, axisNum, newSize);
 
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
@@ -276,7 +277,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
 static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath, int verbose, airArray* mop)
 {
     // make the projection alone input axis
-    projectData(projNrrd, nin, axis, percent, verbose);
+    projectData(projNrrd, nin, axis, percent, verbose, mop);
 
     for (int i = 0; i < 2; i++)
     {
