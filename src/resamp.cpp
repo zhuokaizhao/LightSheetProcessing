@@ -837,9 +837,9 @@ void Resamp::main()
             cout << ")" << endl;
 
             // join the z and x
-            Nrrd *tmp_nout_array[2] = {finalPaded_z, finalPaded_x};
+            Nrrd *tmp_nout_array[2] = {finalPaded_z, finalPaded_y};
             Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 2, 0);
+            nrrdJoin(finalPaded_join, tmp_nout_array, 2, 1, 0);
             cout << "finalPaded_join has dimension ( ";
             for (int i = 0; i < 3; i++)
             {
