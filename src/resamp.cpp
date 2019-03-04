@@ -839,7 +839,21 @@ void Resamp::main()
             
             // save the joined image
             string imageOutPath_joined = common_prefix + "_joined.png";
-            nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, NULL);
+            if (nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, NULL)) 
+            {
+                if (opt.verbose)
+                {
+                    printf("%s: trouble saving output\n", __func__);
+                }
+                airMopError(mop);
+            }
+            cout << "Finished saving image at " << imageOutPath_joined << endl;
+            cout << imageOutPath_joined << " has dimension ( ";
+            for (int i = 0; i < 3; i++)
+            {
+                cout << finalPaded_join->axis[i].size << " ";
+            }
+            cout << ")" << endl;
         }
     }
 
