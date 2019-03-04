@@ -850,7 +850,8 @@ void Resamp::main()
             img_x.copyTo(res(cv::Rect(img_z.cols, 0, img_x.cols, img_x.rows)));
 
             // Show result
-            cv::imwrite(imageOutPath_z, res);
+            string imageOutPath_joined = common_prefix + "_joined.png";
+            cv::imwrite(imageOutPath_joined, res);
 
 
             // // join the z and x
