@@ -336,7 +336,7 @@ static void processData(Nrrd* nrrd_new, string nhdr_name, string grid_path, stri
     // save the resampled data as NHDR files
     if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
     {
-        if (opt.verbose)
+        if (verbose)
         {
             printf("%s: trouble saving new volume as Nrrd file\n", __func__);
         }
@@ -344,6 +344,11 @@ static void processData(Nrrd* nrrd_new, string nhdr_name, string grid_path, stri
         return;
     }
     cout << "Finished saving new volume at " << volumeOutPath << endl;
+
+    // free memory
+    lspVolumeNix(volume);
+    lspVolumeNix(volume_new);
+    lspCtx3DNix(ctx);
 }
 
 // function that project the "percent" of the loaded volume alone a specific axis
@@ -466,11 +471,6 @@ static void makeProjImage(Nrrd* nin, string axis, double percent, string imageOu
         airMopError(mop);
     }
     cout << "Finished saving image at " << imageOutPath << endl;
-
-    // free memory
-    lspVolumeNix(volume);
-    lspVolumeNix(volume_new);
-    lspCtx3DNix(ctx);
 }
 
 // ********************** end of static helper functions *********************
