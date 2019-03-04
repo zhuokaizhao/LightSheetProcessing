@@ -230,7 +230,7 @@ static int isEven (uint x)
 }
 
 // function that project the "percent" of the loaded volume alone a specific axis
-static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent)
+static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, int verbose)
 {
     int axisNum = lspNan(0);
     if (axis == "x")
@@ -259,30 +259,30 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent)
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
     {
-        if (opt.verbose)
+        if (verbose)
         {
             printf("%s: trouble projecting Nrrd data alone x-axis using MIP\n", __func__);
         }
         airMopError(mop);
         return;
     }
-    if (opt.verbose)
+    if (verbose)
     {
         cout << "Finished projecting Nrrd data alone x-axis" << endl;
     }
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath)
+static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imgOutPath, int verbose)
 {
     // make the projection alone input axis
-    projectData(projNrrd, nin, axis, percent);
+    projectData(projNrrd, nin, axis, percent, verbose);
 
     for (int i = 0; i < 2; i++)
     {
         if (nrrdSlice(slices[i], projNrrd, 0, i))
         {
-            if (opt.verbose)
+            if (verbose)
             {
                 printf("%s: trouble slicing into 2 channels projected alone %s axis\n", __func__, axis);
             }
@@ -291,14 +291,14 @@ static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent
         if (nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true)
             || nrrdQuantize(quantized[i], slices[i], range, 8))
         {
-            if (opt.verbose)
+            if (verbose)
             {
                 printf("%s: trouble quantizing to 8 bits projected alone %s axis\n", __func__, axis);
             }
             airMopError(mop);
         }
     }
-    if (opt.verbose)
+    if (verbose)
     {
         cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
         cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
@@ -307,13 +307,13 @@ static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent
     // Join the two channel
     if (nrrdJoin(finalJoined, quantized, 2, 0, 1))
     {
-        if (opt.verbose)
+        if (verbose)
         {
             printf("%s: trouble joining 2 channels projected in z plane\n", __func__);
         }
         airMopError(mop);
     }
-    if (opt.verbose)
+    if (verbose)
     {
         cout << "Fnished joining the 2 channels projected in z plane" << endl;
     }
@@ -327,7 +327,7 @@ static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent
 
     if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
     {
-        if (opt.verbose)
+        if (verbose)
         {
             printf("%s: trouble saving output\n", __func__);
         }
@@ -804,15 +804,15 @@ void Resamp::main()
                     
                 // *********************** alone x-axis ******************************
                 string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x);
+                makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose);
 
                 // *********************** alone y-axis ******************************
                 string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y);
+                makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z);
+                makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose);
             }
         }
     }
