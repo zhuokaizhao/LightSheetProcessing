@@ -832,15 +832,14 @@ void Resamp::main()
 
             // join the z and x
             Nrrd *ppm_z = safe_nrrd_load(mop, common_prefix + "_z.ppm");
-            Nrrd *ppm_x = safe_nrrd_load(mop, common_prefix + "_x.ppm");
-            Nrrd *tmp_nout_array[2] = {ppm_z, ppm_x};
+            Nrrd *ppm_y = safe_nrrd_load(mop, common_prefix + "_y.ppm");
+            Nrrd *tmp_nout_array[2] = {ppm_z, ppm_y};
             Nrrd* finalPaded_join = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             nrrdJoin(finalPaded_join, tmp_nout_array, 2, 1, 0);
             
             // save the joined image
             string imageOutPath_joined = common_prefix + "_joined.png";
-            nrrd_checker(nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, nullptr), 
-                        mop, "Error saving png file:\n", "resamp.cpp", "Resamp::main()");
+            nrrdSave(imageOutPath_joined.c_str(), finalPaded_join, NULL);
         }
     }
 
