@@ -229,6 +229,123 @@ static int isEven (uint x)
     return 0;
 }
 
+// helper function that does all the processing, created as helper function since there are two modes
+static void processData(Nrrd* nrrd_new, string nhdr_name, string grid_path, string kernel_name, string volumeOutPath, airArray* mop, int verbose)
+{
+    // load the nhdr header
+    Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
+    if (verbose)
+    {
+        cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
+    }
+
+    // do the permutation
+    // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(1)-y(2)-z(3)
+    unsigned int permute[4] = {2, 0, 1, 3};
+    Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    if ( nrrdAxesPermute(nin_permuted, nin, permute) )
+    {
+        if (verbose)
+        {
+            cout << "nrrdAxesPermute failed, program stops" << endl;
+        }
+        return;
+    }
+    if (verbose)
+    {
+        cout << "Finished permutation" << endl;
+    }
+
+    // put Nrrd data into lspVolume
+    lspVolume* volume = lspVolumeNew();
+    // airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
+
+    if ( lspVolumeFromNrrd(volume, nin_permuted) )
+    {
+        if (verbose)
+        {
+            cout << "lspVolumeFromNrrd failed, program stops" << endl;
+        }
+        return;
+    }
+    if (verbose)
+    {
+        cout << "Finished converting Nrrd data to lspVolume" << endl;
+    }
+
+    // put both volume and user-defined kernel into the Ctx3D
+    const NrrdKernel* kernel;
+    if (kernel_name == "box")
+    {
+        kernel = nrrdKernelBox;
+    }
+    else if (kernel_name == "ctml")
+    {
+        kernel = nrrdKernelCatmullRom;
+    }
+
+    // get the container ready
+    lspCtx3D* ctx = lspCtx3DNew(volume, grid_path, kernel, NULL);
+    if (verbose)
+    {
+        cout << "Finished generating ctx container" << endl;
+    }
+
+    // perform the 3D sampling (convolution)
+    lspVolume* volume_new = lspVolumeNew();
+    // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
+
+    // allocate memory for the new volume, with sizes being the region of interest sizes
+    if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
+    {
+        if (verbose)
+        {
+            printf("%s: trouble allocating volume\n", __func__);
+        }
+        return;
+    }
+
+    // start 3D convolution
+    if ( nrrdResample3D(volume_new, ctx) )
+    {
+        if (verbose)
+        {
+            printf("%s: trouble computing 3D convolution\n", __func__);
+        }
+        return;
+    }
+    if (verbose)
+    {
+        cout << "Finished resampling with Box kernel" << endl;
+    }
+
+    // change the volume back to Nrrd file for projection
+    if (lspNrrdFromVolume(nrrd_new, volume_new))
+    {
+        if (verbose)
+        {
+            printf("%s: trouble converting Volume to Nrrd data\n", __func__);
+        }
+        return;
+    }
+    if (verbose)
+    {
+        cout << "Finished converting resulting volume back to Nrrd data" << endl;
+    }
+
+    // save the resampled data as NHDR files
+    if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
+    {
+        if (opt.verbose)
+        {
+            printf("%s: trouble saving new volume as Nrrd file\n", __func__);
+        }
+        airMopError(mop);
+        return;
+    }
+    cout << "Finished saving new volume at " << volumeOutPath << endl;
+}
+
 // function that project the "percent" of the loaded volume alone a specific axis
 static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, int verbose, airArray* mop)
 {
@@ -274,10 +391,22 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, NrrdRange* range, Nrrd* slices[2], Nrrd* quantized[2], Nrrd* finalJoined, string imageOutPath, int verbose, airArray* mop)
+static void makeProjImage(Nrrd* nin, string axis, double percent, string imageOutPath, int verbose, airArray* mop)
 {
+    // projected Nrrd dataset
+    Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     // make the projection alone input axis
     projectData(projNrrd, nin, axis, percent, verbose, mop);
+
+    // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
+    Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
+                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+    // quantized to 8-bit
+    Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
+                            safe_nrrd_new(mop, (airMopper)nrrdNuke)};
+    // range for quantization
+    auto range = nrrdRangeNew(lspNan(0), lspNan(0));
+    airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
 
     for (int i = 0; i < 2; i++)
     {
@@ -305,6 +434,8 @@ static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent
         cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
     }
 
+    // final joined nrrd data file
+    Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     // Join the two channel
     if (nrrdJoin(finalJoined, quantized, 2, 0, 1))
     {
@@ -335,6 +466,11 @@ static void makeProjImage(Nrrd* projNrrd, Nrrd* nin, string axis, double percent
         airMopError(mop);
     }
     cout << "Finished saving image at " << imageOutPath << endl;
+
+    // free memory
+    lspVolumeNix(volume);
+    lspVolumeNix(volume_new);
+    lspCtx3DNix(ctx);
 }
 
 // ********************** end of static helper functions *********************
@@ -540,6 +676,7 @@ void Resamp::main()
 {
     // turn off nrrd warnings
     nrrdStateVerboseIO = 0;
+    // non single file mode
     if (!opt.isSingleFile)
     {
         // loop over all the current files
@@ -566,210 +703,12 @@ void Resamp::main()
                 string nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
                 cout << "Currently processing input file " << nhdr_name << endl;
 
-                // load the nhdr header
-                Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
-                if (opt.verbose)
-                {
-                    cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
-                }
-
-                // do the permutation
-                // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(1)-y(2)-z(3)
-                unsigned int permute[4] = {2, 0, 1, 3};
-                Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                if ( nrrdAxesPermute(nin_permuted, nin, permute) )
-                {
-                    if (opt.verbose)
-                    {
-                        cout << "nrrdAxesPermute failed, program stops" << endl;
-                    }
-                    return;
-                }
-                if (opt.verbose)
-                {
-                    cout << "Finished permutation" << endl;
-                }
-
-                // put Nrrd data into lspVolume
-                lspVolume* volume = lspVolumeNew();
-                // airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
-
-                if ( lspVolumeFromNrrd(volume, nin_permuted) )
-                {
-                    if (opt.verbose)
-                    {
-                        cout << "lspVolumeFromNrrd failed, program stops" << endl;
-                    }
-                    return;
-                }
-                if (opt.verbose)
-                {
-                    cout << "Finished converting Nrrd data to lspVolume" << endl;
-                }
-
-                // put both volume and user-defined kernel into the Ctx3D
-                const NrrdKernel* kernel;
-                if (opt.kernel_name == "box")
-                {
-                    kernel = nrrdKernelBox;
-                }
-                else if (opt.kernel_name == "ctml")
-                {
-                    kernel = nrrdKernelCatmullRom;
-                }
-
-                // get the container ready
-                lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
-                if (opt.verbose)
-                {
-                    cout << "Finished generating ctx container" << endl;
-                }
-
-                // perform the 3D sampling (convolution)
-                lspVolume* volume_new = lspVolumeNew();
-                // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
-
-                // allocate memory for the new volume, with sizes being the region of interest sizes
-                if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble allocating volume\n", __func__);
-                    }
-                    return;
-                }
-
-                // start 3D convolution
-                if ( nrrdResample3D(volume_new, ctx) )
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble computing 3D convolution\n", __func__);
-                    }
-                    return;
-                }
-                if (opt.verbose)
-                {
-                    cout << "Finished resampling with Box kernel" << endl;
-                }
-
-                // change the volume back to Nrrd file for projection
+                // nrrd_new is the processed(resampled) new nrrd data
                 Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                if (lspNrrdFromVolume(nrrd_new, volume_new))
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble converting Volume to Nrrd data\n", __func__);
-                    }
-                    return;
-                }
-                if (opt.verbose)
-                {
-                    cout << "Finished converting resulting volume back to Nrrd data" << endl;
-                }
+                processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
-                // save the resampled volume as NHDR files
-                if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble saving new volume as Nrrd file\n", __func__);
-                    }
-                    airMopError(mop);
-                    return;
-                }
-                cout << "Finished saving new volume at " << volumeOutPath << endl;
-
-                // Project the volume (in nrrd format) alone z axis using MIP
-                Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                if (nrrdProject(projNrrd, nrrd_new, 3, nrrdMeasureMax, nrrdTypeDouble))
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble projecting Nrrd data alone z-axis using MIP\n", __func__);
-                    }
-                    airMopError(mop);
-                    return;
-                }
-                if (opt.verbose)
-                {
-                    cout << "Finished projecting Nrrd data alone z-axis" << endl;
-                }
-
-                // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
-                Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
-                                    safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-
-                // quantized
-                Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-                                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-
-                // range during quantizing
-                auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-
-                for (int i = 0; i < 2; i++)
-                {
-                    if (nrrdSlice(slices[i], projNrrd, 0, i))
-                    {
-                        if (opt.verbose)
-                        {
-                            printf("%s: trouble slicing into 2 channels\n", __func__);
-                        }
-                        airMopError(mop);
-                    }
-                    if (nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true)
-                        || nrrdQuantize(quantized[i], slices[i], range, 8))
-                    {
-                        if (opt.verbose)
-                        {
-                            printf("%s: trouble quantizing to 8 bits\n", __func__);
-                        }
-                        airMopError(mop);
-                    }
-                }
-                if (opt.verbose)
-                {
-                    cout << "Finished slicing the data based on its channel (GFP and RFP)" << endl;
-                    cout << "Finished quantizing to 8-bit" << endl;
-                }
-
-                // Join the two channel
-                Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                if (nrrdJoin(finalJoined, quantized, 2, 0, 1))
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble joining 2 channels\n", __func__);
-                    }
-                    airMopError(mop);
-                }
-                if (opt.verbose)
-                {
-                    cout << "Fnished joining the 2 channels" << endl;
-                }
-
-                // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
-                // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
-                Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                ptrdiff_t min[3] = {-1, 0, 0};
-                ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
-                nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
-
-                if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
-                {
-                    if (opt.verbose)
-                    {
-                        printf("%s: trouble saving output\n", __func__);
-                    }
-                    airMopError(mop);
-                }
-                cout << "Finished saving image at " << imageOutPath << endl;
-
-                // free memory
-                lspVolumeNix(volume);
-                lspVolumeNix(volume_new);
-                lspCtx3DNix(ctx);
+                // Project the volume (in nrrd format) alone z axis using MIP and save images
+                makeProjImage(nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -790,256 +729,87 @@ void Resamp::main()
                 }
 
                 // initialize variables for later use
-                // projected Nrrd dataset
-                Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
-                Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
-                                    safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-                // quantized to 8-bit
-                Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-                                        safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-                // range for quantization
-                auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-                // final joined nrrd data file
-                Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                    
                 // *********************** alone x-axis ******************************
                 string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose, mop);
 
                 // *********************** alone y-axis ******************************
                 string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose, mop);
+                makeProjImage(nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose, mop);
             }
         }
     }
+    // single file mode
     else
     {
-        auto start = chrono::high_resolution_clock::now();
-
-        // since it is single file mode, nhdr_path is now the file path
-        const string nhdr_name = opt.nhdr_path;
-        // get the name of the file only
-        int startlocation = nhdr_name.rfind("/");
-        string curFileName = nhdr_name.substr(startlocation+1, 3);
-
-        // we will save this new volume as nrrd
-        string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
-        // we will save the final nrrd as image
-        string imageOutPath = opt.out_path + "/" + curFileName + ".png";
-
-        // load the nhdr header
-        Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
-        if (opt.verbose)
+        // non video only mode
+        if (opt.mode.empty() || opt.mode != "VideoOnly")
         {
-            cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
+            auto start = chrono::high_resolution_clock::now();
+
+            // since it is single file mode, nhdr_path is now the file path
+            const string nhdr_name = opt.nhdr_path;
+            // get the name of the file only
+            int startlocation = nhdr_name.rfind("/");
+            string curFileName = nhdr_name.substr(startlocation+1, 3);
+
+            // we will save this new volume as nrrd
+            string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
+            // we will save the final nrrd as image
+            string imageOutPath = opt.out_path + "/" + curFileName + ".png";
+
+            // resample the old data and generate new dataset
+            Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+            processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
+
+            // Project the volume (in nrrd format) alone z axis using MIP
+            makeProjImage(projNrrd, "z", 1, imageOutPath, opt.verbose, mop);
+
+            auto stop = chrono::high_resolution_clock::now(); 
+            auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+            cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl;
         }
-
-        // do the permutation
-        // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
-        unsigned int permute[4] = {2, 0, 1, 3};
-        Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if ( nrrdAxesPermute(nin_permuted, nin, permute) )
+        // video only mode
+        else
         {
+            // video only mode
+            cout << "Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
+
+            // since it is single file mode, nhdr_path is now the file path
+            const string nhdr_name = opt.nhdr_path;
+            // get the name of the file only
+            int startlocation = nhdr_name.rfind("/");
+            string curFileName = nhdr_name.substr(startlocation+1, 3);
+
+            // we will save this new volume as nrrd
+            string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
+            // we will save the final nrrd as image
+            string imageOutPath = opt.out_path + "/" + curFileName + ".png";
+
+            // These variables are used for all three directions
+            // load the nhdr header
+            Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
             if (opt.verbose)
             {
-                cout << "nrrdAxesPermute failed, program stops" << endl;
+                cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
-            return;
-        }
-        if (opt.verbose)
-        {
-            cout << "Finished permutation" << endl;
-        }
+                
+            // *********************** alone x-axis ******************************
+            string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
+            makeProjImage(projNrrd, nin, "x", 0.5, range, slices, quantized, finalJoined, imageOutPath_x, opt.verbose, mop);
 
-        // put Nrrd data into lspVolume
-        lspVolume* volume = lspVolumeNew();
-        // airMopAdd(mop, volume, (airMopper)lspVolumeNix, airMopAlways);
+            // *********************** alone y-axis ******************************
+            string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
+            makeProjImage(projNrrd, nin, "y", 0.5, range, slices, quantized, finalJoined, imageOutPath_y, opt.verbose, mop);
 
-        if ( lspVolumeFromNrrd(volume, nin_permuted) )
-        {
-            if (opt.verbose)
-            {
-                cout << "lspVolumeFromNrrd failed, program stops" << endl;
-            }
-            return;
+            // *********************** alone z-axis ******************************
+            string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
+            makeProjImage(projNrrd, nin, "z", 1., range, slices, quantized, finalJoined, imageOutPath_z, opt.verbose, mop);
         }
-        if (opt.verbose)
-        {
-            cout << "Finished converting Nrrd data to lspVolume" << endl;
-        }
-
-        // put both volume and user-defined kernel into the Ctx3D
-        const NrrdKernel* kernel;
-        if (opt.kernel_name == "box")
-        {
-            kernel = nrrdKernelBox;
-        }
-        else if (opt.kernel_name == "ctml")
-        {
-            kernel = nrrdKernelCatmullRom;
-        }
-
-        // get the container ready
-        lspCtx3D* ctx = lspCtx3DNew(volume, opt.grid_path, kernel, NULL);
-        if (opt.verbose)
-        {
-            cout << "Finished generating ctx container" << endl;
-        }
-
-        // perform the 3D sampling (convolution)
-        lspVolume* volume_new = lspVolumeNew();
-        // airMopAdd(mop, volume_new, (airMopper)lspVolumeNix, airMopAlways);
-
-        // allocate memory for the new volume, with sizes being the region of interest sizes
-        if (lspVolumeAlloc(volume_new, volume->channel, ctx->boundaries[0], ctx->boundaries[1], ctx->boundaries[2], volume->dtype)) 
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble allocating volume\n", __func__);
-            }
-            return;
-        }
-
-        // start 3D convolution
-        if ( nrrdResample3D(volume_new, ctx) )
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble computing 3D convolution\n", __func__);
-            }
-            return;
-        }
-        if (opt.verbose)
-        {
-            cout << "Finished resampling with Box kernel" << endl;
-        }
-
-        // change the volume back to Nrrd file for projection
-        Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (lspNrrdFromVolume(nrrd_new, volume_new))
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble converting Volume to Nrrd data\n", __func__);
-            }
-            return;
-        }
-        if (opt.verbose)
-        {
-            cout << "Finished converting resulting volume back to Nrrd data" << endl;
-        }
-
-        if (nrrdSave(volumeOutPath.c_str(), nrrd_new, NULL)) 
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble saving new volume as Nrrd file\n", __func__);
-            }
-            airMopError(mop);
-            return;
-        }
-        cout << "Finished saving new volume at " << volumeOutPath << endl;
-
-        // Project the volume (in nrrd format) alone z axis using MIP
-        Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (nrrdProject(projNrrd, nrrd_new, 3, nrrdMeasureMax, nrrdTypeDouble))
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble projecting Nrrd data alone z-axis using MIP\n", __func__);
-            }
-            airMopError(mop);
-            return;
-        }
-        if (opt.verbose)
-        {
-            cout << "Finished projecting Nrrd data alone z-axis" << endl;
-        }
-
-        // slice the nrrd into separate GFP and RFP channel (and quantize to 8bit)
-        Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
-                            safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-
-        // quantized
-        Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
-                                safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-
-        // range during quantizing
-        auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-        airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
-
-        for (int i = 0; i < 2; i++)
-        {
-            if (nrrdSlice(slices[i], projNrrd, 0, i))
-            {
-                if (opt.verbose)
-                {
-                    printf("%s: trouble slicing into 2 channels\n", __func__);
-                }
-                airMopError(mop);
-            }
-            if (nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true)
-                || nrrdQuantize(quantized[i], slices[i], range, 8))
-            {
-                if (opt.verbose)
-                {
-                    printf("%s: trouble quantizing to 8 bits\n", __func__);
-                }
-                airMopError(mop);
-            }
-        }
-        if (opt.verbose)
-        {
-            cout << "Finished slicing the data based on its channel (GFP and RFP)" << endl;
-            cout << "Finished quantizing to 8-bit" << endl;
-        }
-
-        // Join the two channel
-        Nrrd* finalJoined = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        if (nrrdJoin(finalJoined, quantized, 2, 0, 1))
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble joining 2 channels\n", __func__);
-            }
-            airMopError(mop);
-        }
-        if (opt.verbose)
-        {
-            cout << "Fnished joining the 2 channels" << endl;
-        }
-
-        // right now it is two channel png [GFP RFP], we want to make it a three channel [RFP GFP RFP]
-        // unu pad -i 598.png -min -1 0 0 -max M M M -b wrap -o tmp.png
-        Nrrd* finalPaded = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-        ptrdiff_t min[3] = {-1, 0, 0};
-        ptrdiff_t max[3] = {(ptrdiff_t)finalJoined->axis[0].size-1, (ptrdiff_t)finalJoined->axis[1].size-1, (ptrdiff_t)finalJoined->axis[2].size-1};
-        nrrdPad_va(finalPaded, finalJoined, min, max, nrrdBoundaryWrap);
-
-        if (nrrdSave(imageOutPath.c_str(), finalPaded, NULL)) 
-        {
-            if (opt.verbose)
-            {
-                printf("%s: trouble saving output\n", __func__);
-            }
-            airMopError(mop);
-        }
-        cout << "Finished saving image at " << imageOutPath << endl;
-
-        // free memory
-        lspVolumeNix(volume);
-        lspVolumeNix(volume_new);
-        lspCtx3DNix(ctx);
-
-        auto stop = chrono::high_resolution_clock::now(); 
-        auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-        cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
     }
 
     return;
