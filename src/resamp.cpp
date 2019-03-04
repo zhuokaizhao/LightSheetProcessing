@@ -235,15 +235,15 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent)
     int axisNum = lspNan(0);
     if (axis == "x")
     {
-        axisNum = 0;
+        axisNum = 1;
     }
     else if (axis == "y")
     {
-        axisNum = 1;
+        axisNum = 2;
     }
     else if (axis == "z")
     {
-        axisNum = 2;
+        axisNum = 3;
     }
     else
     {
@@ -252,6 +252,9 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent)
     }
 
     // take the block (percent) of input data to become the new nin
+    // get the size of the projection axis
+    size_t size = nin->axis[axisNum].size;
+    nrrdReshape_nva(nin, nin, axisNum, size*percent);
 
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
@@ -570,7 +573,7 @@ void Resamp::main()
                 }
 
                 // do the permutation
-                // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(0)-y(1)-z(3)
+                // permute from x(0)-y(1)-channel(2)-z(3) to channel(2)-x(1)-y(2)-z(3)
                 unsigned int permute[4] = {2, 0, 1, 3};
                 Nrrd* nin_permuted = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 if ( nrrdAxesPermute(nin_permuted, nin, permute) )
