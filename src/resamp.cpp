@@ -849,10 +849,10 @@ void Resamp::main()
             // *********************** alone x-axis ******************************
             // left
             string imageOutPath_x_left = common_prefix + "_x_left.png";
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_left, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
             // right
             string imageOutPath_x_right = common_prefix + "_x_right.png";
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_right, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = common_prefix + "_z.png";
