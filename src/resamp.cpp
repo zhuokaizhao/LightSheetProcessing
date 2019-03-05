@@ -825,7 +825,7 @@ void Resamp::main()
         }
 
         // generate video
-        Resamp::makeVideo()
+        Resamp::makeVideo();
     }
     // single file mode
     else
