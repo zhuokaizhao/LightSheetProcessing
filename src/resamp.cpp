@@ -399,10 +399,11 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
     }
 
     // cropping takes place at the projected axis
-    nrrdCrop(nin, nin, min, max);
+    Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+    nrrdCrop(nin_cropped, nin, min, max);
 
     // Project the loaded data alone input axis using MIP
-    if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
+    if (nrrdProject(projNrrd, nin_cropped, axisNum, nrrdMeasureMax, nrrdTypeDouble))
     {
         if (verbose)
         {
