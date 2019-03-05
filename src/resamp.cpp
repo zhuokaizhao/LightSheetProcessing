@@ -423,7 +423,7 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // projected Nrrd dataset
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     // make the projection alone input axis
-    projectData(projNrrd, nin, axis, startPercent, endPercent, percent, verbose, mop);
+    projectData(projNrrd, nin, axis, startPercent, endPercent, verbose, mop);
 
     // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
     Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
@@ -867,7 +867,7 @@ void Resamp::main()
 
             // Get dimension of final image
             // 616 rows (y direction top to bottom)
-            int rows = cv::max(img_z.rows, img_x.rows);
+            int rows = cv::max(img_z.rows, img_x_left.rows);
             // 550+616 columes (x direction left to right)
             int cols = img_z.cols + img_x_left.cols + img_x_right.cols;
 
@@ -875,7 +875,7 @@ void Resamp::main()
             cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
 
             // Copy images in correct position
-            img_x_left.copyTo(res(cv::Rect(0, 0, img_x_left.cols, img_x_left.rows)))
+            img_x_left.copyTo(res(cv::Rect(0, 0, img_x_left.cols, img_x_left.rows)));
             img_z.copyTo(res(cv::Rect(img_x_left.cols, 0, img_z.cols, img_z.rows)));
             img_x_right.copyTo(res(cv::Rect(img_x_left.cols + img_z.cols, 0, img_x_right.cols, img_x_right.rows)));
 
