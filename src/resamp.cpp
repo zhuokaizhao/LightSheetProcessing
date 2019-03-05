@@ -817,9 +817,6 @@ void Resamp::main()
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
 
-                // the final images's x and z component
-                string common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
-
                 // *********************** alone x-axis ******************************
                 // left
                 makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
@@ -873,6 +870,12 @@ void Resamp::main()
             // video only mode
             cout << "Video only (single file) mode" << endl;
 
+            // since it is single file mode, nhdr_path is now the file path
+            const string nhdr_name = opt.nhdr_path;
+            // get the name of the file only
+            int startlocation = nhdr_name.rfind("/");
+            string curFileName = nhdr_name.substr(startlocation+1, 3);
+
             // the final images's x and z component
             string common_prefix = opt.out_path + "/" + curFileName;
             string imageOutPath_x_left = common_prefix + "_x_left.png";
@@ -884,12 +887,6 @@ void Resamp::main()
                 cout << imageOutPath_x_left << ", " << imageOutPath_x_right << " and " << imageOutPath_z << " all exist, continue to next." << endl;
                 return;
             }
-
-            // since it is single file mode, nhdr_path is now the file path
-            const string nhdr_name = opt.nhdr_path;
-            // get the name of the file only
-            int startlocation = nhdr_name.rfind("/");
-            string curFileName = nhdr_name.substr(startlocation+1, 3);
 
             // These variables are used for all three directions
             // load the nhdr header
