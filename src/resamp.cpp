@@ -363,34 +363,34 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
     {
         axisNum = 1;
         // x-axis is what we are going to crop with
-        min[1] = (size_t)floor(startPercent * nin->axis[1].size);
-        max[1] = (size_t)floor(endPercent * nin->axis[1].size);
+        min[1] = (size_t)floor( startPercent * (nin->axis[1].size-1) );
+        max[1] = (size_t)floor( endPercent * (nin->axis[1].size-1) );
         min[2] = 0;
-        max[2] = nin->axis[2].size;
+        max[2] = nin->axis[2].size-1;
         min[3] = 0;
-        max[3] = nin->axis[3].size;
+        max[3] = nin->axis[3].size-1;
     }
     else if (axis == "y")
     {
         axisNum = 2;
         // y-axis is what we are going to crop with
         min[1] = 0;
-        max[1] = nin->axis[1].size;
-        min[2] = (size_t)floor(startPercent * nin->axis[2].size);
-        max[2] = (size_t)floor(endPercent * nin->axis[2].size);
+        max[1] = nin->axis[1].size-1;
+        min[2] = (size_t)floor( startPercent * (nin->axis[2].size-1) );
+        max[2] = (size_t)floor(endPercent * (nin->axis[2].size-1) );
         min[3] = 0;
-        max[3] = nin->axis[3].size;
+        max[3] = nin->axis[3].size-1;
     }
     else if (axis == "z")
     {
         axisNum = 3;
         // z-axis is what we are going to crop with
         min[1] = 0;
-        max[1] = nin->axis[1].size;
+        max[1] = nin->axis[1].size-1;
         min[2] = 0;
-        max[2] = nin->axis[2].size;
-        min[3] = (size_t)floor(startPercent * nin->axis[3].size);
-        max[3] = (size_t)floor(endPercent * nin->axis[3].size);
+        max[2] = nin->axis[2].size-1;
+        min[3] = (size_t)floor( startPercent * (nin->axis[3].size-1) );
+        max[3] = (size_t)floor( endPercent * (nin->axis[3].size-1) );
     }
     else
     {
@@ -402,7 +402,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
     Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     nrrdCrop(nin_cropped, nin, min, max);
     cout << "nin_cropped has dimension ( ";
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         cout << nin_cropped->axis[i].size << " ";
     }
