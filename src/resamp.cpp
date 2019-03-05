@@ -352,20 +352,45 @@ static void processData(Nrrd* nrrd_new, string nhdr_name, string grid_path, stri
 }
 
 // function that project the "percent" of the loaded volume alone a specific axis
-static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, int verbose, airArray* mop)
+static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPercent, double endPercent, int verbose, airArray* mop)
 {
+    // considering there are two channels, total dimension is 4
+    size_t min[4], max[4];
+    min[0] = 0;
+    max[0] = nin->axis[0].size;
     int axisNum = lspNan(0);
     if (axis == "x")
     {
         axisNum = 1;
+        // x-axis is what we are going to crop with
+        min[1] = (size_t)floor(startPercent * nin->axis[1].size);
+        max[1] = (size_t)floor(endPercent * nin->axis[1].size);
+        min[2] = 0;
+        max[2] = nin->axis[2].size;
+        min[3] = 0;
+        max[3] = nin->axis[3].size;
     }
     else if (axis == "y")
     {
         axisNum = 2;
+        // y-axis is what we are going to crop with
+        min[1] = 0;
+        max[1] = nin->axis[1].size;
+        min[2] = (size_t)floor(startPercent * nin->axis[2].size);
+        max[2] = (size_t)floor(endPercent * nin->axis[2].size);
+        min[3] = 0;
+        max[3] = nin->axis[3].size;
     }
     else if (axis == "z")
     {
         axisNum = 3;
+        // z-axis is what we are going to crop with
+        min[1] = 0;
+        max[1] = nin->axis[1].size;
+        min[2] = 0;
+        max[2] = nin->axis[2].size;
+        min[3] = (size_t)floor(startPercent * nin->axis[3].size);
+        max[3] = (size_t)floor(endPercent * nin->axis[3].size);
     }
     else
     {
@@ -373,11 +398,8 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
         return;
     }
 
-    // take the block (percent) of input data to become the new nin
-    // get the size of the projection axis
-    size_t size = nin->axis[axisNum].size;
-    size_t newSize = (size_t)floor(size*percent);
-    nrrdReshape_nva(nin, nin, axisNum, &newSize);
+    // cropping takes place at the projected axis
+    nrrdCrop(nin, nin, min, max);
 
     // Project the loaded data alone input axis using MIP
     if (nrrdProject(projNrrd, nin, axisNum, nrrdMeasureMax, nrrdTypeDouble))
@@ -396,12 +418,12 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double percent, 
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double percent, string imageOutPath, int verbose, airArray* mop)
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     // make the projection alone input axis
-    projectData(projNrrd, nin, axis, percent, verbose, mop);
+    projectData(projNrrd, nin, axis, startPercent, endPercent, percent, verbose, mop);
 
     // slice the nrrd into separate GFP and RFP channel (axis 0) (and quantize to 8bit)
     Nrrd* slices[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke), 
@@ -716,7 +738,7 @@ void Resamp::main()
 
                 // Project the volume (in nrrd format) alone z axis using MIP and save images
                 Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
+                makeProjImage(nrrd_new, "z", 0, 1, imageOutPath, opt.verbose, mop);
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -737,16 +759,20 @@ void Resamp::main()
                 }
 
                 // *********************** alone x-axis ******************************
-                string imageOutPath_x = opt.out_path + "/" + opt.allValidFiles[i].second + "_x.png";
-                makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
+                // left
+                string imageOutPath_x_left = opt.out_path + "/" + opt.allValidFiles[i].second + "_x_left.png";
+                makeProjImage(nin, "x", 0., 0.5, imageOutPath_x_left, opt.verbose, mop);
+                // right
+                string imageOutPath_x_right = opt.out_path + "/" + opt.allValidFiles[i].second + "_x_right.png";
+                makeProjImage(nin, "x", 0.5, 1., imageOutPath_x_right, opt.verbose, mop);
 
                 // *********************** alone y-axis ******************************
-                string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
+                // string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
+                // makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
                 string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 0., 1.0, imageOutPath_z, opt.verbose, mop);
             }
         }
     }
@@ -774,7 +800,7 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // Project the volume (in nrrd format) alone z axis using MIP
-            makeProjImage(nrrd_new, "z", 1, imageOutPath, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, opt.verbose, mop);
 
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -809,41 +835,49 @@ void Resamp::main()
                 
             // the final images's x and z component
             string common_prefix = opt.out_path + "/" + curFileName;
-            
-            string ppm_zOutPath = common_prefix + "_z.ppm";
+
             // *********************** alone x-axis ******************************
-            string imageOutPath_x = common_prefix + "_x.png";
-            makeProjImage(nin, "x", 0.5, imageOutPath_x, opt.verbose, mop);
+            // left
+            string imageOutPath_x_left = common_prefix + "_x_left.png";
+            makeProjImage(nin, "x", 0., 0.5, imageOutPath_x_left, opt.verbose, mop);
+            // right
+            string imageOutPath_x_right = common_prefix + "_x_right.png";
+            makeProjImage(nin, "x", 0.5, 1., imageOutPath_x_right, opt.verbose, mop);
 
             // *********************** alone y-axis ******************************
-            string imageOutPath_y = common_prefix + "_y.png";
-            makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
+            // string imageOutPath_y = common_prefix + "_y.png";
+            // makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = common_prefix + "_z.png";
-            makeProjImage(nin, "z", 1.0, imageOutPath_z, opt.verbose, mop);
+            makeProjImage(nin, "z", 0., 1.0, imageOutPath_z, opt.verbose, mop);
 
             // use OpenCV to join two images
             // Load images
             cv::Mat3b img_z = cv::imread(imageOutPath_z);
-            cv::Mat3b img_x = cv::imread(imageOutPath_x);
+            cv::Mat3b img_x_left = cv::imread(imageOutPath_x_left);
+            cv::Mat3b img_x_right = cv::imread(imageOutPath_x_right);
 
-            // rotate x-projected image by 90 degrees clock-wise
-            cv::transpose(img_x, img_x);
-            cv::flip(img_x, img_x, 0);
+            // rotate x-projected left image by 90 degrees counterclock-wise
+            cv::transpose(img_x_left, img_x_left);
+            cv::flip(img_x_left, img_x_left, 0);
+            // rotate x-projected right image by 90 degrees clock-wise
+            cv::transpose(img_x_right, img_x_right);
+            cv::flip(img_x_right, img_x_right, 1);
 
             // Get dimension of final image
             // 616 rows (y direction top to bottom)
             int rows = cv::max(img_z.rows, img_x.rows);
             // 550+616 columes (x direction left to right)
-            int cols = img_z.cols + img_x.cols;
+            int cols = img_z.cols + img_x_left.cols + img_x_right.cols;
 
             // Create a black image
             cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
 
             // Copy images in correct position
-            img_z.copyTo(res(cv::Rect(0, 0, img_z.cols, img_z.rows)));
-            img_x.copyTo(res(cv::Rect(img_z.cols, 0, img_x.cols, img_x.rows)));
+            img_x_left.copyTo(res(cv::Rect(0, 0, img_x_left.cols, img_x_left.rows)))
+            img_z.copyTo(res(cv::Rect(img_x_left.cols, 0, img_z.cols, img_z.rows)));
+            img_x_right.copyTo(res(cv::Rect(img_x_left.cols + img_z.cols, 0, img_x_right.cols, img_x_right.rows)));
 
             // Show result
             string imageOutPath_joined = common_prefix + "_joined.png";
