@@ -1,7 +1,7 @@
 #!/bin/bash
-for ((number = 565; number<=574; number++))
+for ((number = 32; number<=99; number++))
 do
-	lsp resamp -i corr_nhdr/$number.nhdr -g grid.txt -k ctml -o resamp_ctml -v 1
+	lsp resamp -i resamp_box/0$number.nhdr -m VideoOnly -g grid.txt -k box -o resamp3D -v 1
 done
 
 
