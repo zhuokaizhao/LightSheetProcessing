@@ -357,7 +357,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
     // considering there are two channels, total dimension is 4
     size_t min[4], max[4];
     min[0] = 0;
-    max[0] = nin->axis[0].size;
+    max[0] = nin->axis[0].size-1;
     int axisNum = lspNan(0);
     if (axis == "x")
     {
