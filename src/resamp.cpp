@@ -397,18 +397,18 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
         cout << "projectData: Unknown axis number, return" << endl;
         return;
     }
-    cout << "min is (" << min[0] << ", " << min[1] << ", " << min[2] << ", " << min[3] << ")" << endl;
-    cout << "max is (" << max[0] << ", " << max[1] << ", " << max[2] << ", " << max[3] << ")" << endl;
+    // cout << "min is (" << min[0] << ", " << min[1] << ", " << min[2] << ", " << min[3] << ")" << endl;
+    // cout << "max is (" << max[0] << ", " << max[1] << ", " << max[2] << ", " << max[3] << ")" << endl;
 
     // cropping takes place at the projected axis
     Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
     nrrdCrop(nin_cropped, nin, min, max);
-    cout << "nin_cropped has dimension ( ";
-    for (int i = 0; i < 4; i++)
-    {
-        cout << nin_cropped->axis[i].size << " ";
-    }
-    cout << ")" << endl;
+    // cout << "nin_cropped has dimension ( ";
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     cout << nin_cropped->axis[i].size << " ";
+    // }
+    // cout << ")" << endl;
     
 
     // Project the loaded data alone input axis using MIP
@@ -509,6 +509,42 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
         cout << finalPaded->axis[i].size << " ";
     }
     cout << ")" << endl;
+}
+
+// helper function that stitches left, middle and right image
+static void stitchImages(string imageOutPath_x_left, string imageOutPath_z, string imageOutPath_x_right, string common_prefix)
+{
+    // use OpenCV to join two images
+    // Load images
+    cv::Mat3b img_x_left = cv::imread(imageOutPath_x_left);
+    cv::Mat3b img_z = cv::imread(imageOutPath_z);
+    cv::Mat3b img_x_right = cv::imread(imageOutPath_x_right);
+
+    // flip and rotate the x-projected left image by 90 degrees counterclock-wise
+    cv::flip(img_x_left, img_x_left, 1);
+    cv::transpose(img_x_left, img_x_left);
+    cv::flip(img_x_left, img_x_left, 0);
+    // rotate x-projected right image by 90 degrees clock-wise
+    cv::transpose(img_x_right, img_x_right);
+    cv::flip(img_x_right, img_x_right, 1);
+
+    // Get dimension of final image
+    // 616 rows (y direction top to bottom)
+    int rows = cv::max(img_z.rows, img_x_left.rows);
+    // 550+616 columes (x direction left to right)
+    int cols = img_z.cols + img_x_left.cols + img_x_right.cols;
+
+    // Create a black image
+    cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
+
+    // Copy images in correct position
+    img_x_left.copyTo(res(cv::Rect(0, 0, img_x_left.cols, img_x_left.rows)));
+    img_z.copyTo(res(cv::Rect(img_x_left.cols, 0, img_z.cols, img_z.rows)));
+    img_x_right.copyTo(res(cv::Rect(img_x_left.cols + img_z.cols, 0, img_x_right.cols, img_x_right.rows)));
+
+    // Show result
+    string imageOutPath_joined = common_prefix + "_joined.png";
+    cv::imwrite(imageOutPath_joined, res);
 }
 
 // ********************** end of static helper functions *********************
@@ -768,23 +804,28 @@ void Resamp::main()
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
 
+                // the final images's x and z component
+                string common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
+
                 // *********************** alone x-axis ******************************
                 // left
-                string imageOutPath_x_left = opt.out_path + "/" + opt.allValidFiles[i].second + "_x_left.png";
-                makeProjImage(nin, "x", 0., 0.5, imageOutPath_x_left, opt.verbose, mop);
+                string imageOutPath_x_left = common_prefix + "_x_left.png";
+                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
                 // right
-                string imageOutPath_x_right = opt.out_path + "/" + opt.allValidFiles[i].second + "_x_right.png";
-                makeProjImage(nin, "x", 0.5, 1., imageOutPath_x_right, opt.verbose, mop);
-
-                // *********************** alone y-axis ******************************
-                // string imageOutPath_y = opt.out_path + "/" + opt.allValidFiles[i].second + "_y.png";
-                // makeProjImage(nin, "y", 0.5, imageOutPath_y, opt.verbose, mop);
+                string imageOutPath_x_right = common_prefix + "_x_right.png";
+                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
-                string imageOutPath_z = opt.out_path + "/" + opt.allValidFiles[i].second + "_z.png";
-                makeProjImage(nin, "z", 0., 1.0, imageOutPath_z, opt.verbose, mop);
+                string imageOutPath_z = common_prefix + "_z.png";
+                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, opt.verbose, mop);
+
+                // stitch and save the image
+                stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
             }
         }
+
+        // generate video
+        Resamp::makeVideo()
     }
     // single file mode
     else
@@ -835,13 +876,6 @@ void Resamp::main()
             {
                 cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
-
-            cout << "nin has dimension ( ";
-            for (int i = 0; i < 4; i++)
-            {
-                cout << nin->axis[i].size << " ";
-            }
-            cout << ")" << endl;
                 
             // the final images's x and z component
             string common_prefix = opt.out_path + "/" + curFileName;
@@ -856,39 +890,10 @@ void Resamp::main()
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = common_prefix + "_z.png";
-            makeProjImage(nin, "z", 0., 1.0, imageOutPath_z, opt.verbose, mop);
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, opt.verbose, mop);
 
-            // use OpenCV to join two images
-            // Load images
-            cv::Mat3b img_z = cv::imread(imageOutPath_z);
-            cv::Mat3b img_x_left = cv::imread(imageOutPath_x_left);
-            cv::Mat3b img_x_right = cv::imread(imageOutPath_x_right);
-
-            // flip and rotate the x-projected left image by 90 degrees counterclock-wise
-            cv::flip(img_x_left, img_x_left, 1);
-            cv::transpose(img_x_left, img_x_left);
-            cv::flip(img_x_left, img_x_left, 0);
-            // rotate x-projected right image by 90 degrees clock-wise
-            cv::transpose(img_x_right, img_x_right);
-            cv::flip(img_x_right, img_x_right, 1);
-
-            // Get dimension of final image
-            // 616 rows (y direction top to bottom)
-            int rows = cv::max(img_z.rows, img_x_left.rows);
-            // 550+616 columes (x direction left to right)
-            int cols = img_z.cols + img_x_left.cols + img_x_right.cols;
-
-            // Create a black image
-            cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
-
-            // Copy images in correct position
-            img_x_left.copyTo(res(cv::Rect(0, 0, img_x_left.cols, img_x_left.rows)));
-            img_z.copyTo(res(cv::Rect(img_x_left.cols, 0, img_z.cols, img_z.rows)));
-            img_x_right.copyTo(res(cv::Rect(img_x_left.cols + img_z.cols, 0, img_x_right.cols, img_x_right.rows)));
-
-            // Show result
-            string imageOutPath_joined = common_prefix + "_joined.png";
-            cv::imwrite(imageOutPath_joined, res);
+            // stitch and save the image
+            stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
         }
     }
 
@@ -898,40 +903,86 @@ void Resamp::main()
 // generate videos, only when not in the single file mode
 void Resamp::makeVideo()
 {
-    int numFiles = opt.numFiles;
-
-    // get the size by reading the first frame image
-    cv::Size s = cv::imread(opt.out_path + "/001.png").size();
-    
-    string out_file;
-    if (opt.maxFileNum != "")
-        out_file = opt.out_path + "/result_" + opt.maxFileNum + ".avi";
-    else
-        out_file = opt.out_path + "/result.avi";
-
-    if (opt.maxFileNum != "")
-        cout << "===================== result_" + opt.maxFileNum + ".avi =====================" << std::endl;
-    else
-        cout << "===================== result.avi =====================" << std::endl;
-        
-
-    // write the images to video with opencv video writer
-    // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
-    // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
-    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
-    
-    if(!vw.isOpened()) 
-        std::cout << "cannot open videoWriter." << std::endl;
-    
-    for(int i = 0; i < numFiles; i++)
+    // non video only mode
+    if (opt.mode.empty() || opt.mode != "VideoOnly")
     {
-        string frameNum = opt.allValidFiles[i].second;
-        std::string name = opt.out_path + "/" + frameNum + ".png";
-        cv::Mat curImage = cv::imread(name);
-        // put white text indicating frame number on the bottom left cornor of images
-        // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-        putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
-        vw << curImage;
+        int numFiles = opt.numFiles;
+
+        // get the size by reading the first frame image
+        cv::Size s = cv::imread(opt.out_path + "/001.png").size();
+        
+        string out_file;
+        if (opt.maxFileNum != "")
+            out_file = opt.out_path + "/result_" + opt.maxFileNum + ".avi";
+        else
+            out_file = opt.out_path + "/result.avi";
+
+        if (opt.maxFileNum != "")
+            cout << "===================== result_" + opt.maxFileNum + ".avi =====================" << std::endl;
+        else
+            cout << "===================== result.avi =====================" << std::endl;
+            
+
+        // write the images to video with opencv video writer
+        // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
+        // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
+        cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
+        
+        if(!vw.isOpened()) 
+            std::cout << "cannot open videoWriter." << std::endl;
+        
+        for(int i = 0; i < numFiles; i++)
+        {
+            string frameNum = opt.allValidFiles[i].second;
+            std::string name = opt.out_path + "/" + frameNum + ".png";
+            cv::Mat curImage = cv::imread(name);
+            // put white text indicating frame number on the bottom left cornor of images
+            // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
+            putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+            vw << curImage;
+        }
+        vw.release();
     }
-    vw.release();
+    // video only mode
+    else
+    {
+        int numFiles = opt.numFiles;
+
+        // get the size by reading the first frame image
+        cv::Size s = cv::imread(opt.out_path + "/001_joined.png").size();
+        
+        string out_file;
+        if (opt.maxFileNum != "")
+            out_file = opt.out_path + "/result_3view_" + opt.maxFileNum + ".avi";
+        else
+            out_file = opt.out_path + "/result_3view.avi";
+
+        if (opt.maxFileNum != "")
+            cout << "===================== result_3view_" + opt.maxFileNum + ".avi =====================" << std::endl;
+        else
+            cout << "===================== result_3view.avi =====================" << std::endl;
+            
+
+        // write the images to video with opencv video writer
+        // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
+        // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
+        cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
+        
+        if(!vw.isOpened()) 
+            std::cout << "cannot open videoWriter." << std::endl;
+        
+        for(int i = 0; i < numFiles; i++)
+        {
+            string frameNum = opt.allValidFiles[i].second;
+            std::string name = opt.out_path + "/" + frameNum + "_joined.png";
+            cv::Mat curImage = cv::imread(name);
+            // put white text indicating frame number on the bottom left cornor of images
+            // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
+            putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+            vw << curImage;
+        }
+        vw.release();
+    }
+    
+    
 }
