@@ -397,6 +397,8 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
         cout << "projectData: Unknown axis number, return" << endl;
         return;
     }
+    cout << "min is (" << min[0] << ", " << min[1] << ", " << min[2] << ", " << min[3] << ")" << endl;
+    cout << "max is (" << max[0] << ", " << max[1] << ", " << max[2] << ", " << max[3] << ")" << endl;
 
     // cropping takes place at the projected axis
     Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -847,10 +849,10 @@ void Resamp::main()
             // *********************** alone x-axis ******************************
             // left
             string imageOutPath_x_left = common_prefix + "_x_left.png";
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_left, opt.verbose, mop);
             // right
             string imageOutPath_x_right = common_prefix + "_x_right.png";
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_right, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
             string imageOutPath_z = common_prefix + "_z.png";
