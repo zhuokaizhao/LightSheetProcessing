@@ -858,9 +858,10 @@ void Resamp::main()
             cv::Mat3b img_x_left = cv::imread(imageOutPath_x_left);
             cv::Mat3b img_x_right = cv::imread(imageOutPath_x_right);
 
-            // rotate x-projected left image by 90 degrees counterclock-wise
-            // cv::transpose(img_x_left, img_x_left);
+            // flip and rotate the x-projected left image by 90 degrees counterclock-wise
             cv::flip(img_x_left, img_x_left, 1);
+            cv::transpose(img_x_left, img_x_left);
+            cv::flip(img_x_left, img_x_left, 0);
             // rotate x-projected right image by 90 degrees clock-wise
             cv::transpose(img_x_right, img_x_right);
             cv::flip(img_x_right, img_x_right, 1);
