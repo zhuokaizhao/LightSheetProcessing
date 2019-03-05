@@ -794,6 +794,19 @@ void Resamp::main()
             {
                 // video only mode
                 cout << "Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
+                
+                // the final images's x and z component
+                string common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
+                string imageOutPath_x_left = common_prefix + "_x_left.png";
+                string imageOutPath_x_right = common_prefix + "_x_right.png";
+                string imageOutPath_z = common_prefix + "_z.png";
+
+                // when output already exists, skip this iteration
+                if (fs::exists(imageOutPath_x_left) && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
+                {
+                    cout << imageOutPath_x_left << ", " << imageOutPath_x_right << " and " << imageOutPath_z << " all exist, continue to next." << endl;
+                    continue;
+                }
 
                 // These variables are used for all three directions
                 // load the nhdr header
@@ -809,14 +822,11 @@ void Resamp::main()
 
                 // *********************** alone x-axis ******************************
                 // left
-                string imageOutPath_x_left = common_prefix + "_x_left.png";
                 makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
                 // right
-                string imageOutPath_x_right = common_prefix + "_x_right.png";
                 makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
-                string imageOutPath_z = common_prefix + "_z.png";
                 makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, opt.verbose, mop);
 
                 // stitch and save the image
@@ -863,6 +873,18 @@ void Resamp::main()
             // video only mode
             cout << "Video only (single file) mode" << endl;
 
+            // the final images's x and z component
+            string common_prefix = opt.out_path + "/" + curFileName;
+            string imageOutPath_x_left = common_prefix + "_x_left.png";
+            string imageOutPath_x_right = common_prefix + "_x_right.png";
+            string imageOutPath_z = common_prefix + "_z.png";
+            // when output already exists, skip this iteration
+            if (fs::exists(imageOutPath_x_left) && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
+            {
+                cout << imageOutPath_x_left << ", " << imageOutPath_x_right << " and " << imageOutPath_z << " all exist, continue to next." << endl;
+                return;
+            }
+
             // since it is single file mode, nhdr_path is now the file path
             const string nhdr_name = opt.nhdr_path;
             // get the name of the file only
@@ -876,20 +898,14 @@ void Resamp::main()
             {
                 cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
-                
-            // the final images's x and z component
-            string common_prefix = opt.out_path + "/" + curFileName;
 
             // *********************** alone x-axis ******************************
             // left
-            string imageOutPath_x_left = common_prefix + "_x_left.png";
             makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
             // right
-            string imageOutPath_x_right = common_prefix + "_x_right.png";
             makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
-            string imageOutPath_z = common_prefix + "_z.png";
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, opt.verbose, mop);
 
             // stitch and save the image
