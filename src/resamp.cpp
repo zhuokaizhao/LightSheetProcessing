@@ -858,7 +858,7 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // Project the volume (in nrrd format) alone z axis using MIP
-            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, "0.1%", "10.0%", opt.verbose, mop);
 
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
