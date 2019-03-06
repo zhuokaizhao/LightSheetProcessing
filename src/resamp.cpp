@@ -428,7 +428,8 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, const char * rangeMinPercentile, const char * rangeMaxPercentile, int verbose, airArray* mop)
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, 
+                            const vector<string> rangeMinPercentile, const vector<string> rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -455,7 +456,7 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
             }
             airMopError(mop);
         }
-        if (nrrdRangePercentileFromStringSet(range, slices[i],  rangeMinPercentile, rangeMaxPercentile, 5000, true)
+        if (nrrdRangePercentileFromStringSet(range, slices[i],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true)
             || nrrdQuantize(quantized[i], slices[i], range, 8))
         {
             if (verbose)
@@ -784,7 +785,11 @@ void Resamp::main()
 
                 // Project the volume (in nrrd format) alone z axis using MIP and save images
                 Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(nrrd_new, "z", 0, 1, imageOutPath, "0.1%", "10.0%", opt.verbose, mop);
+                // min percentile for GFP and RFP in quantization
+                vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+                // max percentile for GFP and RFP in quantization
+                vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
+                makeProjImage(nrrd_new, "z", 0, 1, imageOutPath, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -817,14 +822,18 @@ void Resamp::main()
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
 
+                // min percentile for GFP and RFP in quantization
+                vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+                // max percentile for GFP and RFP in quantization
+                vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
                 // *********************** alone x-axis ******************************
                 // left
-                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, "0.1%", "10.0%", opt.verbose, mop);
+                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // right
-                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, "0.1%", "10.0%", opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
-                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, "0.1%", "10.0%", opt.verbose, mop);
+                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 // stitch and save the image
                 stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -858,7 +867,11 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // Project the volume (in nrrd format) alone z axis using MIP
-            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, "0.1%", "0.1%", opt.verbose, mop);
+            // min percentile for GFP and RFP in quantization
+            vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+            // max percentile for GFP and RFP in quantization
+            vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
+            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -896,14 +909,18 @@ void Resamp::main()
                 cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
 
+            // min percentile for GFP and RFP in quantization
+            vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+            // max percentile for GFP and RFP in quantization
+            vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, "0.01%", "0.01%", opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, "0.01%", "0.01%", opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, "0.1%", "0.1%", opt.verbose, mop);
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
