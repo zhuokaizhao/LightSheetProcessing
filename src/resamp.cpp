@@ -995,7 +995,7 @@ void Resamp::main()
             // min percentile for GFP and RFP in quantization
             vector<string> rangeMinPercentile = {"5%", "5%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.002%", "0.001%"};
+            vector<string> rangeMaxPercentile = {"0.2%", "0.1%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
             NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
