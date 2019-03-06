@@ -454,9 +454,13 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
         if (!rangeGFP->min || !rangeGFP->max || !rangeRFP->min || !rangeRFP->max)
         {
             printf("%s: range for projection should've been passed as input\n", __func__, axis);
+            return;
         }
-        return;
     }
+
+    vector<NrrdRange*> range;
+    range.push_back(rangeGFP);
+    range.push_back(rangeRFP);
 
     for (int i = 0; i < 2; i++)
     {
