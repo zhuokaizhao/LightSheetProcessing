@@ -932,17 +932,17 @@ void Resamp::main()
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
             airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
             airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
-            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -989,17 +989,17 @@ void Resamp::main()
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
             airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
             airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
