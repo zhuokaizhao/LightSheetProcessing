@@ -936,7 +936,7 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"5%", "5%"};
+            vector<string> rangeMinPercentile = {"10%", "10%"};
             // max percentile for GFP and RFP in quantization
             vector<string> rangeMaxPercentile = {"0.01%", "0.001%"};
             // we project alone z-axis first
