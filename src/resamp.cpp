@@ -453,7 +453,7 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // otherwise, range should be pre-defined elsewhere and passed as input, return if empty
     else
     {
-        if (!range->min || !range->max)
+        if (!range[0]->min || !range[1]->min || !range[0]->max || !range[1]->max)
         {
             printf("%s: range for projection should've been passed as input\n", __func__, axis);
         }
@@ -782,8 +782,10 @@ void Resamp::main()
                 // we will save this volume as nrrd
                 string volumeOutPath = common_prefix + ".nhdr";
 
-                // we will save the final nrrd as image
-                string imageOutPath = common_prefix + ".png";
+                // the final images's x and z component
+                string imageOutPath_x_left = common_prefix + "_x_left.png";
+                string imageOutPath_x_right = common_prefix + "_x_right.png";
+                string imageOutPath_z = common_prefix + "_z.png";
 
                 // when output already exists, skip this iteration
                 if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
@@ -808,12 +810,12 @@ void Resamp::main()
                 NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
                 airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
                 // *********************** alone z-axis ******************************
-                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
                 // left
-                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // right
-                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 // stitch and save the image
                 stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -888,9 +890,12 @@ void Resamp::main()
             string curFileName = nhdr_name.substr(startlocation+1, 3);
 
             // we will save this new volume as nrrd
-            string volumeOutPath = opt.out_path + "/" + curFileName + ".nhdr";
-            // we will save the final nrrd as image
-            string imageOutPath = opt.out_path + "/" + curFileName + ".png";
+            string common_prefix = opt.out_path + "/" + curFileName;
+            string volumeOutPath = common_prefix + ".nhdr";
+            // the final images's x and z component
+            string imageOutPath_x_left = common_prefix + "_x_left.png";
+            string imageOutPath_x_right = common_prefix + "_x_right.png";
+            string imageOutPath_z = common_prefix + "_z.png";
 
             // resample the old data and generate new dataset
             Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
