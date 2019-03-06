@@ -788,7 +788,8 @@ void Resamp::main()
                 string imageOutPath_z = common_prefix + "_z.png";
 
                 // when output already exists, skip this iteration
-                if (fs::exists(volumeOutPath) && fs::exists(imageOutPath))
+                if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
+                    && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
                 {
                     cout << volumeOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
                     continue;
@@ -896,6 +897,14 @@ void Resamp::main()
             string imageOutPath_x_left = common_prefix + "_x_left.png";
             string imageOutPath_x_right = common_prefix + "_x_right.png";
             string imageOutPath_z = common_prefix + "_z.png";
+
+            // when output already exists, skip this iteration
+            if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
+                && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
+            {
+                cout << volumeOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                continue;
+            }
 
             // resample the old data and generate new dataset
             Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
