@@ -428,7 +428,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, nrrdRange* range,
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, NrrdRange* range,
                             const vector<string> rangeMinPercentile, const vector<string> rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
