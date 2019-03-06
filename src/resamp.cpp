@@ -808,9 +808,9 @@ void Resamp::main()
                 makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
                 // left
-                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // right
-                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 // stitch and save the image
                 stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -858,9 +858,9 @@ void Resamp::main()
                 makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
                 // left
-                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // right
-                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 // stitch and save the image
                 stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -905,9 +905,9 @@ void Resamp::main()
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -960,9 +960,9 @@ void Resamp::main()
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
