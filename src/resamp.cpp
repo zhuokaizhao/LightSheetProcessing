@@ -910,9 +910,9 @@ void Resamp::main()
             }
 
             // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"0.1%", "10.01%"};
+            vector<string> rangeMinPercentile = {"0.1%", "5.01%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.1%", "10.01%"};
+            vector<string> rangeMaxPercentile = {"0.1%", "5.01%"};
             // *********************** alone x-axis ******************************
             // left
             makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
