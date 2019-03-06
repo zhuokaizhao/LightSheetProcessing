@@ -541,12 +541,15 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
         airMopError(mop);
     }
     cout << "Finished saving image at " << imageOutPath << endl;
-    cout << imageOutPath << " has dimension ( ";
-    for (int i = 0; i < 3; i++)
+    if (verbose)
     {
-        cout << finalPaded->axis[i].size << " ";
+        cout << imageOutPath << " has dimension ( ";
+        for (int i = 0; i < 3; i++)
+        {
+            cout << finalPaded->axis[i].size << " ";
+        }
+        cout << ")" << endl;
     }
-    cout << ")" << endl;
 }
 
 // helper function that stitches left, middle and right image
@@ -583,6 +586,7 @@ static void stitchImages(string imageOutPath_x_left, string imageOutPath_z, stri
     // Show result
     string imageOutPath_joined = common_prefix + "_joined.png";
     cv::imwrite(imageOutPath_joined, res);
+    cout << "Finished saving stitched image to " << imageOutPath_joined << endl;
 }
 
 // ********************** end of static helper functions *********************
