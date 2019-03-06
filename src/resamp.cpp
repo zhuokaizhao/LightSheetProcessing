@@ -469,8 +469,8 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     }
 
     vector<NrrdRange*> range;
-    range.push_back(rangeGFP);
-    range.push_back(rangeRFP);
+    range.push_back(range_GFP);
+    range.push_back(range_RFP);
 
     for (int i = 0; i < 2; i++)
     {
