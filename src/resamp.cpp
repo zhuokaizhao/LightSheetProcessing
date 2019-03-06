@@ -428,7 +428,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, NrrdRange* rangeGFP, NrrdRange* rangeRFP,
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, NrrdRange* range_GFP, NrrdRange* range_RFP,
                             const vector<string> rangeMinPercentile, const vector<string> rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
@@ -445,26 +445,26 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // when projecting alone z, we generate range based on input percentiles
     if (axis == "z")
     {
-        nrrdRangePercentileFromStringSet(rangeGFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true);
-        nrrdRangePercentileFromStringSet(rangeRFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true);
+        nrrdRangePercentileFromStringSet(range_GFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true);
+        nrrdRangePercentileFromStringSet(range_RFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true);
         if (verbose)
         {
-            cout << "Z projection GFP min is " << rangeGFP->min << ", GFP max is " << rangeGFP->max << endl;
-            cout << "Z projection RFP min is " << rangeRFP->min << ", RFP max is " << rangeRFP->max << endl;
+            cout << "Z projection GFP min is " << range_GFP->min << ", GFP max is " << range_GFP->max << endl;
+            cout << "Z projection RFP min is " << range_RFP->min << ", RFP max is " << range_RFP->max << endl;
         }
     }
     // otherwise, range should be pre-defined elsewhere and passed as input, return if empty
     else
     {
-        if (!rangeGFP->min || !rangeGFP->max || !rangeRFP->min || !rangeRFP->max)
+        if (!range_GFP->min || !range_GFP->max || !range_RFP->min || !range_RFP->max)
         {
             printf("%s: range for projection should've been passed as input\n", __func__, axis);
             return;
         }
         if (verbose)
         {
-            cout << "X projection GFP min is " << rangeGFP->min << ", GFP max is " << rangeGFP->max << endl;
-            cout << "X projection RFP min is " << rangeRFP->min << ", RFP max is " << rangeRFP->max << endl;
+            cout << "X projection GFP min is " << range_GFP->min << ", GFP max is " << range_GFP->max << endl;
+            cout << "X projection RFP min is " << range_RFP->min << ", RFP max is " << range_RFP->max << endl;
         }
     }
 
@@ -932,17 +932,17 @@ void Resamp::main()
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
             airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
             airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
-            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -989,17 +989,17 @@ void Resamp::main()
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
             airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
             airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, &range_GFP, &range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
