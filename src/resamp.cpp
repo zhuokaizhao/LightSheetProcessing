@@ -445,8 +445,8 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // when projecting alone z, we generate range based on input percentiles
     if (axis == "z")
     {
-        nrrdRangePercentileFromStringSet(rangeGFP, slices[0],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true);
-        nrrdRangePercentileFromStringSet(rangeRFP, slices[1],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true);
+        nrrdRangePercentileFromStringSet(rangeGFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true);
+        nrrdRangePercentileFromStringSet(rangeRFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true);
     }
     // otherwise, range should be pre-defined elsewhere and passed as input, return if empty
     else
