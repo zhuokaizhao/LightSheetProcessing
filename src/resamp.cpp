@@ -809,7 +809,8 @@ void Resamp::main()
                 // we project alone z-axis first
                 // note that when projecting alone z, we save the min/max range for later projecting alone x
                 vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
-                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+                airMopAdd(mop, range[0], (airMopper)nrrdRangeNix, airMopAlways);
+                airMopAdd(mop, range[1], (airMopper)nrrdRangeNix, airMopAlways);
                 // *********************** alone z-axis ******************************
                 makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
@@ -859,7 +860,8 @@ void Resamp::main()
                 // we project alone z-axis first
                 // note that when projecting alone z, we save the min/max range for later projecting alone x
                 vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
-                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+                airMopAdd(mop, range[0], (airMopper)nrrdRangeNix, airMopAlways);
+                airMopAdd(mop, range[1], (airMopper)nrrdRangeNix, airMopAlways);
                 // *********************** alone z-axis ******************************
                 makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
@@ -903,7 +905,7 @@ void Resamp::main()
                 && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
             {
                 cout << "All outputs exist, continue to next." << endl;
-                continue;
+                return;
             }
 
             // resample the old data and generate new dataset
@@ -917,14 +919,15 @@ void Resamp::main()
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
             vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
-            airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+            airMopAdd(mop, range[0], (airMopper)nrrdRangeNix, airMopAlways);
+            airMopAdd(mop, range[1], (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -972,7 +975,8 @@ void Resamp::main()
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
             vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
-            airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+            airMopAdd(mop, range[0], (airMopper)nrrdRangeNix, airMopAlways);
+            airMopAdd(mop, range[1], (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
