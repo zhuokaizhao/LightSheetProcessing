@@ -447,6 +447,11 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     {
         nrrdRangePercentileFromStringSet(rangeGFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true);
         nrrdRangePercentileFromStringSet(rangeRFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true);
+        if (verbose)
+        {
+            cout << "Z projection GFP min is " << rangeGPF->min << ", GFP max is " << rangeGPF->max << endl;
+            cout << "Z projection RFP min is " << rangeRPF->min << ", RFP max is " << rangeRPF->max << endl;
+        }
     }
     // otherwise, range should be pre-defined elsewhere and passed as input, return if empty
     else
@@ -455,6 +460,11 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
         {
             printf("%s: range for projection should've been passed as input\n", __func__, axis);
             return;
+        }
+        if (verbose)
+        {
+            cout << "X projection GFP min is " << rangeGPF->min << ", GFP max is " << rangeGPF->max << endl;
+            cout << "X projection RFP min is " << rangeRPF->min << ", RFP max is " << rangeRPF->max << endl;
         }
     }
 
