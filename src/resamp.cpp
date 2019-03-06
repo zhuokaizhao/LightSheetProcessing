@@ -858,7 +858,7 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // Project the volume (in nrrd format) alone z axis using MIP
-            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, "0.1%", "10.0%", opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, "0.1%", "0.1%", opt.verbose, mop);
 
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -898,12 +898,12 @@ void Resamp::main()
 
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, "0.1%", "10.0%", opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, "0.01%", "0.01%", opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, "0.1%", "10.0%", opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, "0.01%", "0.01%", opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, "0.1%", "10.0%", opt.verbose, mop);
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, "0.1%", "0.1%", opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
