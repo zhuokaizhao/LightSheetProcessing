@@ -428,7 +428,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, int verbose, airArray* mop)
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, const char * rangeMinPercentile, const char * rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -455,7 +455,7 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
             }
             airMopError(mop);
         }
-        if (nrrdRangePercentileFromStringSet(range, slices[i],  "0.1%", "0.1%", 5000, true)
+        if (nrrdRangePercentileFromStringSet(range, slices[i],  rangeMinPercentile, rangeMaxPercentile, 5000, true)
             || nrrdQuantize(quantized[i], slices[i], range, 8))
         {
             if (verbose)
@@ -784,7 +784,7 @@ void Resamp::main()
 
                 // Project the volume (in nrrd format) alone z axis using MIP and save images
                 Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                makeProjImage(nrrd_new, "z", 0, 1, imageOutPath, opt.verbose, mop);
+                makeProjImage(nrrd_new, "z", 0, 1, imageOutPath, "0.1%", "10.0%", opt.verbose, mop);
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -819,12 +819,12 @@ void Resamp::main()
 
                 // *********************** alone x-axis ******************************
                 // left
-                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, "0.1%", "10.0%", opt.verbose, mop);
                 // right
-                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
+                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, "0.1%", "10.0%", opt.verbose, mop);
 
                 // *********************** alone z-axis ******************************
-                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, opt.verbose, mop);
+                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, "0.1%", "10.0%", opt.verbose, mop);
 
                 // stitch and save the image
                 stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -898,12 +898,12 @@ void Resamp::main()
 
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, "0.1%", "10.0%", opt.verbose, mop);
             // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, opt.verbose, mop);
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, "0.1%", "10.0%", opt.verbose, mop);
 
             // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, opt.verbose, mop);
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, "0.1%", "10.0%", opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
