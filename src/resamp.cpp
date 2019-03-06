@@ -428,7 +428,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, 
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, nrrdRange* range,
                             const vector<string> rangeMinPercentile, const vector<string> rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
@@ -442,9 +442,20 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // quantized to 8-bit
     Nrrd* quantized[2] = {safe_nrrd_new(mop, (airMopper)nrrdNuke),
                             safe_nrrd_new(mop, (airMopper)nrrdNuke)};
-    // range for quantization
-    auto range = nrrdRangeNew(lspNan(0), lspNan(0));
-    airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+    // when projecting alone z, we generate range based on input percentiles
+    if (axis == "z")
+    {
+        nrrdRangePercentileFromStringSet(range, slices[i],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true);
+    }
+    // otherwise, range should be pre-defined elsewhere and passed as input, return if empty
+    else
+    {
+        if (!range->min || !range->max)
+        {
+            printf("%s: range for projection should've been passed as input\n", __func__, axis);
+        }
+        return;
+    }
 
     for (int i = 0; i < 2; i++)
     {
@@ -455,26 +466,23 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
                 printf("%s: trouble slicing into 2 channels projected alone %s axis\n", __func__, axis);
             }
             airMopError(mop);
+            if (verbose)
+            {
+                cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
+            }
         }
-        if (nrrdRangePercentileFromStringSet(range, slices[i],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true)
-            || nrrdQuantize(quantized[i], slices[i], range, 8))
+        if (nrrdQuantize(quantized[i], slices[i], range, 8))
         {
             if (verbose)
             {
                 printf("%s: trouble quantizing to 8 bits projected alone %s axis\n", __func__, axis);
             }
             airMopError(mop);
+            if (verbose)
+            {
+                cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
+            }
         }
-    }
-    if (verbose)
-    {
-        if (axis == "z")
-        {
-            cout << "range min is " << range->min << endl;
-            cout << "range max is " << range->max << endl;
-        }
-        cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
-        cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
     }
 
     // final joined nrrd data file
@@ -788,13 +796,24 @@ void Resamp::main()
                 Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
-                // Project the volume (in nrrd format) alone z axis using MIP and save images
-                Nrrd* finalPaded_z = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+                vector<string> rangeMinPercentile = {"5%", "5%"};
                 // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
-                makeProjImage(nrrd_new, "z", 0, 1, imageOutPath, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+                // we project alone z-axis first
+                // note that when projecting alone z, we save the min/max range for later projecting alone x
+                NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+                // *********************** alone z-axis ******************************
+                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                // *********************** alone x-axis ******************************
+                // left
+                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+                // right
+                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+
+                // stitch and save the image
+                stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
 
                 auto stop = chrono::high_resolution_clock::now(); 
                 auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -828,17 +847,20 @@ void Resamp::main()
                 }
 
                 // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+                vector<string> rangeMinPercentile = {"5%", "5%"};
                 // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
+                vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+                // we project alone z-axis first
+                // note that when projecting alone z, we save the min/max range for later projecting alone x
+                NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+                airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+                // *********************** alone z-axis ******************************
+                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
                 // left
                 makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
                 // right
                 makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
-
-                // *********************** alone z-axis ******************************
-                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
                 // stitch and save the image
                 stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -871,12 +893,24 @@ void Resamp::main()
             Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
-            // Project the volume (in nrrd format) alone z axis using MIP
             // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"0.1%", "0.01%"};
+            vector<string> rangeMinPercentile = {"5%", "5%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.1%", "0.01%"};
-            makeProjImage(nrrd_new, "z", 0., 1., imageOutPath, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+            // we project alone z-axis first
+            // note that when projecting alone z, we save the min/max range for later projecting alone x
+            NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+            airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+            // *********************** alone z-axis ******************************
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            // *********************** alone x-axis ******************************
+            // left
+            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            // right
+            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+
+            // stitch and save the image
+            stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
 
             auto stop = chrono::high_resolution_clock::now(); 
             auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
@@ -918,14 +952,17 @@ void Resamp::main()
             vector<string> rangeMinPercentile = {"5%", "5%"};
             // max percentile for GFP and RFP in quantization
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+            // we project alone z-axis first
+            // note that when projecting alone z, we save the min/max range for later projecting alone x
+            NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+            airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
+            // *********************** alone z-axis ******************************
+            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
             makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
             // right
             makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
-
-            // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
