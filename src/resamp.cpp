@@ -791,7 +791,7 @@ void Resamp::main()
                 if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
                     && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
                 {
-                    cout << volumeOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                    cout << "All outputs exist, continue to next." << endl;
                     continue;
                 }
 
@@ -808,7 +808,7 @@ void Resamp::main()
                 vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
                 // we project alone z-axis first
                 // note that when projecting alone z, we save the min/max range for later projecting alone x
-                NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+                vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
                 airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
                 // *********************** alone z-axis ******************************
                 makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
@@ -858,7 +858,7 @@ void Resamp::main()
                 vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
                 // we project alone z-axis first
                 // note that when projecting alone z, we save the min/max range for later projecting alone x
-                NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+                vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
                 airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
                 // *********************** alone z-axis ******************************
                 makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
@@ -902,7 +902,7 @@ void Resamp::main()
             if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
                 && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
             {
-                cout << volumeOutPath << " and " << imageOutPath << " both exists, continue to next." << endl;
+                cout << "All outputs exist, continue to next." << endl;
                 continue;
             }
 
@@ -916,7 +916,7 @@ void Resamp::main()
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+            vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
             airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
