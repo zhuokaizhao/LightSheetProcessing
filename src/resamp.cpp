@@ -445,8 +445,11 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // when projecting alone z, we generate range based on input percentiles
     if (axis == "z")
     {
-        nrrdRangePercentileFromStringSet(range_GFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true);
-        nrrdRangePercentileFromStringSet(range_RFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true);
+        if (nrrdRangePercentileFromStringSet(range_GFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true);
+            || nrrdRangePercentileFromStringSet(range_RFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true))
+        {
+            printf("%s: trouble generating ranges for GFP and RFP\n", __func__, axis);
+        }
         if (verbose)
         {
             cout << "Z projection GFP min is " << range_GFP->min << ", GFP max is " << range_GFP->max << endl;
@@ -481,10 +484,11 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
                 printf("%s: trouble slicing into 2 channels projected alone %s axis\n", __func__, axis);
             }
             airMopError(mop);
-            if (verbose)
-            {
-                cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
-            }
+            return;
+        }
+        if (verbose)
+        {
+            cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
         }
         if (nrrdQuantize(quantized[i], slices[i], range[i], 8))
         {
@@ -493,10 +497,11 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
                 printf("%s: trouble quantizing to 8 bits projected alone %s axis\n", __func__, axis);
             }
             airMopError(mop);
-            if (verbose)
-            {
-                cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
-            }
+            return;
+        }
+        if (verbose)
+        {
+            cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
         }
     }
 
