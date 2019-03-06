@@ -428,7 +428,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 }
 
 // generating projection image alone the input axis
-static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, NrrdRange* range,
+static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, vector<NrrdRange*> range,
                             const vector<string> rangeMinPercentile, const vector<string> rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
@@ -445,7 +445,10 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // when projecting alone z, we generate range based on input percentiles
     if (axis == "z")
     {
-        nrrdRangePercentileFromStringSet(range, slices[i],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true);
+        for (int i = 0; i < 2; i++)
+        {
+            nrrdRangePercentileFromStringSet(range[i], slices[i],  rangeMinPercentile[i].c_str(), rangeMaxPercentile[i].c_str(), 5000, true);
+        }
     }
     // otherwise, range should be pre-defined elsewhere and passed as input, return if empty
     else
@@ -471,7 +474,7 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
                 cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
             }
         }
-        if (nrrdQuantize(quantized[i], slices[i], range, 8))
+        if (nrrdQuantize(quantized[i], slices[i], range[i], 8))
         {
             if (verbose)
             {
@@ -954,7 +957,7 @@ void Resamp::main()
             vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange* range = nrrdRangeNew(lspNan(0), lspNan(0));
+            vector<NrrdRange*> range = { nrrdRangeNew(lspNan(0), lspNan(0)), nrrdRangeNew(lspNan(0), lspNan(0)) };
             airMopAdd(mop, range, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
