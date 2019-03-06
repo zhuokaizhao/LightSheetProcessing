@@ -470,8 +470,8 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     {
         if (axis == "z")
         {
-            cout << "range min is " << range.min << endl;
-            cout << "range max is " << range.max << endl;
+            cout << "range min is " << range->min << endl;
+            cout << "range max is " << range->max << endl;
         }
         cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
         cout << "Finished quantizing to 8-bit projected alone " << axis << " axis" << endl;
