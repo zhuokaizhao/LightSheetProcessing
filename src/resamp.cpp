@@ -429,7 +429,7 @@ static void projectData(Nrrd* projNrrd, Nrrd* nin, string axis, double startPerc
 
 // generating projection image alone the input axis
 static void makeProjImage(Nrrd* nin, string axis, double startPercent, double endPercent, string imageOutPath, NrrdRange* range_GFP, NrrdRange* range_RFP,
-                            const vector<string> rangeMinPercentile, const vector<string> rangeMaxPercentile, int verbose, airArray* mop)
+                            const vector<char*> rangeMinPercentile, const vector<char*> rangeMaxPercentile, int verbose, airArray* mop)
 {
     // projected Nrrd dataset
     Nrrd* projNrrd = safe_nrrd_new(mop, (airMopper)nrrdNuke);
@@ -445,8 +445,8 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     // when projecting alone z, we generate range based on input percentiles
     if (axis == "z")
     {
-        if (nrrdRangePercentileFromStringSet(range_GFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true)
-            || nrrdRangePercentileFromStringSet(range_RFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true))
+        if (nrrdRangePercentileFromStringSet(range_GFP, slices[0],  rangeMinPercentile[0], rangeMaxPercentile[0], 5000, true)
+            || nrrdRangePercentileFromStringSet(range_RFP, slices[1],  rangeMinPercentile[1], rangeMaxPercentile[1], 5000, true))
         {
             printf("%s: trouble generating ranges for GFP and RFP\n", __func__, axis);
         }
@@ -820,9 +820,9 @@ void Resamp::main()
                 processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
                 // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"5%", "5%"};
+                vector<char*> rangeMinPercentile = {"5%", "5%"};
                 // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+                vector<char*> rangeMaxPercentile = {"0.02%", "0.01%"};
                 // we project alone z-axis first
                 // note that when projecting alone z, we save the min/max range for later projecting alone x
                 NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
@@ -872,9 +872,9 @@ void Resamp::main()
                 }
 
                 // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"5%", "5%"};
+                vector<char*> rangeMinPercentile = {"5%", "5%"};
                 // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+                vector<char*> rangeMaxPercentile = {"0.02%", "0.01%"};
                 // we project alone z-axis first
                 // note that when projecting alone z, we save the min/max range for later projecting alone x
                 NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
@@ -932,9 +932,9 @@ void Resamp::main()
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
             // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"5%", "5%"};
+            vector<char*> rangeMinPercentile = {"5%", "5%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+            vector<char*> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
             NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
@@ -989,9 +989,9 @@ void Resamp::main()
             }
 
             // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"5%", "5%"};
+            vector<char*> rangeMinPercentile = {"5%", "5%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
+            vector<char*> rangeMaxPercentile = {"0.02%", "0.01%"};
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
             NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
