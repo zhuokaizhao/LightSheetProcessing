@@ -467,21 +467,21 @@ static void generateRange(Nrrd* nin, NrrdRange* range_GFP, NrrdRange* range_RFP,
         {
             if (verbose)
             {
-                printf("%s: trouble slicing into 2 channels projected alone %s axis\n", __func__, axis);
+                printf("%s: trouble slicing into 2 channels projected alone z axis\n", __func__);
             }
             airMopError(mop);
             return;
         }
         if (verbose)
         {
-            cout << "Finished slicing the data based on its channel (GFP and RFP) projected alone " << axis << " axis" << endl;
+            printf("%s: Finished slicing the data based on its channel (GFP and RFP) projected alone z axis\n", __func__);
         }
     }
 
     if (nrrdRangePercentileFromStringSet(range_GFP, slices[0],  rangeMinPercentile[0].c_str(), rangeMaxPercentile[0].c_str(), 5000, true)
         || nrrdRangePercentileFromStringSet(range_RFP, slices[1],  rangeMinPercentile[1].c_str(), rangeMaxPercentile[1].c_str(), 5000, true))
     {
-        printf("%s: trouble generating ranges for GFP and RFP\n", __func__, axis);
+        printf("%s: trouble generating ranges for GFP and RFP\n", __func__);
     }
     if (verbose)
     {
@@ -995,12 +995,12 @@ void Resamp::main()
             airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
             airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
-            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
             // *********************** alone x-axis ******************************
             // left
-            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, opt.verbose, mop);
             // right
-            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, opt.verbose, mop);
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
@@ -1068,7 +1068,7 @@ void Resamp::main()
             // max percentile for GFP and RFP in quantization
             vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
             // generate range
-            generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose);
+            generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
             // we project alone z-axis first
             // *********************** alone z-axis ******************************
