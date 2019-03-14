@@ -872,16 +872,35 @@ void Resamp::main()
                 Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
                 processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
-                // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"5%", "5%"};
-                // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
-                // we project alone z-axis first
-                // note that when projecting alone z, we save the min/max range for later projecting alone x
+                // we want to get the RFP data range from the middle part of the data set, so that the
+                // pioneers which have low brightness would not be influenced by the
+                // so we take the center part of the data first
+                Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+                // range of cropping along each axis
+                double startPercent_x = 0.25;
+                double endPercent_x = 0.75;
+                double startPercent_y = 0.25;
+                double endPercent_y = 0.75;
+                double startPercent_z = 0.0;
+                double endPercent_z = 1.0;
+                cropDataSet(nin_cropped, nrrd_new, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
+                if (opt.verbose)
+                {
+                    cout << "Finish cropping input Nrrd data" << endl;
+                }
+
+                // generate range based on cropped data
                 NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
                 NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
                 airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
                 airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
+                // min percentile for GFP and RFP in quantization
+                vector<string> rangeMinPercentile = {"10%", "10%"};
+                // max percentile for GFP and RFP in quantization
+                vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
+                // generate range
+                generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+
                 // *********************** alone z-axis ******************************
                 makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
@@ -924,16 +943,35 @@ void Resamp::main()
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
 
-                // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"5%", "5%"};
-                // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.02%", "0.01%"};
-                // we project alone z-axis first
-                // note that when projecting alone z, we save the min/max range for later projecting alone x
+                // we want to get the RFP data range from the middle part of the data set, so that the
+                // pioneers which have low brightness would not be influenced by the
+                // so we take the center part of the data first
+                Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+                // range of cropping along each axis
+                double startPercent_x = 0.25;
+                double endPercent_x = 0.75;
+                double startPercent_y = 0.25;
+                double endPercent_y = 0.75;
+                double startPercent_z = 0.0;
+                double endPercent_z = 1.0;
+                cropDataSet(nin_cropped, nin, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
+                if (opt.verbose)
+                {
+                    cout << "Finish cropping input Nrrd data" << endl;
+                }
+
+                // generate range based on cropped data
                 NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
                 NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
                 airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
                 airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
+                // min percentile for GFP and RFP in quantization
+                vector<string> rangeMinPercentile = {"10%", "10%"};
+                // max percentile for GFP and RFP in quantization
+                vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
+                // generate range
+                generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+
                 // *********************** alone z-axis ******************************
                 makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
                 // *********************** alone x-axis ******************************
@@ -984,10 +1022,35 @@ void Resamp::main()
             Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
             processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
 
+            // we want to get the RFP data range from the middle part of the data set, so that the
+            // pioneers which have low brightness would not be influenced by the
+            // so we take the center part of the data first
+            Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+            // range of cropping along each axis
+            double startPercent_x = 0.25;
+            double endPercent_x = 0.75;
+            double startPercent_y = 0.25;
+            double endPercent_y = 0.75;
+            double startPercent_z = 0.0;
+            double endPercent_z = 1.0;
+            cropDataSet(nin_cropped, nrrd_new, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
+            if (opt.verbose)
+            {
+                cout << "Finish cropping input Nrrd data" << endl;
+            }
+
+            // generate range based on cropped data
+            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
+            airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
+            airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // min percentile for GFP and RFP in quantization
             vector<string> rangeMinPercentile = {"10%", "10%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.01%", "0.001%"};
+            vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
+            // generate range
+            generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
+
             // we project alone z-axis first
             // note that when projecting alone z, we save the min/max range for later projecting alone x
             NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
