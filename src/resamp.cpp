@@ -903,7 +903,7 @@ void Resamp::main()
                 // min percentile for GFP and RFP in quantization
                 vector<string> rangeMinPercentile = {"10%", "10%"};
                 // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
+                vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
                 // generate range
                 generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
@@ -1129,7 +1129,7 @@ void Resamp::main()
             // min percentile for GFP and RFP in quantization
             vector<string> rangeMinPercentile = {"10%", "10%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
+            vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
             // generate range
             generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
