@@ -628,6 +628,12 @@ static void stitchImages(string imageOutPath_x_left, string imageOutPath_z, stri
     img_z.copyTo(res(cv::Rect(img_x_left.cols, 0, img_z.cols, img_z.rows)));
     img_x_right.copyTo(res(cv::Rect(img_x_left.cols + img_z.cols, 0, img_x_right.cols, img_x_right.rows)));
 
+    // rotate the joined image by 180 degrees clock-wise
+    cv::transpose(res, res);
+    cv::flip(res, res, 1);
+    cv::transpose(res, res);
+    cv::flip(res, res, 1);
+
     // Show result
     string imageOutPath_joined = common_prefix + "_joined.png";
     cv::imwrite(imageOutPath_joined, res);
@@ -968,7 +974,7 @@ void Resamp::main()
                 // min percentile for GFP and RFP in quantization
                 vector<string> rangeMinPercentile = {"10%", "10%"};
                 // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
+                vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
                 // generate range
                 generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
