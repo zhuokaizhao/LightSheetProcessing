@@ -1051,12 +1051,6 @@ void Resamp::main()
             // generate range
             generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
-            // we project alone z-axis first
-            // note that when projecting alone z, we save the min/max range for later projecting alone x
-            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
-            airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
             // *********************** alone z-axis ******************************
             makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
             // *********************** alone x-axis ******************************
