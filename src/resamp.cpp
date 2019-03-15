@@ -1187,7 +1187,7 @@ void Resamp::makeVideo()
         string curText;
         for(int i = 0; i < numFiles; i++)
         {
-            // string frameNum = opt.allValidFiles[i].second;
+            string frameNum = opt.allValidFiles[i].second;
             std::string name = opt.out_path + "/" + frameNum + ".png";
             cv::Mat curImage = cv::imread(name);
             // put white text indicating frame number on the bottom left cornor of images
