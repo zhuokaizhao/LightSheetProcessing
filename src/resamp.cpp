@@ -1192,7 +1192,7 @@ void Resamp::makeVideo()
             cv::Mat curImage = cv::imread(name);
             // put white text indicating frame number on the bottom left cornor of images
             // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-            curText = to_string(timestamp) + " mins"
+            curText = to_string(timestamp) + " mins";
             putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
             vw << curImage;
             timestamp = timestamp + 2;
