@@ -1129,7 +1129,7 @@ void Resamp::main()
             // min percentile for GFP and RFP in quantization
             vector<string> rangeMinPercentile = {"10%", "12%"};
             // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
+            vector<string> rangeMaxPercentile = {"0.3%", "0.7%"};
             // generate range
             generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
@@ -1227,6 +1227,10 @@ void Resamp::makeVideo()
         if(!vw.isOpened()) 
             std::cout << "cannot open videoWriter." << std::endl;
         
+        // determine the time stamps, if starting with 0, it is 0min, if starting with 1, it is 2min
+        int timestamp_min = stoi(opt.allValidFiles[0].second) * 2;
+        int timestamp_hour = 0;
+        string curText;
         for(int i = 0; i < numFiles; i++)
         {
             string frameNum = opt.allValidFiles[i].second;
@@ -1234,8 +1238,43 @@ void Resamp::makeVideo()
             cv::Mat curImage = cv::imread(name);
             // put white text indicating frame number on the bottom left cornor of images
             // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-            putText(curImage, frameNum, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
-            vw << curImage;
+            if (timestamp_min >= 60)
+            {
+                timestamp_min = 0;
+                timestamp_hour++;
+                if (timestamp_hour < 10)
+                {
+                    curText = "0" + to_string(timestamp_hour) + ":00";
+                }
+                else
+                {
+                    curText = to_string(timestamp_hour) + ":00";
+                }
+                putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+                vw << curImage;
+            }
+            else
+            {
+                timestamp_min = timestamp_min + 2;
+                if (timestamp_hour < 10 && timestamp_min < 10)
+                {
+                    curText = "0" + to_string(timestamp_hour) + ":" + "0" + to_string(timestamp_min);
+                }
+                else if (timestamp_hour < 10 && timestamp_min >= 10)
+                {
+                    curText = "0" + to_string(timestamp_hour) + ":" + to_string(timestamp_min);
+                }
+                else if (timestamp_hour >= 10 && timestamp_min < 10)
+                {
+                    curText = to_string(timestamp_hour) + ":" + "0" + to_string(timestamp_min);
+                }
+                else if (timestamp_hour >= 10 && timestamp_min >= 10)
+                {
+                    curText = to_string(timestamp_hour) + ":" + to_string(timestamp_min);
+                }
+                putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+                vw << curImage;
+            }
         }
         vw.release();
     }
