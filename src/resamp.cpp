@@ -143,6 +143,7 @@ void setup_resamp(CLI::App &app)
                 std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
             }
         }
+        // check if we can get to single-file mode
         else
         {
             // the program also handles if input file is a single file
@@ -161,6 +162,7 @@ void setup_resamp(CLI::App &app)
             else
             {
                 cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
+                opt->numFiles = 1;
                 // we want to actually learn the name of the file with .nhdr
                 int start = curFile.rfind("/");
                 string curFileName = curFile.substr(start+1, 3);
@@ -841,28 +843,54 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-    // turn off nrrd warnings
-    nrrdStateVerboseIO = 0;
-    // non single file mode
-    if (!opt.isSingleFile)
-    {
         // loop over all the current files
+        // in single file mode, numFiles = 1, the for loop just runs once
         int nhdrNum = opt.numFiles;
         for (int i = 0; i < nhdrNum; i++)
         {
-            // when we are not in VideoOnly mode
-            if (opt.mode.empty() || opt.mode != "VideoOnly")
+            auto start = chrono::high_resolution_clock::now();
+            string common_prefix, volumeOutPath, imageOutPath_x_left, imageOutPath_x_right, imageOutPath_z, nhdr_name, curFileName;
+            int startlocation;
+            // non single file mode
+            if (!opt.isSingleFile)
             {
-                auto start = chrono::high_resolution_clock::now();
-                string common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
+                common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
                 // we will save this volume as nrrd
-                string volumeOutPath = common_prefix + ".nhdr";
+                volumeOutPath;
 
                 // the final images's x and z component
-                string imageOutPath_x_left = common_prefix + "_x_left.png";
-                string imageOutPath_x_right = common_prefix + "_x_right.png";
-                string imageOutPath_z = common_prefix + "_z.png";
+                imageOutPath_x_left = common_prefix + "_x_left.png";
+                imageOutPath_x_right = common_prefix + "_x_right.png";
+                imageOutPath_z = common_prefix + "_z.png";
 
+                nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
+                cout << "Currently processing input file " << nhdr_name << endl;
+            }
+            // single file mode
+            else
+            {
+                // since it is single file mode, nhdr_path is now the file path
+                nhdr_name = opt.nhdr_path;
+                // get the name of the file only
+                startlocation = nhdr_name.rfind("/");
+                curFileName = nhdr_name.substr(startlocation+1, 3);
+
+                // we will save this new volume as nrrd
+                common_prefix = opt.out_path + "/" + curFileName;
+                volumeOutPath;
+                // the final images's x and z component
+                imageOutPath_x_left = common_prefix + "_x_left.png";
+                imageOutPath_x_right = common_prefix + "_x_right.png";
+                imageOutPath_z = common_prefix + "_z.png";   
+            }
+
+            // nrrd_new is the processed(resampled) new nrrd data
+            Nrrd* nin;
+            // when we are not in VideoOnly mode, we need to process the input data
+            if (opt.mode.empty() || opt.mode != "VideoOnly")
+            {
+                // non video only mode
+                cout << "Non-Single File Non-Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
                 // when output already exists, skip this iteration
                 if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
                     && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
@@ -871,67 +899,16 @@ void Resamp::main()
                     continue;
                 }
 
-                string nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
-                cout << "Currently processing input file " << nhdr_name << endl;
-
-                // nrrd_new is the processed(resampled) new nrrd data
-                Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
-
-                // we want to get the RFP data range from the middle part of the data set, so that the
-                // pioneers which have low brightness would not be influenced by the
-                // so we take the center part of the data first
-                Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                // range of cropping along each axis
-                double startPercent_x = 0.25;
-                double endPercent_x = 0.75;
-                double startPercent_y = 0.25;
-                double endPercent_y = 0.75;
-                double startPercent_z = 0.0;
-                double endPercent_z = 1.0;
-                cropDataSet(nin_cropped, nrrd_new, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
-                if (opt.verbose)
-                {
-                    cout << "Finish cropping input Nrrd data" << endl;
-                }
-
-                // generate range based on cropped data
-                NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-                NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
-                airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
-                airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
-                // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"10%", "10%"};
-                // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
-                // generate range
-                generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
-
-                // *********************** alone z-axis ******************************
-                makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
-                // *********************** alone x-axis ******************************
-                // left
-                makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, opt.verbose, mop);
-                // right
-                makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, opt.verbose, mop);
-
-                // stitch and save the image
-                stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
-
-                auto stop = chrono::high_resolution_clock::now(); 
-                auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-                cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
+                // the processed data will be put in nin
+                nin = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+                // we will save this volume as nrrd
+                volumeOutPath = common_prefix + ".nhdr";
+                processData(nin, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
             }
+            // video only mode
             else
             {
-                // video only mode
-                cout << "Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
-                
-                // the final images's x and z component
-                string common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
-                string imageOutPath_x_left = common_prefix + "_x_left.png";
-                string imageOutPath_x_right = common_prefix + "_x_right.png";
-                string imageOutPath_z = common_prefix + "_z.png";
+                cout << "Non-Single File Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
 
                 // when output already exists, skip this iteration
                 if (fs::exists(imageOutPath_x_left) && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
@@ -940,168 +917,11 @@ void Resamp::main()
                     continue;
                 }
 
-                // These variables are used for all three directions
-                // load the nhdr header
-                string nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
-                Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
+                nin = safe_nrrd_load(mop, nhdr_name);
                 if (opt.verbose)
                 {
                     cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
                 }
-
-                // we want to get the RFP data range from the middle part of the data set, so that the
-                // pioneers which have low brightness would not be influenced by the
-                // so we take the center part of the data first
-                Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                // range of cropping along each axis
-                double startPercent_x = 0.25;
-                double endPercent_x = 0.75;
-                double startPercent_y = 0.25;
-                double endPercent_y = 0.75;
-                double startPercent_z = 0.0;
-                double endPercent_z = 1.0;
-                cropDataSet(nin_cropped, nin, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
-                if (opt.verbose)
-                {
-                    cout << "Finish cropping input Nrrd data" << endl;
-                }
-
-                // generate range based on cropped data
-                NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-                NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
-                airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
-                airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
-                // min percentile for GFP and RFP in quantization
-                vector<string> rangeMinPercentile = {"10%", "10%"};
-                // max percentile for GFP and RFP in quantization
-                vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
-                // generate range
-                generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
-
-                // *********************** alone z-axis ******************************
-                makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
-                // *********************** alone x-axis ******************************
-                // left
-                makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, opt.verbose, mop);
-                // right
-                makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, opt.verbose, mop);
-
-                // stitch and save the image
-                stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
-            }
-        }
-
-        // generate video
-        Resamp::makeVideo();
-    }
-    // single file mode
-    else
-    {
-        // single file non video only mode
-        if (opt.mode.empty() || opt.mode != "VideoOnly")
-        {
-            auto start = chrono::high_resolution_clock::now();
-
-            // since it is single file mode, nhdr_path is now the file path
-            const string nhdr_name = opt.nhdr_path;
-            // get the name of the file only
-            int startlocation = nhdr_name.rfind("/");
-            string curFileName = nhdr_name.substr(startlocation+1, 3);
-
-            // we will save this new volume as nrrd
-            string common_prefix = opt.out_path + "/" + curFileName;
-            string volumeOutPath = common_prefix + ".nhdr";
-            // the final images's x and z component
-            string imageOutPath_x_left = common_prefix + "_x_left.png";
-            string imageOutPath_x_right = common_prefix + "_x_right.png";
-            string imageOutPath_z = common_prefix + "_z.png";
-
-            // when output already exists, skip this iteration
-            if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
-                && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
-            {
-                cout << "All outputs exist, continue to next." << endl;
-                return;
-            }
-
-            // resample the old data and generate new dataset
-            Nrrd* nrrd_new = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            processData(nrrd_new, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
-
-            // we want to get the RFP data range from the middle part of the data set, so that the
-            // pioneers which have low brightness would not be influenced by the
-            // so we take the center part of the data first
-            Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            // range of cropping along each axis
-            double startPercent_x = 0.25;
-            double endPercent_x = 0.75;
-            double startPercent_y = 0.25;
-            double endPercent_y = 0.75;
-            double startPercent_z = 0.0;
-            double endPercent_z = 1.0;
-            cropDataSet(nin_cropped, nrrd_new, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
-            if (opt.verbose)
-            {
-                cout << "Finish cropping input Nrrd data" << endl;
-            }
-
-            // generate range based on cropped data
-            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
-            airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
-            // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"10%", "10%"};
-            // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.3%", "1.0%"};
-            // generate range
-            generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
-
-            // *********************** alone z-axis ******************************
-            makeProjImage(nrrd_new, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
-            // *********************** alone x-axis ******************************
-            // left
-            makeProjImage(nrrd_new, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, opt.verbose, mop);
-            // right
-            makeProjImage(nrrd_new, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, opt.verbose, mop);
-
-            // stitch and save the image
-            stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
-
-            auto stop = chrono::high_resolution_clock::now(); 
-            auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-            cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl;
-        }
-        // single file video only mode
-        else
-        {
-            // video only mode
-            cout << "Video only (single file) mode" << endl;
-
-            // since it is single file mode, nhdr_path is now the file path
-            const string nhdr_name = opt.nhdr_path;
-            // get the name of the file only
-            int startlocation = nhdr_name.rfind("/");
-            string curFileName = nhdr_name.substr(startlocation+1, 3);
-
-            // the final images's x and z component
-            string common_prefix = opt.out_path + "/" + curFileName;
-            string imageOutPath_x_left = common_prefix + "_x_left.png";
-            string imageOutPath_x_right = common_prefix + "_x_right.png";
-            string imageOutPath_z = common_prefix + "_z.png";
-            // when output already exists, skip this iteration
-            if (fs::exists(imageOutPath_x_left) && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
-            {
-                cout << imageOutPath_x_left << ", " << imageOutPath_x_right << " and " << imageOutPath_z << " all exist, continue to next." << endl;
-                return;
-            }
-
-            // These variables are used for all three directions
-            // load the nhdr header
-            Nrrd* nin = safe_nrrd_load(mop, nhdr_name);
-            if (opt.verbose)
-            {
-                cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
 
             // we want to get the RFP data range from the middle part of the data set, so that the
@@ -1126,14 +946,10 @@ void Resamp::main()
             NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
             airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
             airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
-            // min percentile for GFP and RFP in quantization
-            vector<string> rangeMinPercentile = {"10%", "12%"};
-            // max percentile for GFP and RFP in quantization
-            vector<string> rangeMaxPercentile = {"0.3%", "0.7%"};
-            // generate range
-            generateRange(nin_cropped, range_GFP, range_RFP, rangeMinPercentile, rangeMaxPercentile, opt.verbose, mop);
 
-            // we project alone z-axis first
+            // generate range
+            generateRange(nin_cropped, range_GFP, range_RFP, opt.rangeMinPercentile, opt.rangeMaxPercentile, opt.verbose, mop);
+
             // *********************** alone z-axis ******************************
             makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
             // *********************** alone x-axis ******************************
@@ -1144,7 +960,13 @@ void Resamp::main()
 
             // stitch and save the image
             stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
+
+            auto stop = chrono::high_resolution_clock::now(); 
+            auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+            cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
         }
+        // generate video
+        Resamp::makeVideo();
     }
 
     return;
@@ -1153,131 +975,79 @@ void Resamp::main()
 // generate videos, only when not in the single file mode
 void Resamp::makeVideo()
 {
-    // non video only mode
-    if (opt.mode.empty() || opt.mode != "VideoOnly")
-    {
-        int numFiles = opt.numFiles;
+    int numFiles = opt.numFiles;
 
-        // get the size by reading the first frame image
-        cv::Size s = cv::imread(opt.out_path + "/001.png").size();
-        
-        string out_file;
-        if (opt.maxFileNum != "")
-            out_file = opt.out_path + "/result_" + opt.maxFileNum + ".avi";
-        else
-            out_file = opt.out_path + "/result.avi";
-
-        if (opt.maxFileNum != "")
-            cout << "===================== result_" + opt.maxFileNum + ".avi =====================" << std::endl;
-        else
-            cout << "===================== result.avi =====================" << std::endl;
-            
-
-        // write the images to video with opencv video writer
-        // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
-        // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
-        cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
-        
-        if(!vw.isOpened()) 
-            std::cout << "cannot open videoWriter." << std::endl;
-        
-
-        // determine the time stamps, if starting with 0, it is 0min, if starting with 1, it is 2min
-        int timestamp = stoi(opt.allValidFiles[0].second) * 2;
-        string curText;
-        for(int i = 0; i < numFiles; i++)
-        {
-            string frameNum = opt.allValidFiles[i].second;
-            std::string name = opt.out_path + "/" + frameNum + ".png";
-            cv::Mat curImage = cv::imread(name);
-            // put white text indicating frame number on the bottom left cornor of images
-            // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-            curText = to_string(timestamp) + " mins";
-            putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
-            vw << curImage;
-            timestamp = timestamp + 2;
-        }
-        vw.release();
-    }
-    // video only mode
+    // get the size by reading the first frame image
+    cv::Size s = cv::imread(opt.out_path + "/001_joined.png").size();
+    
+    string out_file;
+    if (opt.maxFileNum != "")
+        out_file = opt.out_path + "/result_3view_" + opt.maxFileNum + ".avi";
     else
+        out_file = opt.out_path + "/result_3view.avi";
+
+    if (opt.maxFileNum != "")
+        cout << "===================== result_3view_" + opt.maxFileNum + ".avi =====================" << std::endl;
+    else
+        cout << "===================== result_3view.avi =====================" << std::endl;
+        
+
+    // write the images to video with opencv video writer
+    // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
+    // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
+    cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
+    
+    if(!vw.isOpened()) 
+        std::cout << "cannot open videoWriter." << std::endl;
+    
+    // determine the time stamps, if starting with 0, it is 0min, if starting with 1, it is 2min
+    int timestamp_min = stoi(opt.allValidFiles[0].second) * 2;
+    int timestamp_hour = 0;
+    string curText;
+    for(int i = 0; i < numFiles; i++)
     {
-        int numFiles = opt.numFiles;
-
-        // get the size by reading the first frame image
-        cv::Size s = cv::imread(opt.out_path + "/001_joined.png").size();
-        
-        string out_file;
-        if (opt.maxFileNum != "")
-            out_file = opt.out_path + "/result_3view_" + opt.maxFileNum + ".avi";
-        else
-            out_file = opt.out_path + "/result_3view.avi";
-
-        if (opt.maxFileNum != "")
-            cout << "===================== result_3view_" + opt.maxFileNum + ".avi =====================" << std::endl;
-        else
-            cout << "===================== result_3view.avi =====================" << std::endl;
-            
-
-        // write the images to video with opencv video writer
-        // VideoWriter (const String &filename, int fourcc, double fps, Size frameSize, bool isColor=true)
-        // If FFMPEG is enabled, using codec=0; fps=0; you can create an uncompressed (raw) video file. 
-        cv::VideoWriter vw(out_file.c_str(), cv::VideoWriter::fourcc('F', 'F', 'V', '1'), opt.fps, s, true);
-        
-        if(!vw.isOpened()) 
-            std::cout << "cannot open videoWriter." << std::endl;
-        
-        // determine the time stamps, if starting with 0, it is 0min, if starting with 1, it is 2min
-        int timestamp_min = stoi(opt.allValidFiles[0].second) * 2;
-        int timestamp_hour = 0;
-        string curText;
-        for(int i = 0; i < numFiles; i++)
+        string frameNum = opt.allValidFiles[i].second;
+        std::string name = opt.out_path + "/" + frameNum + "_joined.png";
+        cv::Mat curImage = cv::imread(name);
+        // put white text indicating frame number on the bottom left cornor of images
+        // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
+        if (timestamp_min >= 60)
         {
-            string frameNum = opt.allValidFiles[i].second;
-            std::string name = opt.out_path + "/" + frameNum + "_joined.png";
-            cv::Mat curImage = cv::imread(name);
-            // put white text indicating frame number on the bottom left cornor of images
-            // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false )
-            if (timestamp_min >= 60)
+            timestamp_min = 0;
+            timestamp_hour++;
+            if (timestamp_hour < 10)
             {
-                timestamp_min = 0;
-                timestamp_hour++;
-                if (timestamp_hour < 10)
-                {
-                    curText = "0" + to_string(timestamp_hour) + ":00";
-                }
-                else
-                {
-                    curText = to_string(timestamp_hour) + ":00";
-                }
-                putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
-                vw << curImage;
+                curText = "0" + to_string(timestamp_hour) + ":00";
             }
             else
             {
-                timestamp_min = timestamp_min + 2;
-                if (timestamp_hour < 10 && timestamp_min < 10)
-                {
-                    curText = "0" + to_string(timestamp_hour) + ":" + "0" + to_string(timestamp_min);
-                }
-                else if (timestamp_hour < 10 && timestamp_min >= 10)
-                {
-                    curText = "0" + to_string(timestamp_hour) + ":" + to_string(timestamp_min);
-                }
-                else if (timestamp_hour >= 10 && timestamp_min < 10)
-                {
-                    curText = to_string(timestamp_hour) + ":" + "0" + to_string(timestamp_min);
-                }
-                else if (timestamp_hour >= 10 && timestamp_min >= 10)
-                {
-                    curText = to_string(timestamp_hour) + ":" + to_string(timestamp_min);
-                }
-                putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
-                vw << curImage;
+                curText = to_string(timestamp_hour) + ":00";
             }
+            putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+            vw << curImage;
         }
-        vw.release();
+        else
+        {
+            timestamp_min = timestamp_min + 2;
+            if (timestamp_hour < 10 && timestamp_min < 10)
+            {
+                curText = "0" + to_string(timestamp_hour) + ":" + "0" + to_string(timestamp_min);
+            }
+            else if (timestamp_hour < 10 && timestamp_min >= 10)
+            {
+                curText = "0" + to_string(timestamp_hour) + ":" + to_string(timestamp_min);
+            }
+            else if (timestamp_hour >= 10 && timestamp_min < 10)
+            {
+                curText = to_string(timestamp_hour) + ":" + "0" + to_string(timestamp_min);
+            }
+            else if (timestamp_hour >= 10 && timestamp_min >= 10)
+            {
+                curText = to_string(timestamp_hour) + ":" + to_string(timestamp_min);
+            }
+            putText(curImage, curText, cv::Point2f(20, s.height-20), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255,255,255), 3, 2, false);
+            vw << curImage;
+        }
     }
-    
-    
+    vw.release();
 }

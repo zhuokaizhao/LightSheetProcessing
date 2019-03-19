@@ -46,6 +46,12 @@ struct resampOptions {
     vector< pair<int, string> > allValidFiles;
 
     uint verbose = 0;
+    
+    // used for the upper and lower bounds for clamping
+    // min percentile for GFP and RFP in quantization
+    vector<string> rangeMinPercentile = {"10%", "12%"};
+    // max percentile for GFP and RFP in quantization
+    vector<string> rangeMaxPercentile = {"0.3%", "0.7%"}; 
 };
 
 void setup_resamp(CLI::App &app);

@@ -1,0 +1,5 @@
+v6 parameters: vector<string> rangeMinPercentile = {"10%", "12%"};
+               vector<string> rangeMaxPercentile = {"0.3%", "0.5%"};
+
+v6 parameters: vector<string> rangeMinPercentile = {"10%", "12%"};
+               vector<string> rangeMaxPercentile = {"0.3%", "0.7%"};
