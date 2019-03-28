@@ -965,8 +965,12 @@ void Resamp::main()
         auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
         cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
     }
-    // generate video
-    Resamp::makeVideo();
+
+    // non single file mode, generate video
+    if (!opt.isSingleFile)
+    {
+        Resamp::makeVideo();
+    }
 
     return;
 }
