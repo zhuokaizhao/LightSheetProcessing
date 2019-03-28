@@ -843,131 +843,130 @@ int nrrdResample3D(lspVolume* newVolume, lspCtx3D* ctx3D)
 // main function
 void Resamp::main()
 {
-        // loop over all the current files
-        // in single file mode, numFiles = 1, the for loop just runs once
-        int nhdrNum = opt.numFiles;
-        for (int i = 0; i < nhdrNum; i++)
+    // loop over all the current files
+    // in single file mode, numFiles = 1, the for loop just runs once
+    int nhdrNum = opt.numFiles;
+    for (int i = 0; i < nhdrNum; i++)
+    {
+        auto start = chrono::high_resolution_clock::now();
+        string common_prefix, volumeOutPath, imageOutPath_x_left, imageOutPath_x_right, imageOutPath_z, nhdr_name, curFileName;
+        int startlocation;
+        // non single file mode
+        if (!opt.isSingleFile)
         {
-            auto start = chrono::high_resolution_clock::now();
-            string common_prefix, volumeOutPath, imageOutPath_x_left, imageOutPath_x_right, imageOutPath_z, nhdr_name, curFileName;
-            int startlocation;
-            // non single file mode
-            if (!opt.isSingleFile)
+            common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
+            // we will save this volume as nrrd
+            volumeOutPath;
+
+            // the final images's x and z component
+            imageOutPath_x_left = common_prefix + "_x_left.png";
+            imageOutPath_x_right = common_prefix + "_x_right.png";
+            imageOutPath_z = common_prefix + "_z.png";
+
+            nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
+            cout << "Currently processing input file " << nhdr_name << endl;
+        }
+        // single file mode
+        else
+        {
+            // since it is single file mode, nhdr_path is now the file path
+            nhdr_name = opt.nhdr_path;
+            // get the name of the file only
+            startlocation = nhdr_name.rfind("/");
+            curFileName = nhdr_name.substr(startlocation+1, 3);
+
+            // we will save this new volume as nrrd
+            common_prefix = opt.out_path + "/" + curFileName;
+            volumeOutPath;
+            // the final images's x and z component
+            imageOutPath_x_left = common_prefix + "_x_left.png";
+            imageOutPath_x_right = common_prefix + "_x_right.png";
+            imageOutPath_z = common_prefix + "_z.png";   
+        }
+
+        // nrrd_new is the processed(resampled) new nrrd data
+        Nrrd* nin;
+        // when we are not in VideoOnly mode, we need to process the input data
+        if (opt.mode.empty() || opt.mode != "VideoOnly")
+        {
+            // non video only mode
+            cout << "Non-Single File Non-Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
+            // when output already exists, skip this iteration
+            if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
+                && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
             {
-                common_prefix = opt.out_path + "/" + opt.allValidFiles[i].second;
-                // we will save this volume as nrrd
-                volumeOutPath;
-
-                // the final images's x and z component
-                imageOutPath_x_left = common_prefix + "_x_left.png";
-                imageOutPath_x_right = common_prefix + "_x_right.png";
-                imageOutPath_z = common_prefix + "_z.png";
-
-                nhdr_name = opt.nhdr_path + opt.allValidFiles[i].second + ".nhdr";
-                cout << "Currently processing input file " << nhdr_name << endl;
-            }
-            // single file mode
-            else
-            {
-                // since it is single file mode, nhdr_path is now the file path
-                nhdr_name = opt.nhdr_path;
-                // get the name of the file only
-                startlocation = nhdr_name.rfind("/");
-                curFileName = nhdr_name.substr(startlocation+1, 3);
-
-                // we will save this new volume as nrrd
-                common_prefix = opt.out_path + "/" + curFileName;
-                volumeOutPath;
-                // the final images's x and z component
-                imageOutPath_x_left = common_prefix + "_x_left.png";
-                imageOutPath_x_right = common_prefix + "_x_right.png";
-                imageOutPath_z = common_prefix + "_z.png";   
-            }
-
-            // nrrd_new is the processed(resampled) new nrrd data
-            Nrrd* nin;
-            // when we are not in VideoOnly mode, we need to process the input data
-            if (opt.mode.empty() || opt.mode != "VideoOnly")
-            {
-                // non video only mode
-                cout << "Non-Single File Non-Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
-                // when output already exists, skip this iteration
-                if (fs::exists(volumeOutPath) && fs::exists(imageOutPath_x_left)
-                    && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
-                {
-                    cout << "All outputs exist, continue to next." << endl;
-                    continue;
-                }
-
-                // the processed data will be put in nin
-                nin = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-                // we will save this volume as nrrd
-                volumeOutPath = common_prefix + ".nhdr";
-                processData(nin, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
-            }
-            // video only mode
-            else
-            {
-                cout << "Non-Single File Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
-
-                // when output already exists, skip this iteration
-                if (fs::exists(imageOutPath_x_left) && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
-                {
-                    cout << imageOutPath_x_left << ", " << imageOutPath_x_right << " and " << imageOutPath_z << " all exist, continue to next." << endl;
-                    continue;
-                }
-
-                nin = safe_nrrd_load(mop, nhdr_name);
-                if (opt.verbose)
-                {
-                    cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
-                }
+                cout << "All outputs exist, continue to next." << endl;
+                continue;
             }
 
-            // we want to get the RFP data range from the middle part of the data set, so that the
-            // pioneers which have low brightness would not be influenced by the
-            // so we take the center part of the data first
-            Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
-            // range of cropping along each axis
-            double startPercent_x = 0.25;
-            double endPercent_x = 0.75;
-            double startPercent_y = 0.25;
-            double endPercent_y = 0.75;
-            double startPercent_z = 0.0;
-            double endPercent_z = 1.0;
-            cropDataSet(nin_cropped, nin, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
+            // the processed data will be put in nin
+            nin = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+            // we will save this volume as nrrd
+            volumeOutPath = common_prefix + ".nhdr";
+            processData(nin, nhdr_name, opt.grid_path, opt.kernel_name, volumeOutPath, mop, opt.verbose);
+        }
+        // video only mode
+        else
+        {
+            cout << "Non-Single File Video only mode, found " << nhdrNum << " processed .nhdr files" << endl;
+
+            // when output already exists, skip this iteration
+            if (fs::exists(imageOutPath_x_left) && fs::exists(imageOutPath_x_right) && fs::exists(imageOutPath_z))
+            {
+                cout << imageOutPath_x_left << ", " << imageOutPath_x_right << " and " << imageOutPath_z << " all exist, continue to next." << endl;
+                continue;
+            }
+
+            nin = safe_nrrd_load(mop, nhdr_name);
             if (opt.verbose)
             {
-                cout << "Finish cropping input Nrrd data" << endl;
+                cout << "Finish loading Nrrd data located at " << nhdr_name << endl;
             }
-
-            // generate range based on cropped data
-            NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
-            airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
-            airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
-
-            // generate range
-            generateRange(nin_cropped, range_GFP, range_RFP, opt.rangeMinPercentile, opt.rangeMaxPercentile, opt.verbose, mop);
-
-            // *********************** alone z-axis ******************************
-            makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
-            // *********************** alone x-axis ******************************
-            // left
-            makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, opt.verbose, mop);
-            // right
-            makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, opt.verbose, mop);
-
-            // stitch and save the image
-            stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
-
-            auto stop = chrono::high_resolution_clock::now(); 
-            auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-            cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
         }
-        // generate video
-        Resamp::makeVideo();
+
+        // we want to get the RFP data range from the middle part of the data set, so that the
+        // pioneers which have low brightness would not be influenced by the
+        // so we take the center part of the data first
+        Nrrd* nin_cropped = safe_nrrd_new(mop, (airMopper)nrrdNuke);
+        // range of cropping along each axis
+        double startPercent_x = 0.25;
+        double endPercent_x = 0.75;
+        double startPercent_y = 0.25;
+        double endPercent_y = 0.75;
+        double startPercent_z = 0.0;
+        double endPercent_z = 1.0;
+        cropDataSet(nin_cropped, nin, startPercent_x, endPercent_x, startPercent_y, endPercent_y, startPercent_z, endPercent_z);
+        if (opt.verbose)
+        {
+            cout << "Finish cropping input Nrrd data" << endl;
+        }
+
+        // generate range based on cropped data
+        NrrdRange* range_GFP = nrrdRangeNew(lspNan(0), lspNan(0));
+        NrrdRange* range_RFP = nrrdRangeNew(lspNan(0), lspNan(0));
+        airMopAdd(mop, range_GFP, (airMopper)nrrdRangeNix, airMopAlways);
+        airMopAdd(mop, range_RFP, (airMopper)nrrdRangeNix, airMopAlways);
+
+        // generate range
+        generateRange(nin_cropped, range_GFP, range_RFP, opt.rangeMinPercentile, opt.rangeMaxPercentile, opt.verbose, mop);
+
+        // *********************** alone z-axis ******************************
+        makeProjImage(nin, "z", 0.0, 1.0, imageOutPath_z, range_GFP, range_RFP, opt.verbose, mop);
+        // *********************** alone x-axis ******************************
+        // left
+        makeProjImage(nin, "x", 0.0, 0.5, imageOutPath_x_left, range_GFP, range_RFP, opt.verbose, mop);
+        // right
+        makeProjImage(nin, "x", 0.5, 1.0, imageOutPath_x_right, range_GFP, range_RFP, opt.verbose, mop);
+
+        // stitch and save the image
+        stitchImages(imageOutPath_x_left, imageOutPath_z, imageOutPath_x_right, common_prefix);
+
+        auto stop = chrono::high_resolution_clock::now(); 
+        auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
+        cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
     }
+    // generate video
+    Resamp::makeVideo();
 
     return;
 }
