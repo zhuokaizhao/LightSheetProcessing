@@ -963,7 +963,11 @@ void Resamp::main()
 
         auto stop = chrono::high_resolution_clock::now(); 
         auto duration = chrono::duration_cast<chrono::seconds>(stop - start); 
-        cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
+        // non single file mode, print out this message
+        if (!opt.isSingleFile)
+        {
+            cout << endl << "Processed " << nhdr_name << " took " << duration.count() << " seconds" << endl << endl; 
+        }
     }
 
     // non single file mode, generate video
