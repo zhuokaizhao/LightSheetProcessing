@@ -5,6 +5,7 @@
 
 #include <teem/nrrd.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/photo.hpp>
 #include "opencv2/highgui.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <omp.h>
