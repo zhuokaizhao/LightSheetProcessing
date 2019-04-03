@@ -604,12 +604,12 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
 // helper function that perform image denoising
 static cv::Mat3b textureRemoval(cv::Mat3b inputImage)
 {
-    cv::Mat3b outputImage;
+    cv::Mat3b denoisedImage, outputImage;
     // denoising
-    cv::fastNlMeansDenoisingColored(inputImage, outputImage, 3, 7, 21);
+    cv::fastNlMeansDenoisingColored(inputImage, denoisedImage, 3, 7, 21);
 
     //applying Gaussian filter 
-    GaussianBlur(outputImage, outputImage, cv::Size(7, 7), 0, 0);
+    GaussianBlur(denoisedImage, outputImage, cv::Size(7, 7), 0, 0);
 
     cout << "Performed texture removal" << endl;
 
