@@ -26,7 +26,7 @@ include_directories("/software/teem-trunk-el7-x86_64/include")
 include_directories("/software/libxml2-2.9-el7-x86_64/include/libxml2")
 target_include_directories(lsp PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-target_link_libraries(lsp teem xml2 boost_filesystem boost_system opencv_core opencv_videoio opencv_imgcodecs opencv_imgproc fftw3f png z)
+target_link_libraries(lsp teem xml2 boost_filesystem boost_system opencv_core opencv_videoio opencv_imgcodecs opencv_imgproc opencv_photo opencv_highgui fftw3f png z)
 
 install (TARGETS lsp DESTINATION bin)
 
