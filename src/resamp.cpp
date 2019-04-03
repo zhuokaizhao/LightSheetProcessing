@@ -50,7 +50,7 @@ void setup_resamp(CLI::App &app)
             // count the number of files
             const vector<string> files = GetDirectoryFiles(opt->nhdr_path);
 
-            // note that the number starts counting at 0
+            // count the number of valid nhdr files
             int nhdrNum = 0;
             
             for (int i = 0; i < files.size(); i++) 
@@ -58,7 +58,7 @@ void setup_resamp(CLI::App &app)
                 string curFile = files[i];
                 // check if input file is a .nhdr file
                 int nhdr_suff = curFile.rfind(".nhdr");
-                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5))
+                if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5) )
                 {
                     if (opt->verbose)
                         cout << "Current input file " + curFile + " ends with .nhdr, count this file" << endl;
@@ -96,6 +96,7 @@ void setup_resamp(CLI::App &app)
 
                     if (is_number(sequenceNumString))
                     {
+                        // curFileName is like 001, without the file type
                         opt->allValidFiles.push_back( make_pair(stoi(sequenceNumString), curFileName) );
                     }
                     else
@@ -152,14 +153,10 @@ void setup_resamp(CLI::App &app)
             cout << curFile << " is not a directory, check if it is a valid .nhdr file" << endl;
             
             // check if input file is a .nhdr file
-            int suff = curFile.rfind(".nhdr");
+            int nhdr_suff = curFile.rfind(".nhdr");
 
-            if ( (suff == string::npos) || (suff != curFile.length() - 5)) 
-            {
-                cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
-                return;
-            }
-            else
+            // if it is a valid file
+            if ( (nhdr_suff != string::npos) && (nhdr_suff == curFile.length() - 5) )
             {
                 cout << "Current input file " + curFile + " ends with .nhdr, process this file" << endl;
                 opt->numFiles = 1;
@@ -196,6 +193,11 @@ void setup_resamp(CLI::App &app)
                     std::cerr << "Exception thrown by " << e.get_func() << "() in " << e.get_file() << ": " << e.what() << std::endl;
                 }
             }
+            else
+            {
+                cout << "Current input file " + curFile + " does not end with .nhdr, error" << endl;
+            }
+            
         }
     });
 }
@@ -599,6 +601,15 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
     }
 }
 
+// helper function that perform image denoising
+static cv::Mat3b textureRemoval(cv::Mat3b inputImage)
+{
+    cv::Mat3b outputImage;
+    outputImage = cv::fastNlMeansDenoisingColored(inputImage, outputImage, 3, 7, 21);
+
+    return outputImage;
+}
+
 // helper function that stitches left, middle and right image
 static void stitchImages(string imageOutPath_x_left, string imageOutPath_z, string imageOutPath_x_right, string common_prefix)
 {
@@ -636,9 +647,12 @@ static void stitchImages(string imageOutPath_x_left, string imageOutPath_z, stri
     cv::transpose(res, res);
     cv::flip(res, res, 1);
 
+    // texture removal
+    cv::Mat3b res_removed = textureRemoval(res);
+
     // Show result
     string imageOutPath_joined = common_prefix + "_joined.png";
-    cv::imwrite(imageOutPath_joined, res);
+    cv::imwrite(imageOutPath_joined, res_removed);
     cout << "Finished saving stitched image to " << imageOutPath_joined << endl;
 }
 
