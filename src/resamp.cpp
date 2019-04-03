@@ -5,9 +5,8 @@
 
 #include <teem/nrrd.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/photo.hpp>
-#include "opencv2/highgui.hpp"
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <omp.h>
 #include <fstream>
 #include <regex>
