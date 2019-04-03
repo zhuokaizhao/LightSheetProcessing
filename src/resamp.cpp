@@ -612,7 +612,7 @@ static cv::Mat3b textureRemoval(cv::Mat3b inputImage)
     cv::fastNlMeansDenoisingColored(inputImage, denoisedImage, 3, 7, 21);
 
     //applying Gaussian filter 
-    cv::GaussianBlur(denoisedImage, outputImage, cv::Size(7, 7), 0, 0);
+    // cv::GaussianBlur(denoisedImage, outputImage, cv::Size(7, 7), 0, 0);
 
     cout << "Performed texture removal" << endl;
 
