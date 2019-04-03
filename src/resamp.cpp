@@ -605,7 +605,7 @@ static void makeProjImage(Nrrd* nin, string axis, double startPercent, double en
 static cv::Mat3b textureRemoval(cv::Mat3b inputImage)
 {
     cv::Mat3b outputImage;
-    outputImage = cv::fastNlMeansDenoisingColored(inputImage, outputImage, 3, 7, 21);
+    cv::fastNlMeansDenoisingColored(inputImage, outputImage, 3, 7, 21);
 
     return outputImage;
 }
